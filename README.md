@@ -31,7 +31,7 @@ uv tool install dividendcase
 dividendcase
 ```
 
-It opens <http://127.0.0.1:8765/dashboard/> in your browser. Keep the terminal window open while you use it, and press Ctrl+C there to stop. If `dividendcase` isn't found after installing uv, run `uv tool update-shell` and open a new terminal.
+It opens <http://127.0.0.1:8765/dashboard/> in your browser once it's ready; the first start after installing or updating can take up to a minute. Keep the terminal window open while you use it, and press Ctrl+C there to stop. If `dividendcase` isn't found after installing uv, run `uv tool update-shell` and open a new terminal.
 
 - **Update:** `uv tool upgrade dividendcase`. The app tells you when a new version is out, and saves a copy of your data before an update changes it.
 - **Uninstall:** `uv tool uninstall dividendcase`. Your data folder (below) stays until you delete it.

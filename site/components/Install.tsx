@@ -131,7 +131,8 @@ export function Install() {
                   <Step n={3} title="Run it">
                     <Command prompt={o.prompt} cmd="dividendcase" />
                     <p>
-                      It opens <span className="num text-ink">{LOCAL_URL}</span> in your browser. Your data is kept in{" "}
+                      It opens <span className="num text-ink">{LOCAL_URL}</span> in your browser once it&apos;s ready (the first
+                      start takes up to a minute). Your data is kept in{" "}
                       <span className="num text-ink [overflow-wrap:anywhere]">{DATA_FOLDERS[o.key]}</span>.
                     </p>
                   </Step>

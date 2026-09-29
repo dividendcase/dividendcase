@@ -3,8 +3,9 @@
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
 while the version starts with 0, a minor release (0.2, 0.3…) may change things.
 
-## Unreleased
+## 0.1.1
 
+- The browser now opens once DividendCase is ready. On the first start after installing or updating, which can take up to a minute while Python prepares its libraries, it used to open too early and show "This site can't be reached". The terminal now says it's starting and when it's ready.
 - The website's install steps no longer say "coming soon".
 
 ## 0.1.0
