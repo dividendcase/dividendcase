@@ -155,8 +155,12 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 
 ## Next milestones
 
-1. Early testers on 0.1.0 (published 29 Sep 2026); collect issues on GitHub.
-2. Deploy `site/` as dividendcase.com after the hosted accounts close on 1 Nov 2026.
+In order; details and decisions are in `docs/roadmap.md`. Early testers have had it since 0.1.0 (29 Sep 2026); collect their issues on GitHub.
+
+1. Landing page redesign (October 2026): one continuous scroll film (GSAP ScrollTrigger + Motion +
+   three.js), storyboard reviewed first. It goes live as dividendcase.com on 1 Nov 2026, not earlier:
+   the hosted app keeps working until closure day.
+2. Broker imports: Zerodha, Angel One (0.4.0), then Trading 212, Revolut, Degiro (0.5.0).
 3. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
    CH, ES, JP); Australian unfranked parts; Irish DWT exemptions.
 4. Contributions: no CLA and no outside code (decided 29 Sep 2026). People propose work in issues and
