@@ -5,6 +5,7 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- **Income after tax:** the Income and Calendar pages show dividends after the tax the paying country withholds (switch to "Before tax" any time). Rates for residents of Ireland, the UK, India, Canada, Australia and the US, by treaty where one applies, with the paperwork each assumes (a W-8BEN for US dividends, for example). Countries it doesn't cover yet are shown before tax and named. Settings lists every rate and lets you set the one your broker actually uses; stock pages show what's withheld for you.
 - Stock suggestions (Compare, Watchlists, DRIP, Add holding) no longer get cut off by the card or dialog they're in.
 
 ## 0.2.0

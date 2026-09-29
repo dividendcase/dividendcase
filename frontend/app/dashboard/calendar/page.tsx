@@ -6,6 +6,7 @@ import { AlertTriangle, CalendarDays, Info, Plus } from "lucide-react";
 import { useIncomeCalendar } from "@/lib/hooks/useIncomeCalendar";
 import { usePortfolios } from "@/lib/hooks/usePortfolios";
 import { convertAmount, useHomeCurrency } from "@/lib/fx";
+import { calendarFor, TAX_VIEW_OPTIONS, useTaxView } from "@/lib/withholding";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,24 @@ function Amount({ value, currency, original, originalCurrency }: {
   );
 }
 
+/** "15% withheld (United States)" under an after-tax amount, with the reason on hover. */
+function WithheldNote({ entry, show }: { entry: CalendarEntry; show: boolean }) {
+  if (!show) return null;
+  if (entry.withholding_rate == null) {
+    return entry.source_country ? (
+      <span className="block text-[11px] text-watch" title="This country's withholding isn't estimated yet; set it in Settings">
+        before tax ({entry.source_country})
+      </span>
+    ) : null;
+  }
+  if (entry.withholding_rate === 0) return null;
+  return (
+    <span className="block text-[11px] text-ink-3" title={entry.withholding_note ?? undefined}>
+      {entry.withholding_rate}% withheld
+    </span>
+  );
+}
+
 function whenLabel(iso: string): string | null {
   const d = daysUntil(iso);
   if (d < 0 || d > 30) return null;
@@ -87,7 +106,11 @@ function whenLabel(iso: string): string | null {
 export default function CalendarPage() {
   const { portfolios } = usePortfolios();
   const [portfolioId, setPortfolioId] = useState<number | undefined>(undefined);
-  const { data, error, isLoading } = useIncomeCalendar(portfolioId);
+  const { data: rawCalendar, error, isLoading } = useIncomeCalendar(portfolioId);
+  // After withholding at source once a tax residence is set (shared with the Income page)
+  const [taxView, setTaxView] = useTaxView();
+  const taxed = !!rawCalendar?.residence;
+  const data = useMemo(() => calendarFor(rawCalendar, taxView), [rawCalendar, taxView]);
   const { home, fx, canConvert } = useHomeCurrency();
   const [pickedCurrency, setPickedCurrency] = useState<string | null>(null);
   const [listView, setListView] = useState<"month" | "stock">("month");
@@ -231,8 +254,17 @@ export default function CalendarPage() {
   const header = (
     <PageHeader
       title="Calendar"
-      description="Dividends your holdings are expected to pay over the next 12 months, estimated from each stock's last payment and how often it pays."
-      actions={portfolioPicker}
+      description={
+        taxed && taxView === "net"
+          ? "Dividends your holdings are expected to pay over the next 12 months, after tax withheld by the paying country."
+          : "Dividends your holdings are expected to pay over the next 12 months, estimated from each stock's last payment and how often it pays."
+      }
+      actions={
+        <>
+          {portfolioPicker}
+          {taxed && <Segmented value={taxView} onChange={setTaxView} options={TAX_VIEW_OPTIONS} aria-label="Before or after tax" />}
+        </>
+      }
     />
   );
 
@@ -488,6 +520,7 @@ export default function CalendarPage() {
                             ) : (
                               <Amount value={e.estimated_amount} currency={e.currency} />
                             )}
+                            <WithheldNote entry={e} show={taxed && taxView === "net"} />
                           </TD>
                         </TR>
                       ))}

@@ -51,6 +51,7 @@ Then open <http://127.0.0.1:8765/dashboard/>. Keep `127.0.0.1:` in the port mapp
 ## What it does
 
 - **Income home:** what your holdings should pay over the next 12 months, month by month, all in your home currency or one currency at a time, with upcoming payments and where the income comes from.
+- **After tax:** what's left once the paying country withholds its tax, for residents of Ireland, the UK, India, Canada, Australia and the US (treaty rates, with the paperwork each assumes); set your broker's actual rate for any country in Settings.
 - **Stock pages:** 10 years of dividend history, TTM yield, a safety score, dividend growth (CAGR) and growth streaks.
 - **Screener:** index members from six markets, filtered by market, yield, how often they pay and whether they beat their local index over ten years.
 - **Portfolios:** individual purchase lots in any currency, a 12-month income calendar, diversification charts, a benchmark comparison and a DRIP calculator.

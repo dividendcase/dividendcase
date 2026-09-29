@@ -19,6 +19,7 @@ import { Chip } from "@/components/ui/segmented";
 import type { ScreenerMarket } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { DeleteAccountDialog } from "@/components/settings/DeleteAccountDialog";
+import { WithholdingSettings } from "@/components/settings/WithholdingSettings";
 
 const BENCHMARK_OPTIONS = [
   { value: "SP500", label: "S&P 500", ticker: "SPY" },
@@ -202,7 +203,7 @@ export function SettingsView() {
           <>
             <SettingRow
               title="Tax residence"
-              description="Later versions use this to show income after withholding tax."
+              description="Used to estimate the tax each country withholds from your dividends (below)."
               htmlFor="pref-residence"
             >
               <Select value={preferences.tax_residence ?? ""} onValueChange={(v) => updatePreference({ tax_residence: v })}>
@@ -269,6 +270,8 @@ export function SettingsView() {
           </>
         )}
       </Section>
+
+      <WithholdingSettings />
 
       <Section title="Preferences">
         {isLoading ? (

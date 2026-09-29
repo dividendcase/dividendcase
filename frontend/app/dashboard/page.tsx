@@ -23,8 +23,9 @@ import { useDataStatus } from "@/lib/hooks/useDataStatus";
 import { buildIncomeModel, monthName, toHomeCurrency, type CurrencyIncome, type IncomeModel } from "@/lib/income";
 import { currencyLabel, daysUntil, formatMoney, formatShortDate, frequencyLabel } from "@/lib/format";
 import { convertAmount, useHomeCurrency, usePortfolioCost } from "@/lib/fx";
+import { calendarFor, countryName, TAX_VIEW_OPTIONS, useTaxView } from "@/lib/withholding";
 import { cn } from "@/lib/utils";
-import type { CalendarEntry, FxRates } from "@/lib/types";
+import type { CalendarEntry, FxRates, IncomeCalendarResponse } from "@/lib/types";
 
 function IncomeContent() {
   const router = useRouter();
@@ -40,11 +41,16 @@ function IncomeContent() {
   const [portfolioId, setPortfolioId] = useState<number | undefined>(undefined);
   const { items: investments, isLoading: investmentsLoading } = useInvestments(portfolioId);
   const { items: allInvestments, isLoading: allLoading } = useInvestments();
-  const { data: calendar, isLoading: calendarLoading } = useIncomeCalendar(portfolioId);
+  const { data: rawCalendar, isLoading: calendarLoading } = useIncomeCalendar(portfolioId);
+  // After withholding at source by default, once a tax residence is set
+  const [taxView, setTaxView] = useTaxView();
+  const taxed = !!rawCalendar?.residence;
+  const calendar = useMemo(() => calendarFor(rawCalendar, taxView), [rawCalendar, taxView]);
   const { status } = useDataStatus();
   const { openImport } = useAppActions();
 
   const model = useMemo(() => buildIncomeModel(calendar, investments), [calendar, investments]);
+  const grossModel = useMemo(() => buildIncomeModel(rawCalendar, investments), [rawCalendar, investments]);
   const { home, fx, canConvert } = useHomeCurrency();
   const cost = usePortfolioCost(canConvert ? home : null, portfolioId);
   const homeIncome = useMemo(
@@ -57,6 +63,13 @@ function IncomeContent() {
   const [picked, setPicked] = useState<string | null>(null);
   const view = picked && views.includes(picked) ? picked : views[0];
   const income = view === HOME ? homeIncome : view ? model.byCurrency[view] : undefined;
+  // The same view before withholding, to say how much is withheld
+  const grossHome = useMemo(
+    () => (canConvert && home && fx && rawCalendar ? toHomeCurrency(rawCalendar, home, fx, null) : undefined),
+    [canConvert, home, fx, rawCalendar]
+  );
+  const grossIncome = view === HOME ? grossHome : view ? grossModel.byCurrency[view] : undefined;
+  const withheld = taxed && taxView === "net" && income && grossIncome ? Math.max(0, grossIncome.annual - income.annual) : 0;
 
   if (legacyTicker) return null;
   if (allLoading) return <HomeSkeleton />;
@@ -94,6 +107,9 @@ function IncomeContent() {
                 </SelectContent>
               </Select>
             )}
+            {taxed && (
+              <Segmented value={taxView} onChange={setTaxView} options={TAX_VIEW_OPTIONS} aria-label="Before or after tax" />
+            )}
             {views.length > 1 && view && (
               <Segmented
                 value={view}
@@ -128,6 +144,13 @@ function IncomeContent() {
               )}
             </p>
           )}
+          {!taxed && (
+            <p className="text-[12.5px] text-ink-3">
+              These are before any tax.{" "}
+              <Link href="/dashboard/settings/" className="text-ink-2 underline-offset-2 hover:underline">Set your tax residence</Link>{" "}
+              to see what&apos;s left after the paying countries withhold theirs.
+            </p>
+          )}
           {income.isHome && (income.skipped?.length ?? 0) > 0 && (
             <p className="text-[12.5px] text-watch">
               ▲ Left out: no exchange rate for <span className="num">{income.skipped!.map(currencyLabel).join(", ")}</span>.
@@ -135,9 +158,18 @@ function IncomeContent() {
           )}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Stat
-              label="Next 12 months"
+              label={taxed && taxView === "net" ? "Next 12 months, after tax" : "Next 12 months"}
               value={formatMoney(income.annual, income.currency, { decimals: 0 })}
-              sub={<>≈ <span className="num">{formatMoney(income.annual / 12, income.currency, { decimals: 0 })}</span> a month</>}
+              sub={
+                withheld > 0 ? (
+                  <>
+                    ≈ <span className="num">{formatMoney(income.annual / 12, income.currency, { decimals: 0 })}</span> a month ·{" "}
+                    <span className="num">{formatMoney(withheld, income.currency, { decimals: 0 })}</span> withheld
+                  </>
+                ) : (
+                  <>≈ <span className="num">{formatMoney(income.annual / 12, income.currency, { decimals: 0 })}</span> a month</>
+                )
+              }
               tone="money"
             />
             <Stat
@@ -195,7 +227,12 @@ function IncomeContent() {
 
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <TopPayers income={income} />
-            <Insights income={income} model={model} missing={status?.your_tickers_missing ?? 0} />
+            <Insights
+              income={income}
+              model={model}
+              missing={status?.your_tickers_missing ?? 0}
+              tax={taxed && taxView === "net" ? { calendar: rawCalendar!, withheld, fx } : null}
+            />
           </div>
         </>
       )}
@@ -356,8 +393,60 @@ function TopPayers({ income }: { income: CurrencyIncome }) {
   );
 }
 
-function Insights({ income, model, missing }: { income: CurrencyIncome; model: IncomeModel; missing: number }) {
+function Insights({
+  income,
+  model,
+  missing,
+  tax,
+}: {
+  income: CurrencyIncome;
+  model: IncomeModel;
+  missing: number;
+  tax: { calendar: IncomeCalendarResponse; withheld: number; fx?: FxRates } | null;
+}) {
   const items: { tone: "money" | "neutral" | "watch"; text: React.ReactNode }[] = [];
+
+  if (tax && tax.withheld > 0) {
+    // Which paying country takes the most, in this view's currency
+    const byCountry = new Map<string, { amount: number; rate: number }>();
+    for (const e of tax.calendar.entries) {
+      if (!e.withholding_rate || !e.source_country) continue;
+      if (!income.isHome && e.currency !== income.currency) continue;
+      const taken = e.estimated_amount - (e.net_amount ?? e.estimated_amount);
+      const amount = income.isHome ? convertAmount(taken, e.currency, income.currency, tax.fx) ?? 0 : taken;
+      const prev = byCountry.get(e.source_country) ?? { amount: 0, rate: e.withholding_rate };
+      byCountry.set(e.source_country, { amount: prev.amount + amount, rate: e.withholding_rate });
+    }
+    const top = Array.from(byCountry.entries()).sort((a, b) => b[1].amount - a[1].amount)[0];
+    items.push({
+      tone: "neutral",
+      text: (
+        <>
+          Tax withheld where your dividends are paid takes about{" "}
+          <span className="num">{formatMoney(tax.withheld, income.currency, { decimals: 0 })}</span> a year
+          {top && (
+            <>
+              , most of it by <b className="font-medium text-ink">{countryName(top[0])}</b> (<span className="num">{top[1].rate}%</span>)
+            </>
+          )}
+          .{" "}
+          <Link href="/dashboard/settings/#withholding" className="text-ink-2 underline-offset-2 hover:underline">Rates</Link>
+        </>
+      ),
+    });
+  }
+  if (tax && (tax.calendar.unestimated_sources?.length ?? 0) > 0) {
+    items.push({
+      tone: "watch",
+      text: (
+        <>
+          Dividends from <b className="font-medium text-ink">{tax.calendar.unestimated_sources!.join(", ")}</b> are shown before tax: those
+          rates aren&apos;t estimated yet.{" "}
+          <Link href="/dashboard/settings/#withholding" className="text-ink underline-offset-2 hover:underline">Set them</Link>
+        </>
+      ),
+    });
+  }
 
   // The calendar runs from today, so this month is only partly covered: leave it out
   const thisMonth = new Date().toISOString().slice(0, 7);

@@ -159,6 +159,15 @@ export interface CalendarEntry {
   total_shares: number;
   currency: string;
   payment_frequency: string;
+  /** "US", or a country name the estimates don't cover yet */
+  source_country?: string | null;
+  /** Percent withheld at source for the user's tax residence; null = not estimated */
+  withholding_rate?: number | null;
+  withholding_basis?: "treaty" | "statutory" | "domestic" | "none" | "override" | null;
+  withholding_note?: string | null;
+  net_amount?: number;
+  /** Set by lib/withholding.ts in the after-tax view: the amount before withholding */
+  gross_amount?: number;
 }
 
 export interface IncomeCalendarResponse {
@@ -167,6 +176,36 @@ export interface IncomeCalendarResponse {
   annual_total: number;
   currency_totals: Record<string, number>;
   monthly_totals_by_currency: Record<string, Record<string, number>>;
+  residence?: string | null;
+  net_currency_totals?: Record<string, number>;
+  net_monthly_totals_by_currency?: Record<string, Record<string, number>>;
+  unestimated_sources?: string[];
+}
+
+export interface WithholdingRow {
+  source: string;
+  name: string;
+  rate: number | null;
+  basis: string | null;
+  note: string;
+  default_rate: number | null;
+  default_note: string | null;
+  your_stocks: string[];
+}
+
+export interface WithholdingTable {
+  residence: string | null;
+  residence_name: string | null;
+  rows: WithholdingRow[];
+  /** With ?ticker=: what applies to that stock */
+  for_stock: {
+    ticker: string;
+    source: string | null;
+    source_name: string | null;
+    rate: number | null;
+    basis: string | null;
+    note: string | null;
+  } | null;
 }
 
 export interface ImportRowResult {
@@ -200,6 +239,8 @@ export interface UserPreferences {
   /** Screener market keys; null means every market */
   screener_markets: string[] | null;
   setup_completed_at: string | null;
+  /** Rates the user set by hand, percent by source country */
+  withholding_overrides: Record<string, number>;
 }
 
 export interface UserPreferencesUpdate {
@@ -211,6 +252,8 @@ export interface UserPreferencesUpdate {
   tax_residence?: string;
   screener_markets?: string[] | null;
   complete_setup?: boolean;
+  /** null removes an override */
+  withholding_overrides?: Record<string, number | null>;
 }
 
 /** European Central Bank reference rates: how much of each currency one euro buys */

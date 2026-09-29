@@ -61,7 +61,7 @@ def test_preferences_start_with_defaults_and_can_change(client):
     assert prefs == {
         "default_benchmark": "SP500", "date_format": "DD/MM/YYYY", "watchlist_collapsed": False,
         "check_for_updates": True, "home_currency": None, "tax_residence": None,
-        "screener_markets": None, "setup_completed_at": None,
+        "screener_markets": None, "setup_completed_at": None, "withholding_overrides": {},
     }
 
     r = client.patch("/api/v1/user/preferences", json={"date_format": "YYYY-MM-DD", "check_for_updates": False})

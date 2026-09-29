@@ -19,4 +19,6 @@ class UserPreferences(Base):
     tax_residence = Column(String(2))
     screener_markets = Column(JSON)
     setup_completed_at = Column(DateTime(timezone=True))
+    # Withholding rates the user set by hand, percent by source country: {"US": 30}
+    withholding_overrides = Column(JSON)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

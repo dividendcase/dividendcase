@@ -26,6 +26,11 @@ from fastapi.testclient import TestClient  # noqa: E402
 BASE_URL = "http://127.0.0.1:8765"
 
 
+# Where a fake company is based, by exchange (withholding depends on it)
+HOME_COUNTRY = {"NYSE": "United States", "NASDAQ": "United States", "LSE": "United Kingdom", "TSX": "Canada",
+                "NSE": "India", "ASX": "Australia", "ISE": "Ireland"}
+
+
 class FakeMarket:
     """Invented stocks and dividends that stand in for Yahoo Finance."""
 
@@ -47,6 +52,7 @@ class FakeMarket:
         last_paid_days_ago: int = 30,
         sector: str = "Consumer Defensive",
         price_start: float | None = None,
+        country: str | None = None,
     ) -> None:
         """A payer with a steadily growing dividend, paid every `every_months` months."""
         per_year = 12 // every_months
@@ -70,7 +76,7 @@ class FakeMarket:
             "ticker_symbol": ticker,
             "company_name": f"{ticker} Test Company",
             "exchange": exchange,
-            "country": "Testland",
+            "country": country or HOME_COUNTRY.get(exchange, "United States"),
             "currency": currency,
             "sector": sector,
             "industry": "Testing",

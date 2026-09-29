@@ -25,6 +25,13 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
   services/updates.py  daily PyPI version check: UpdateNotice in the sidebar and one message in the
                        terminal; install_method (DIVIDENDCASE_INSTALL_METHOD=docker in the image)
                        switches the instructions to docker pull
+  services/withholding.py dividend withholding at source: rule_for(source, residence, overrides)
+                       for IE/GB/IN/CA/AU/US (treaty/statutory/domestic; India's ₹10,000 TDS
+                       threshold); source_country() = company country, else exchange; other
+                       countries → None (shown gross, listed in unestimated_sources). The calendar
+                       adds withholding_rate/net_amount per entry and net totals; GET /withholding
+                       (?ticker=) for Settings and stock pages. Rates need a tax professional's
+                       review before 1.0.
   services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
                        the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
@@ -57,6 +64,9 @@ Dockerfile             node → uv build wheel → uv pip install --system; list
 - First run: `components/setup/FirstRunSetup.tsx` (tax residence, home currency, screener
   markets) shows until `setup_completed_at` is set; "Set up later" hides it for the session.
   Scheduled screener downloads wait for it; finishing it (or changing markets) queues them.
+- After tax: `lib/withholding.ts` `calendarFor(calendar, view)` swaps in net amounts (gross kept as
+  `gross_amount`), so pages reuse their code; `useTaxView()` is shared and remembered;
+  Settings → Tax withheld at source (WithholdingSettings) edits `withholding_overrides`.
 - Money in one currency: `lib/fx.ts` (`useHomeCurrency`, `convertAmount` at latest rates for
   future income, `usePortfolioCost` = lots at purchase-date rates from GET /portfolio/cost);
   `/portfolio/analysis?currency=EUR` converts every amount at its own date (benchmark too).
@@ -147,7 +157,8 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 
 1. Early testers on 0.1.0 (published 29 Sep 2026); collect issues on GitHub.
 2. Deploy `site/` as dividendcase.com after the hosted accounts close on 1 Nov 2026.
-3. Withholding tax v1 (IE, UK, IN, CA, AU, US) using `tax_residence`: income after tax.
+3. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
+   CH, ES, JP); Australian unfranked parts; Irish DWT exemptions.
 4. Contribution terms (CLA or not) before merging outside pull requests; CONTRIBUTING.md says
    they're still being settled.
 Billing and any paid Cloud launch come later; for now the focus is this app and a Cloud prototype.

@@ -95,6 +95,12 @@ class CalendarEntry(BaseModel):
     total_shares: float
     currency: str
     payment_frequency: str
+    # Withholding at source for the user's tax residence (services/withholding.py)
+    source_country: Optional[str] = None     # "US", or a country name v1 doesn't estimate
+    withholding_rate: Optional[float] = None  # percent; None = not estimated (shown gross)
+    withholding_basis: Optional[str] = None   # treaty, statutory, domestic, none, override
+    withholding_note: Optional[str] = None
+    net_amount: float = 0.0                    # estimated_amount after withholding
 
 
 class IncomeCalendarResponse(BaseModel):
@@ -103,6 +109,11 @@ class IncomeCalendarResponse(BaseModel):
     annual_total: float
     currency_totals: dict[str, float]  # {"USD": 500.0, "INR": 2000.0}
     monthly_totals_by_currency: dict[str, dict[str, float]] = {}  # {"USD": {"2026-01": 100.0, ...}}
+    # After withholding, and what wasn't estimated
+    residence: Optional[str] = None
+    net_currency_totals: dict[str, float] = {}
+    net_monthly_totals_by_currency: dict[str, dict[str, float]] = {}
+    unestimated_sources: list[str] = []
 
 
 # ── Excel Import/Export schemas ─────────────────────────────────────────

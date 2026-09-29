@@ -125,7 +125,7 @@ function SetupDialog({ onLater }: { onLater: () => void }) {
             </p>
 
             <div className="mt-7 space-y-7">
-              <Question n={1} title="Where are you resident for tax?" help="Later versions use this to show income after withholding tax.">
+              <Question n={1} title="Where are you resident for tax?" help="Used to show your income after the tax each country withholds from dividends.">
                 <Select value={residence} onValueChange={pickResidence}>
                   <SelectTrigger aria-label="Tax residence" className="h-10">
                     <SelectValue />

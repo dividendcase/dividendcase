@@ -5,6 +5,9 @@ import { ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStockInfo } from "@/lib/hooks/useStockInfo";
+import { useWithholding } from "@/lib/withholding";
+import { InfoTip } from "@/components/ui/tooltip";
+import Link from "next/link";
 import { formatShortDate } from "@/lib/format";
 import type { DividendHistoryResponse } from "@/lib/types";
 
@@ -42,6 +45,8 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
 
 export function CompanyInfoCard({ data, isLoading }: Props) {
   const { info, isLoading: infoLoading } = useStockInfo(data?.ticker_symbol ?? null);
+  const { table: withholding } = useWithholding(data?.ticker_symbol);
+  const forStock = withholding?.for_stock;
   const [expanded, setExpanded] = useState(false);
 
   if (isLoading) {
@@ -102,6 +107,21 @@ export function CompanyInfoCard({ data, isLoading }: Props) {
           {data.metrics.last_dividend_date && (
             <Row label="Last dividend"><span className="num">{formatShortDate(data.metrics.last_dividend_date)}</span></Row>
           )}
+          <Row label="Withheld for you">
+            {!withholding?.residence ? (
+              <Link href="/dashboard/settings/" className="text-ink-3 underline-offset-2 hover:text-ink hover:underline">
+                Set your tax residence
+              </Link>
+            ) : forStock?.rate == null ? (
+              <span className="text-ink-3">{forStock?.source ? `Not estimated (${forStock.source})` : "—"}</span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="num">{forStock.rate}%</span>
+                <span className="text-ink-3">{forStock.source_name}</span>
+                {forStock.note && <InfoTip label="Why this rate">{forStock.note}</InfoTip>}
+              </span>
+            )}
+          </Row>
         </dl>
       </Card>
     </div>

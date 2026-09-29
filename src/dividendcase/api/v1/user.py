@@ -70,6 +70,14 @@ async def update_preferences(
         prefs.screener_markets = updates.screener_markets
     if updates.complete_setup:
         prefs.setup_completed_at = datetime.now(timezone.utc)
+    if updates.withholding_overrides is not None:
+        merged = dict(prefs.withholding_overrides or {})
+        for country, rate in updates.withholding_overrides.items():
+            if rate is None:
+                merged.pop(country, None)
+            else:
+                merged[country] = rate
+        prefs.withholding_overrides = merged
 
     await db.commit()
     await db.refresh(prefs)

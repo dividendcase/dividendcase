@@ -30,7 +30,8 @@ from dividendcase.schemas.user_investment import (
 )
 from dividendcase.api.v1.deps import _get_user_id
 from dividendcase.api.v1.investment import EXCHANGE_BENCHMARKS, DEFAULT_BENCHMARK, _get_benchmark_data
-from dividendcase.services import fx
+from dividendcase.services import fx, withholding
+from dividendcase.models.user_preferences import UserPreferences
 from dividendcase.models.stock import Stock
 
 router = APIRouter()
@@ -622,6 +623,14 @@ async def income_calendar(
     today = date.today()
     entries: list[CalendarEntry] = []
 
+    # Withholding at source depends on where the user is resident for tax
+    prefs = (await db.execute(
+        select(UserPreferences).where(UserPreferences.user_id == user_id)
+    )).scalar_one_or_none()
+    residence = prefs.tax_residence if prefs else None
+    overrides = (prefs.withholding_overrides or {}) if prefs else {}
+    rules: dict[str, tuple] = {}  # ticker → (source, rule)
+
     for ticker, total_shares in shares_per_ticker.items():
         stock = await get_stock(db, ticker)
         if not stock:
@@ -658,6 +667,8 @@ async def income_calendar(
 
         month_step = FREQ_MONTHS.get(freq, 3)
         currency = stock.currency or "USD"
+        source = withholding.source_country(stock.country, stock.exchange)
+        rules[ticker] = (source, withholding.rule_for(source, residence, overrides))
 
         # Project next 12 months of payments
         next_date = last_div_date + relativedelta(months=month_step)
@@ -682,15 +693,39 @@ async def income_calendar(
     # Sort by date
     entries.sort(key=lambda e: e.expected_date)
 
+    # India's TDS for residents applies only above ₹10,000 a year from one company
+    yearly_inr: dict[str, float] = defaultdict(float)
+    for e in entries:
+        if e.currency == "INR":
+            yearly_inr[e.ticker_symbol] += e.estimated_amount
+    unestimated: set[str] = set()
+    for e in entries:
+        source, rule = rules.get(e.ticker_symbol, (None, None))
+        e.source_country = source
+        if rule is None:
+            e.net_amount = e.estimated_amount
+            if source:
+                unestimated.add(source)
+            continue
+        rate = withholding.withheld_rate(rule, source, residence, yearly_inr.get(e.ticker_symbol))
+        e.withholding_rate = rate
+        e.withholding_basis = rule.basis
+        e.withholding_note = rule.note
+        e.net_amount = round(e.estimated_amount * (1 - rate / 100), 2)
+
     # Compute monthly, currency, and monthly-by-currency totals
     monthly_totals: dict[str, float] = defaultdict(float)
     currency_totals: dict[str, float] = defaultdict(float)
     monthly_by_currency: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    net_currency_totals: dict[str, float] = defaultdict(float)
+    net_monthly_by_currency: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
     for e in entries:
         key = e.expected_date.strftime("%Y-%m")
         monthly_totals[key] += e.estimated_amount
         currency_totals[e.currency] += e.estimated_amount
         monthly_by_currency[e.currency][key] += e.estimated_amount
+        net_currency_totals[e.currency] += e.net_amount
+        net_monthly_by_currency[e.currency][key] += e.net_amount
 
     annual_total = sum(e.estimated_amount for e in entries)
 
@@ -703,4 +738,11 @@ async def income_calendar(
             curr: {m: round(v, 2) for m, v in months.items()}
             for curr, months in monthly_by_currency.items()
         },
+        residence=residence,
+        net_currency_totals={k: round(v, 2) for k, v in net_currency_totals.items()},
+        net_monthly_totals_by_currency={
+            curr: {m: round(v, 2) for m, v in months.items()}
+            for curr, months in net_monthly_by_currency.items()
+        },
+        unestimated_sources=sorted(unestimated),
     )
