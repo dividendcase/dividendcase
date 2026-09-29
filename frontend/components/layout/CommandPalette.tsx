@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
-  ArrowRight, BarChart3, Bookmark, CalendarDays, Database, Download, FileSpreadsheet,
+  ArrowRight, BarChart3, Bookmark, Bug, CalendarDays, Lightbulb, Database, Download, FileSpreadsheet,
   GitCompareArrows, Info, Layers, Loader2, RefreshCw, Search, Settings, SlidersHorizontal, Sprout, Upload,
 } from "lucide-react";
 import { useStockSearch } from "@/lib/hooks/useStockSearch";
@@ -13,6 +13,8 @@ import { useInvestments } from "@/lib/hooks/useInvestments";
 import { useWatchlist } from "@/lib/hooks/useWatchlist";
 import { useDataStatus } from "@/lib/hooks/useDataStatus";
 import { TickerBadge } from "@/components/ui/ticker-badge";
+import { useAppInfo } from "@/lib/hooks/useAppInfo";
+import { bugReportUrl, ideaUrl } from "@/lib/feedback";
 
 export const PAGES = [
   { href: "/dashboard/", label: "Income", hint: "Home", Icon: BarChart3, keywords: "home dashboard overview" },
@@ -51,6 +53,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
   const { items: holdings } = useInvestments();
   const { items: watchlist } = useWatchlist();
   const { startRefresh } = useDataStatus();
+  const { info: appInfo } = useAppInfo();
   const [busy, setBusy] = useState<string | null>(null);
 
   // ⌘K / Ctrl+K anywhere; "/" when not typing in a field
@@ -107,6 +110,8 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
     { key: "export", label: "Export everything to Excel", Icon: Download, keywords: "backup xlsx download", fn: onExport },
     { key: "report", label: "Download income report", Icon: FileSpreadsheet, keywords: "xlsx summary", fn: onReport },
     { key: "refresh", label: "Refresh my stocks now", Icon: RefreshCw, keywords: "update fetch yahoo data", fn: () => startRefresh("holdings", true) },
+    { key: "bug", label: "Report a problem", Icon: Bug, keywords: "bug issue feedback broken wrong github", fn: () => { window.open(bugReportUrl(appInfo?.version), "_blank", "noopener"); } },
+    { key: "idea", label: "Suggest an idea", Icon: Lightbulb, keywords: "feature request feedback github", fn: () => { window.open(ideaUrl(), "_blank", "noopener"); } },
   ];
 
   const q = query.trim();
@@ -117,7 +122,11 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
   const shownPages = PAGES.filter((p) => matches(q, p.label, p.keywords));
   const shownActions = actions.filter((a) => matches(q, a.label, a.keywords));
   // A ticker-looking query can always be opened directly, even before search results arrive
-  const looksLikeTicker = /^[A-Z0-9.\-^=]{1,15}$/.test(upper) && !yoursSet.has(upper) && !shownResults.some((r) => r.symbol === upper);
+  // Tickers are short (KO, ABBV), have a market suffix (ENB.TO, HDFCBANK.NS) or are indices (^GSPC)
+  const tickerShaped = /^[A-Z]{1,5}(-[A-Z])?$/.test(upper) || /^[A-Z0-9\-]{1,12}\.[A-Z]{1,3}$/.test(upper) || /^\^[A-Z0-9]{1,10}$/.test(upper);
+  const looksLikeTicker = tickerShaped && !yoursSet.has(upper) && !shownResults.some((r) => r.symbol === upper);
+  // When a page or action matches what was typed, offer it before treating the text as a ticker
+  const openLast = q.length >= 3 && shownPages.length + shownActions.length > 0;
 
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -145,6 +154,29 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 {isSearching ? "Searching…" : "Nothing found. Try a ticker such as KO, ENB.TO or HDFCBANK.NS"}
               </Command.Empty>
 
+              {/* Pages and actions lead when they match what was typed; otherwise stocks do */}
+              {openLast && shownPages.length > 0 && (
+                <Command.Group heading="Go to" className={groupClass}>
+                  {shownPages.map(({ href, label, hint, Icon }) => (
+                    <Command.Item key={href} value={`p-${href}`} onSelect={() => go(href)} className={itemClass}>
+                      <Icon className="text-ink-3 group-data-[selected=true]:text-sprout" />
+                      <span>{label}</span>
+                      {hint && <span className="ml-auto text-[12px] text-ink-3">{hint}</span>}
+                    </Command.Item>
+                  ))}
+                </Command.Group>
+              )}
+
+              {openLast && shownActions.length > 0 && (
+                <Command.Group heading="Actions" className={groupClass}>
+                  {shownActions.map(({ key, label, Icon, fn }) => (
+                    <Command.Item key={key} value={`a-${key}`} onSelect={() => run(key, fn)} className={itemClass}>
+                      {busy === key ? <Loader2 className="animate-spin" /> : <Icon className="text-ink-3 group-data-[selected=true]:text-sprout" />}
+                      <span>{label}</span>
+                    </Command.Item>
+                  ))}
+                </Command.Group>
+              )}
               {shownYours.length > 0 && (
                 <Command.Group heading="Your stocks" className={groupClass}>
                   {shownYours.map((t) => (
@@ -170,7 +202,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 </Command.Group>
               )}
 
-              {looksLikeTicker && (
+              {looksLikeTicker && !openLast && (
                 <Command.Group heading="Open" className={groupClass}>
                   <Command.Item value={`open-${upper}`} onSelect={() => openStock(upper)} className={itemClass}>
                     <ArrowRight />
@@ -181,7 +213,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 </Command.Group>
               )}
 
-              {shownPages.length > 0 && (
+              {!openLast && shownPages.length > 0 && (
                 <Command.Group heading="Go to" className={groupClass}>
                   {shownPages.map(({ href, label, hint, Icon }) => (
                     <Command.Item key={href} value={`p-${href}`} onSelect={() => go(href)} className={itemClass}>
@@ -193,7 +225,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 </Command.Group>
               )}
 
-              {shownActions.length > 0 && (
+              {!openLast && shownActions.length > 0 && (
                 <Command.Group heading="Actions" className={groupClass}>
                   {shownActions.map(({ key, label, Icon, fn }) => (
                     <Command.Item key={key} value={`a-${key}`} onSelect={() => run(key, fn)} className={itemClass}>
@@ -203,6 +235,17 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                   ))}
                 </Command.Group>
               )}
+              {looksLikeTicker && openLast && (
+                <Command.Group heading="Open" className={groupClass}>
+                  <Command.Item value={`open-${upper}`} onSelect={() => openStock(upper)} className={itemClass}>
+                    <ArrowRight />
+                    <span>
+                      Open <span className="num font-medium text-ink">{upper}</span>
+                    </span>
+                  </Command.Item>
+                </Command.Group>
+              )}
+
             </Command.List>
             <div className="flex items-center gap-4 border-t border-line px-4 py-2 font-mono text-[10.5px] text-ink-3">
               <span><kbd className="text-ink-2">↑↓</kbd> move</span>

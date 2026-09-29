@@ -22,7 +22,11 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
   services/fx.py       ECB euro reference rates in fx_rates (one row per day, JSON of rates):
                        full history once (~640 KB zip), then the 90-day XML; RateTable +
                        convert() (GBp/ZAc/ILA minor units); GET /fx/rates, /fx/currencies
-  services/updates.py  daily PyPI version check (UpdateNotice in the sidebar)
+  services/updates.py  daily PyPI version check: UpdateNotice in the sidebar and one message in the
+                       terminal; install_method (DIVIDENDCASE_INSTALL_METHOD=docker in the image)
+                       switches the instructions to docker pull
+  services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
+                       the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
   web/                 built interface (gitignored; filled by scripts/build_web.py)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)
@@ -33,6 +37,11 @@ frontend/              the app: Next 16 App Router, React 19, Tailwind 4, TS 7, 
 site/                  dividendcase.com: Next 16 static export + Motion; not deployed yet
                        (the hosted repo keeps serving dividendcase.com until 1 Nov 2026)
 scripts/build_web.py   npm ci (root) + build frontend + copy frontend/out into src/dividendcase/web
+scripts/smoke_test.py  start an installed `dividendcase` on a temp data folder and check it (pass the
+                       full path locally: `uv run` puts this repo's own environment first on PATH)
+Dockerfile             node → uv build wheel → uv pip install --system; listens on 0.0.0.0 inside,
+                       data in /data, non-root; publish with -p 127.0.0.1:8765:8765
+.github/ISSUE_TEMPLATE bug_report.yml (version/system prefilled by lib/feedback.ts), idea.yml
 ```
 
 ## Interface map (frontend/)
@@ -97,7 +106,8 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   (`scripts/check_dist.py`), installs it on Linux/macOS/Windows and runs `scripts/smoke_test.py`,
   publishes to PyPI by trusted publishing (no tokens in the repo; PyPI publisher: owner
   dividendcase, repo dividendcase, workflow release.yml, no environment), then creates the GitHub
-  release from the changelog. "Run workflow" by hand = TestPyPI dry run. No GitHub environments:
+  release from the changelog, then pushes the Docker image (linux/amd64 + arm64) to
+  ghcr.io/dividendcase/dividendcase:<version> and :latest. "Run workflow" by hand = TestPyPI dry run. No GitHub environments:
   the free plan has none for private repos; add a protected `pypi` environment once public.
   Pushing a release tag publishes publicly: always ask Pratik first.
 - CI: `.github/workflows/tests.yml` (pytest + migrate check; Linux/3.12 on PRs; on main also
@@ -138,6 +148,6 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 1. Early testers on 0.1.0 (published 29 Sep 2026); collect issues on GitHub.
 2. Deploy `site/` as dividendcase.com after the hosted accounts close on 1 Nov 2026.
 3. Withholding tax v1 (IE, UK, IN, CA, AU, US) using `tax_residence`: income after tax.
-4. beats_benchmark for the screener (the hosted pipeline computed it; not ported yet).
-5. The Excel report still adds currencies without converting.
+4. Contribution terms (CLA or not) before merging outside pull requests; CONTRIBUTING.md says
+   they're still being settled.
 Billing and any paid Cloud launch come later; for now the focus is this app and a Cloud prototype.

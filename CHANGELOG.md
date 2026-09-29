@@ -3,6 +3,13 @@
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
 while the version starts with 0, a minor release (0.2, 0.3…) may change things.
 
+## Unreleased
+
+- **Screener:** a "Beat their index" filter and a "Vs index" column: price change plus dividends over the last ten years (or since the first stored payment, if at least three years ago) against the stock's local index over the same period, recomputed weekly and after each screener refresh.
+- **Docker image** at `ghcr.io/dividendcase/dividendcase`, for Intel and ARM.
+- **Update notices:** the terminal now says when a new version is out, with the command to run, and "What's new" opens that version's release notes. Docker installs get Docker instructions.
+- **Feedback:** a Send feedback link in the sidebar and "Report a problem" / "Suggest an idea" in the ⌘K palette open GitHub forms with your version filled in. CONTRIBUTING.md and SECURITY.md.
+
 ## 0.1.1
 
 - The browser now opens once DividendCase is ready. On the first start after installing or updating, which can take up to a minute while Python prepares its libraries, it used to open too early and show "This site can't be reached". The terminal now says it's starting and when it's ready.

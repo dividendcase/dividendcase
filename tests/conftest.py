@@ -46,6 +46,7 @@ class FakeMarket:
         yearly_growth: float = 0.05,
         last_paid_days_ago: int = 30,
         sector: str = "Consumer Defensive",
+        price_start: float | None = None,
     ) -> None:
         """A payer with a steadily growing dividend, paid every `every_months` months."""
         per_year = 12 // every_months
@@ -56,11 +57,13 @@ class FakeMarket:
             months_back = (payments - 1 - i) * every_months
             when = _months_before(last, months_back)
             dividend = round(amount / ((1 + yearly_growth) ** (months_back / 12)), 4)
+            # The price moves in a straight line from price_start to price (flat by default)
+            share_price = price if price_start is None else round(price_start + (price - price_start) * i / max(payments - 1, 1), 4)
             records.append({
                 "dividend_date": when,
                 "dividend_per_share": dividend,
-                "share_price_on_dividend_date": price,
-                "dividend_yield_pct": round(dividend / price * 100, 4),
+                "share_price_on_dividend_date": share_price,
+                "dividend_yield_pct": round(dividend / share_price * 100, 4),
             })
         from dividendcase.services.derived import payment_frequency, yield_consistency
         stock = {

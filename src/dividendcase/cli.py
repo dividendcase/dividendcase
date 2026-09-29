@@ -58,10 +58,13 @@ def main() -> None:
     parser.add_argument("--version", action="version", version=f"dividendcase {__version__}")
     args = parser.parse_args()
 
-    url = f"http://{settings.host}:{args.port}/dashboard/"
+    # In the Docker image the server listens on 0.0.0.0 (the container's port is published on
+    # the host's 127.0.0.1); checks and messages always use this machine's own address
+    local = "127.0.0.1" if settings.host in ("0.0.0.0", "::") else settings.host
+    url = f"http://{local}:{args.port}/dashboard/"
 
-    if _port_in_use(settings.host, args.port):
-        running = _running_version(settings.host, args.port)
+    if _port_in_use(local, args.port):
+        running = _running_version(local, args.port)
         if running is None:
             sys.exit(
                 f"Port {args.port} is used by another program. "
@@ -75,15 +78,18 @@ def main() -> None:
         return
 
     print(f"Starting DividendCase {__version__} at {url}")
-    print("The first start after installing or updating can take a minute; later starts are quick.")
     print(f"Your data: {settings.data_dir}")
-    print("Keep this window open while you use it, and press Ctrl+C here to stop.", flush=True)
+    if settings.install_method != "docker":
+        print("The first start after installing or updating can take a minute; later starts are quick.")
+        print("Keep this window open while you use it, and press Ctrl+C here to stop.")
+    print(end="", flush=True)
 
     if not args.no_browser:
         # Opens the browser once the app answers, not after a fixed delay
-        threading.Thread(target=_open_when_ready, args=(url, settings.host, args.port), daemon=True).start()
+        threading.Thread(target=_open_when_ready, args=(url, local, args.port), daemon=True).start()
 
-    # Bound to 127.0.0.1 only: nothing on the network can reach it
+    # Bound to 127.0.0.1 unless DIVIDENDCASE_HOST says otherwise (the Docker image), so
+    # nothing on the network can reach it
     uvicorn.run("dividendcase.main:app", host=settings.host, port=args.port,
                 log_level=settings.log_level.lower())
 

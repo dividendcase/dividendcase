@@ -10,6 +10,7 @@ export function UpdateNotice() {
   const { info } = useAppInfo();
   const [copied, setCopied] = useState(false);
   if (!info?.update_available || !info.latest_version) return null;
+  const docker = info.install_method === "docker";
 
   const copy = async () => {
     try {
@@ -39,9 +40,9 @@ export function UpdateNotice() {
           Update from <span className="num">{info.version}</span> to <span className="num">{info.latest_version}</span>
         </p>
         <ol className="space-y-2 text-[12.5px] text-ink-2">
-          <li>1. Stop DividendCase (close its terminal window, or press Ctrl+C there).</li>
+          {!docker && <li>1. Stop DividendCase (press Ctrl+C in its terminal window).</li>}
           <li>
-            2. Run:
+            {docker ? "1" : "2"}. Run:
             <div className="mt-1.5 flex items-center gap-2 rounded-md border border-line bg-well py-1 pl-3 pr-1">
               <code className="num min-w-0 flex-1 select-all text-[12px] text-ink">{info.upgrade_command}</code>
               <button
@@ -53,7 +54,14 @@ export function UpdateNotice() {
               </button>
             </div>
           </li>
-          <li>3. Start it again with <code className="num text-ink">dividendcase</code>. Your data is backed up before anything changes.</li>
+          <li>
+            {docker ? "2. Recreate the container with the new image." : (
+              <>
+                3. Start it again with <code className="num text-ink">dividendcase</code>.
+              </>
+            )}{" "}
+            Your data is backed up before anything changes.
+          </li>
         </ol>
         <a
           href={info.releases_url}
@@ -62,7 +70,7 @@ export function UpdateNotice() {
           className="inline-flex items-center gap-1.5 text-[12.5px] text-ink-3 hover:text-ink"
         >
           <ExternalLink className="size-3.5" />
-          What&apos;s new
+          What&apos;s new in <span className="num">{info.latest_version}</span>
         </a>
       </PopoverContent>
     </Popover>

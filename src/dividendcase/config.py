@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # Ask PyPI once a day whether a newer version exists (off in tests; users can also
     # turn it off in Settings)
     check_updates: bool = True
+    # How this copy was installed, for the update instructions: "uv" (uv tool install) or
+    # "docker" (set in the Docker image)
+    install_method: str = "uv"
 
     @property
     def resolved_database_url(self) -> str:

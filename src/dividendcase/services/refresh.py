@@ -204,6 +204,10 @@ class Refresher:
         logger.info("Refresh %s finished: %d saved, %d without dividends, %d failed",
                     kind, progress.saved, progress.skipped, progress.failed)
         self._progress[kind] = _Progress()
+        if kind == SCREENER and progress.saved:
+            # New prices and dividends: compare the screener's stocks with their indices again
+            from dividendcase.services.benchmark import ensure_beats_benchmark
+            run_soon(ensure_beats_benchmark(max_age=timedelta(0)))
 
 
 refresher = Refresher()

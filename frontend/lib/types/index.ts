@@ -246,5 +246,7 @@ export interface AppInfo {
   update_available: boolean;
   update_checked_at: string | null;
   upgrade_command: string;
+  /** The notes for the newer version when there is one, otherwise the list of releases */
   releases_url: string;
+  install_method: "uv" | "docker" | string;
 }

@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/.next
+**/out
+.venv
+dist
+.test-data
+*.db
+*.db-*
+src/dividendcase/web/*
+**/__pycache__
+.claude
+.github

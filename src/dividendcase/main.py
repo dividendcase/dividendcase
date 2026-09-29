@@ -17,6 +17,7 @@ from dividendcase.scheduler.tasks import scheduler
 from dividendcase.services.refresh import fill_derived_fields, queue_holdings, queue_screener, refresher
 from dividendcase.services.updates import check_for_update, update_status
 from dividendcase.services.fx import refresh_rates
+from dividendcase.services.benchmark import ensure_beats_benchmark
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -48,6 +49,9 @@ async def lifespan(app: FastAPI):
         scheduler.add_job(queue_screener, "date", run_date=now + timedelta(seconds=20), kwargs={"scheduled": True})
         scheduler.add_job(queue_holdings, "interval", hours=6, coalesce=True, max_instances=1)
         scheduler.add_job(queue_screener, "interval", hours=24, coalesce=True, max_instances=1, kwargs={"scheduled": True})
+        # Which stocks beat their local index: weekly, a handful of index requests
+        scheduler.add_job(ensure_beats_benchmark, "date", run_date=now + timedelta(seconds=90))
+        scheduler.add_job(ensure_beats_benchmark, "interval", hours=24, coalesce=True, max_instances=1)
         # Exchange rates: the full history once, then new days (cheap when up to date)
         scheduler.add_job(refresh_rates, "date", run_date=now + timedelta(seconds=5))
         scheduler.add_job(refresh_rates, "interval", hours=6, coalesce=True, max_instances=1)

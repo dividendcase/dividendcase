@@ -1,0 +1,46 @@
+name: Something isn't working
+description: A bug, a crash, or a number that looks wrong
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time. Please don't include anything private: no portfolio file, no account numbers, no screenshots of real balances unless you've blurred them.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead.
+      placeholder: I imported my Excel file and the Calendar showed…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we see it too?
+      description: Steps to make it happen again, if you know them. A ticker helps (e.g. KO, ENB.TO, HDFCBANK.NS).
+      placeholder: |
+        1. Open Holdings
+        2. Add ENB.TO …
+  - type: input
+    id: version
+    attributes:
+      label: DividendCase version
+      description: Shown in Settings, or run `dividendcase --version`.
+      placeholder: "0.1.1"
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Computer
+      description: Operating system and version, and how you installed it (uv, Docker or from source).
+      placeholder: macOS 14, installed with uv
+    validations:
+      required: true
+  - type: textarea
+    id: terminal
+    attributes:
+      label: What the terminal says
+      description: If there's an error in the window where DividendCase runs, paste it here.
+      render: text

@@ -71,6 +71,28 @@ def test_preferences_start_with_defaults_and_can_change(client):
     assert client.patch("/api/v1/user/preferences", json={"default_benchmark": "MOON"}).status_code == 422
 
 
+def test_update_is_announced_in_the_terminal_once(client, monkeypatch, capsys):
+    from dividendcase.services import updates
+
+    updates.forget()
+    monkeypatch.setattr(updates, "_fetch_versions", lambda: ["98.0.0"])
+    client.portal.call(updates.check_for_update)
+    client.portal.call(updates.check_for_update)  # the daily check again: no second message
+    out = capsys.readouterr().out
+    assert out.count("DividendCase 98.0.0 is out") == 1
+    assert "uv tool upgrade dividendcase" in out and "/releases/tag/v98.0.0" in out
+    updates.forget()
+
+
+def test_docker_installs_get_docker_instructions(client, monkeypatch):
+    from dividendcase.config import settings
+
+    monkeypatch.setattr(settings, "install_method", "docker")
+    info = client.get("/api/v1/app-info").json()
+    assert info["install_method"] == "docker"
+    assert info["upgrade_command"] == "docker pull ghcr.io/dividendcase/dividendcase:latest"
+
+
 def test_update_check_respects_the_preference(client, monkeypatch):
     from dividendcase.services import updates
 
@@ -78,6 +100,8 @@ def test_update_check_respects_the_preference(client, monkeypatch):
     assert client.portal.call(updates.check_for_update) == "99.0.0"
     info = client.get("/api/v1/app-info").json()
     assert info["latest_version"] == "99.0.0" and info["update_available"] is True
+
+    assert info["releases_url"].endswith("/releases/tag/v99.0.0")  # that version's notes
 
     client.patch("/api/v1/user/preferences", json={"check_for_updates": False})
     assert client.get("/api/v1/app-info").json()["update_available"] is False

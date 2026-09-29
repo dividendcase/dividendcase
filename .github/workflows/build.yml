@@ -85,3 +85,28 @@ jobs:
           echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
       - name: Start it and check it works
         run: uv run --no-project python scripts/smoke_test.py
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - name: Build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: dividendcase:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run it and check it works
+        run: |
+          docker run -d --name dividendcase -p 127.0.0.1:8765:8765 \
+            -e DIVIDENDCASE_AUTO_REFRESH=false -e DIVIDENDCASE_CHECK_UPDATES=false dividendcase:ci
+          for i in $(seq 1 120); do curl -sf http://127.0.0.1:8765/health && break; sleep 1; done
+          curl -sf http://127.0.0.1:8765/dashboard/ > /dev/null
+          curl -sf http://127.0.0.1:8765/api/v1/app-info | grep -q '"install_method":"docker"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -H 'Host: attacker.example' http://127.0.0.1:8765/health)" = 400
+          docker logs dividendcase | tail -5

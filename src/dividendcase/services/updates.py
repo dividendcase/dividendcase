@@ -21,10 +21,23 @@ from dividendcase.models import UserPreferences
 logger = logging.getLogger(__name__)
 
 PYPI_URL = "https://pypi.org/pypi/dividendcase/json"
-UPGRADE_COMMAND = "uv tool upgrade dividendcase"
 RELEASES_URL = "https://github.com/dividendcase/dividendcase/releases"
+DOCKER_IMAGE = "ghcr.io/dividendcase/dividendcase"
 
-_latest: dict = {"version": None, "checked_at": None}
+_latest: dict = {"version": None, "checked_at": None, "announced": None}
+
+
+def upgrade_command() -> str:
+    from dividendcase.config import settings
+
+    if settings.install_method == "docker":
+        return f"docker pull {DOCKER_IMAGE}:latest"
+    return "uv tool upgrade dividendcase"
+
+
+def release_notes_url(version: Optional[str]) -> str:
+    """The notes for one version, or the list of releases."""
+    return f"{RELEASES_URL}/tag/v{version}" if version else RELEASES_URL
 
 
 def newest_release(versions: Iterable[str], current: str) -> Optional[str]:
@@ -84,9 +97,30 @@ async def check_for_update() -> Optional[str]:
         return _latest["version"]
     _latest["version"] = newest_release(versions, __version__)
     _latest["checked_at"] = datetime.now(timezone.utc)
-    if is_newer(_latest["version"], __version__):
-        logger.info("DividendCase %s is available (this is %s)", _latest["version"], __version__)
+    if is_newer(_latest["version"], __version__) and _latest["announced"] != _latest["version"]:
+        _latest["announced"] = _latest["version"]
+        announce(_latest["version"])
     return _latest["version"]
+
+
+def announce(version: str) -> None:
+    """Say so in the terminal too: not everyone looks at the sidebar."""
+    from dividendcase.config import settings
+
+    how = (
+        "restart the container with the new image"
+        if settings.install_method == "docker"
+        else "stop DividendCase (Ctrl+C), run the command below, then start it again"
+    )
+    line = "-" * 72
+    print(
+        f"\n{line}\n"
+        f"DividendCase {version} is out (you have {__version__}). To update, {how}:\n"
+        f"    {upgrade_command()}\n"
+        f"What's new: {release_notes_url(version)}\n"
+        f"{line}\n",
+        flush=True,
+    )
 
 
 _tasks: set = set()
@@ -102,6 +136,7 @@ def check_soon() -> None:
 def forget() -> None:
     _latest["version"] = None
     _latest["checked_at"] = None
+    _latest["announced"] = None
 
 
 def update_status() -> dict:
@@ -110,6 +145,13 @@ def update_status() -> dict:
         "latest_version": _latest["version"],
         "update_available": is_newer(_latest["version"], __version__),
         "update_checked_at": checked.isoformat() if checked else None,
-        "upgrade_command": UPGRADE_COMMAND,
-        "releases_url": RELEASES_URL,
+        "upgrade_command": upgrade_command(),
+        "releases_url": release_notes_url(_latest["version"] if is_newer(_latest["version"], __version__) else None),
+        "install_method": _install_method(),
     }
+
+
+def _install_method() -> str:
+    from dividendcase.config import settings
+
+    return settings.install_method

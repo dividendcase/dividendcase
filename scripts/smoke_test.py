@@ -4,7 +4,9 @@
     python scripts/smoke_test.py uvx --from dist/dividendcase-0.1.0-py3-none-any.whl dividendcase
 
 Runs with a temporary data folder and no network jobs, so it never touches real data.
-CI runs it on Linux, macOS and Windows against the built wheel.
+CI runs it on Linux, macOS and Windows against the built wheel. Locally, pass the full path
+to the installed command: `uv run` puts this repository's own environment first on PATH, so
+a bare `dividendcase` would test the development copy instead.
 """
 import json
 import os

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3, Bookmark, CalendarDays, Database, FolderPlus, GitCompareArrows, Info, Layers,
-  Lock, Settings, SlidersHorizontal, Sprout, X,
+  Lock, Settings, SlidersHorizontal, Sprout, X, MessageSquare, ExternalLink,
 } from "lucide-react";
 import { LogoMark } from "@dividendcase/brand/logo";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ import { usePortfolios } from "@/lib/hooks/usePortfolios";
 import { isBusy, useDataStatus } from "@/lib/hooks/useDataStatus";
 import { timeAgo } from "@/lib/format";
 import { UpdateNotice } from "@/components/layout/UpdateNotice";
+import { FEEDBACK_URL } from "@/lib/feedback";
 
 const MAX_PORTFOLIOS = 4;
 
@@ -171,6 +172,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               />
             ))}
           </div>
+          <a
+            href={FEEDBACK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group mt-0.5 flex items-center gap-3 rounded-lg px-2.5 py-[7px] text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-raised/60 hover:text-ink"
+          >
+            <MessageSquare className="size-[17px] shrink-0 text-ink-3 transition-colors group-hover:text-ink-2" strokeWidth={1.8} />
+            <span className="flex-1 truncate">Send feedback</span>
+            <ExternalLink className="size-3.5 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100" />
+          </a>
         </nav>
 
         <UpdateNotice />

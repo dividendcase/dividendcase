@@ -36,11 +36,23 @@ It opens <http://127.0.0.1:8765/dashboard/> in your browser once it's ready; the
 - **Update:** `uv tool upgrade dividendcase`. The app tells you when a new version is out, and saves a copy of your data before an update changes it.
 - **Uninstall:** `uv tool uninstall dividendcase`. Your data folder (below) stays until you delete it.
 
+**Docker** (Linux servers, a NAS, or if you'd rather not install Python tools)
+
+```bash
+docker run -d --name dividendcase --restart unless-stopped \
+  -p 127.0.0.1:8765:8765 -v dividendcase-data:/data \
+  ghcr.io/dividendcase/dividendcase:latest
+```
+
+Then open <http://127.0.0.1:8765/dashboard/>. Keep `127.0.0.1:` in the port mapping so only this computer can reach it. Your data lives in the `dividendcase-data` volume; to update, `docker pull ghcr.io/dividendcase/dividendcase:latest` and recreate the container.
+
+**Feedback:** the app's **Send feedback** link opens a [bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml) with your version filled in; ideas are welcome [here](https://github.com/dividendcase/dividendcase/issues/new?template=idea.yml). See [CONTRIBUTING.md](https://github.com/dividendcase/dividendcase/blob/main/CONTRIBUTING.md).
+
 ## What it does
 
 - **Income home:** what your holdings should pay over the next 12 months, month by month, all in your home currency or one currency at a time, with upcoming payments and where the income comes from.
 - **Stock pages:** 10 years of dividend history, TTM yield, a safety score, dividend growth (CAGR) and growth streaks.
-- **Screener:** index members from six markets, filtered by market, yield and how often they pay.
+- **Screener:** index members from six markets, filtered by market, yield, how often they pay and whether they beat their local index over ten years.
 - **Portfolios:** individual purchase lots in any currency, a 12-month income calendar, diversification charts, a benchmark comparison and a DRIP calculator.
 - **Watchlists and side-by-side comparison.**
 - **Excel import and export** of portfolios, holdings and watchlists.

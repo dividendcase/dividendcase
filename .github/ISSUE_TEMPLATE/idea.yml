@@ -1,0 +1,29 @@
+name: An idea
+description: Something DividendCase should do, or do differently
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The job, not the solution, e.g. "see how much of my income comes from Canada after tax".
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: How you imagine it working. Sketches and examples from other apps are welcome.
+  - type: dropdown
+    id: markets
+    attributes:
+      label: Which markets do you invest in?
+      multiple: true
+      options:
+        - US
+        - UK
+        - Ireland or elsewhere in Europe
+        - India
+        - Canada
+        - Australia
+        - Other

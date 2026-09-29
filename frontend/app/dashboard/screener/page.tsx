@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { ArrowDown, ArrowUp, Database, Loader2, RefreshCw, Search, SearchX, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Database, Loader2, RefreshCw, Search, SearchX, TrendingUp, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAppActions } from "@/components/layout/AppActions";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { Chip, Segmented } from "@/components/ui/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TickerBadge } from "@/components/ui/ticker-badge";
+import { InfoTip } from "@/components/ui/tooltip";
 import { EXCHANGE_NAMES } from "@/components/dashboard/CompanyInfoCard";
 import { getTopPerformers } from "@/lib/api/backend";
 import { isBusy, useDataStatus } from "@/lib/hooks/useDataStatus";
@@ -56,6 +57,7 @@ export default function ScreenerPage() {
   const [markets, setMarkets] = useState<Set<string>>(new Set());
   const [minYield, setMinYield] = useState(0);
   const [frequency, setFrequency] = useState("any");
+  const [beatsOnly, setBeatsOnly] = useState(false);
   const [text, setText] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "yield", dir: "desc" });
   const [shown, setShown] = useState(PAGE);
@@ -74,6 +76,7 @@ export default function ScreenerPage() {
       if (markets.size > 0 && !markets.has(s.exchange)) return false;
       if ((s.avg_dividend_yield ?? 0) < minYield) return false;
       if (frequency !== "any" && s.payment_frequency !== frequency) return false;
+      if (beatsOnly && s.beats_benchmark !== true) return false;
       if (q && !s.ticker_symbol.toLowerCase().includes(q) && !s.company_name.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -84,7 +87,7 @@ export default function ScreenerPage() {
       const bv = sort.key === "yield" ? b.avg_dividend_yield : b.yield_consistency_score;
       return ((av ?? -1) - (bv ?? -1)) * dir;
     });
-  }, [stocks, markets, minYield, frequency, text, sort]);
+  }, [stocks, markets, minYield, frequency, beatsOnly, text, sort]);
 
   const toggleMarket = (code: string) => {
     setShown(PAGE);
@@ -98,16 +101,18 @@ export default function ScreenerPage() {
   const toggleSort = (key: SortKey) =>
     setSort((prev) => (prev.key === key ? { key, dir: prev.dir === "asc" ? "desc" : "asc" } : { key, dir: key === "ticker" ? "asc" : "desc" }));
 
-  const filtersOn = markets.size > 0 || minYield > 0 || frequency !== "any" || text.trim() !== "";
+  const filtersOn = markets.size > 0 || minYield > 0 || frequency !== "any" || beatsOnly || text.trim() !== "";
   const resetFilters = () => {
     setMarkets(new Set());
     setMinYield(0);
     setFrequency("any");
+    setBeatsOnly(false);
     setText("");
     setShown(PAGE);
   };
 
   const total = stocks?.length ?? 0;
+  const compared = (stocks ?? []).some((s) => s.beats_benchmark != null);
   const screenerRunning = !!status && status.screener.total > 0;
   const marketsPresent = new Set((stocks ?? []).map((s) => s.exchange));
 
@@ -176,6 +181,19 @@ export default function ScreenerPage() {
               {m.label}
             </Chip>
           ))}
+          <span className="mx-1 hidden h-4 w-px bg-line sm:block" aria-hidden="true" />
+          <Chip
+            active={beatsOnly}
+            onClick={() => { setBeatsOnly((v) => !v); setShown(PAGE); }}
+            title={
+              compared
+                ? "Stocks whose price change plus dividends beat their local index over the last 10 years (or since their first stored payment)"
+                : "The comparison with each market's index runs after the screener data has downloaded"
+            }
+          >
+            <TrendingUp className="size-3.5" />
+            Beat their index
+          </Chip>
           {filtersOn && (
             <button onClick={resetFilters} className="ml-auto inline-flex items-center gap-1 text-[12.5px] text-ink-3 hover:text-ink">
               <X className="size-3.5" />
@@ -225,13 +243,22 @@ export default function ScreenerPage() {
             <span className="hidden sm:inline">Yield = last 12 months of dividends ÷ price at the last update</span>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] border-collapse text-[13px]">
+            <table className="w-full min-w-[720px] border-collapse text-[13px]">
               <thead>
                 <tr>
                   <SortTH label="Stock" active={sort.key === "ticker"} dir={sort.dir} onClick={() => toggleSort("ticker")} className="pl-4 text-left" />
                   <th className="px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">Market</th>
                   <th className="px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">Pays</th>
                   <SortTH label="Consistency" active={sort.key === "consistency"} dir={sort.dir} onClick={() => toggleSort("consistency")} className="text-right" />
+                  <th className="px-3 py-2.5 text-right font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">
+                    <span className="inline-flex items-center gap-1">
+                      Vs index
+                      <InfoTip>
+                        Price change plus dividends over the last 10 years (or since the first stored payment, if at least
+                        3 years ago), against the stock&apos;s local index over the same period.
+                      </InfoTip>
+                    </span>
+                  </th>
                   <SortTH label="Yield" active={sort.key === "yield"} dir={sort.dir} onClick={() => toggleSort("yield")} className="pr-4 text-right" />
                 </tr>
               </thead>
@@ -257,6 +284,15 @@ export default function ScreenerPage() {
                       <td className="px-3 py-2 text-ink-2">{s.payment_frequency ? frequencyLabel(s.payment_frequency) : <span className="text-ink-3">—</span>}</td>
                       <td className="px-3 py-2 text-right">
                         {s.yield_consistency_score != null ? <ConsistencyBar value={s.yield_consistency_score} /> : <span className="text-ink-3">—</span>}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-2 text-right text-[12.5px]" title={s.benchmark_ticker ? `Compared with ${s.benchmark_ticker}` : undefined}>
+                        {s.beats_benchmark === true ? (
+                          <span className="text-money">▲ Beat</span>
+                        ) : s.beats_benchmark === false ? (
+                          <span className="text-ink-3">▼ Behind</span>
+                        ) : (
+                          <span className="text-ink-3">—</span>
+                        )}
                       </td>
                       <td className="py-2 pl-3 pr-4 text-right">
                         <span className={cn("num text-[13.5px] font-medium", y != null && y >= 10 ? "text-watch" : "text-money")}>
