@@ -5,6 +5,7 @@
   from `FakeMarket`. These are invented numbers, not market data (see "Never ship Yahoo data").
 - Tests talk to the real app and a real SQLite file through FastAPI's TestClient.
 """
+import asyncio
 import os
 import socket
 import tempfile
@@ -148,7 +149,7 @@ def offline(market):
 
     mp.setattr(socket.socket, "connect", local_only)
 
-    from dividendcase.services import fx, refresh, yahoo_fetcher
+    from dividendcase.services import benchmark, fx, refresh, yahoo_fetcher
     from dividendcase.api.v1 import investment, portfolio, stocks
 
     mp.setattr(yahoo_fetcher.YahooFetcher, "fetch_stock_light", market.fetch_stock_light)
@@ -159,6 +160,7 @@ def offline(market):
     mp.setattr(fx, "_history", lambda: fake_ecb_rates(date(2015, 1, 1)))
     mp.setattr(fx, "_last_90_days", lambda: fake_ecb_rates(date.today() - timedelta(days=90)))
     mp.setattr(refresh, "PACE_SECONDS", (0, 0))
+    mp.setattr(benchmark, "INDEX_PAUSE_SECONDS", 0)
     yield
     mp.undo()
 
@@ -177,6 +179,9 @@ def clean_database(request):
     yield
     if "client" not in request.fixturenames:
         return
+    # A job the test started in the background (the index comparison after a screener refresh,
+    # say) must finish first, or it writes into the next test's rows
+    request.getfixturevalue("client").portal.call(_finish_background_jobs)
     import sqlite3
 
     con = sqlite3.connect(DATA_DIR / "dividendcase.db")
@@ -193,6 +198,15 @@ def clean_database(request):
     from dividendcase.services import fx
 
     fx._table = None  # the in-memory copy of the rates
+
+
+async def _finish_background_jobs(timeout: float = 20.0) -> None:
+    from dividendcase.services import refresh
+
+    if refresh._background:
+        _, pending = await asyncio.wait(set(refresh._background), timeout=timeout)
+        if pending:
+            raise AssertionError(f"Background jobs still running after {timeout}s: {pending}")
 
 
 def wait_until_idle(client, timeout: float = 20.0) -> dict:

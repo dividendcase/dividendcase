@@ -63,3 +63,32 @@ def test_screener_marks_stocks_that_beat_their_index(client, market, flat_index)
 
     only_winners = client.get("/api/v1/stocks/top-performers", params={"beatsBenchmark": "true", "limit": 2000}).json()
     assert [s["ticker_symbol"] for s in only_winners] == ["TESTWIN"]
+
+
+def test_stocks_are_judged_on_what_is_stored_after_the_index_download(client, market, monkeypatch):
+    """Downloading the indices takes seconds; a stock whose history changes meanwhile (or a row
+    replaced by another stock) must be judged on what's stored afterwards, not on an earlier read."""
+    import sqlite3
+
+    from conftest import DATA_DIR, wait_until_idle
+    from dividendcase.api.v1 import investment
+    from dividendcase.services.benchmark import compute_beats_benchmark
+
+    market.add("TESTFADE", price_start=40.0, price=60.0, years=6)  # would beat a flat index
+    client.post("/api/v1/watchlist", json={"ticker": "TESTFADE"})
+    wait_until_idle(client)
+
+    flat = _monthly((date.today() - timedelta(days=3700)).isoformat(), 124, 100.0, 100.0)
+
+    def download_while_history_goes(ticker, year):
+        con = sqlite3.connect(DATA_DIR / "dividendcase.db")
+        con.execute("DELETE FROM dividend_records WHERE ticker_symbol = 'TESTFADE'")
+        con.commit()
+        con.close()
+        return 100.0, flat
+
+    monkeypatch.setattr(investment, "_get_benchmark_data", download_while_history_goes)
+    beat, judged = client.portal.call(compute_beats_benchmark)
+    assert (beat, judged) == (0, 0)
+    stock = client.get("/api/v1/stocks/top-performers", params={"limit": 2000}).json()
+    assert [s["beats_benchmark"] for s in stock if s["ticker_symbol"] == "TESTFADE"] == [None]
