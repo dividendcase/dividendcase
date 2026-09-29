@@ -124,16 +124,8 @@ export function Install() {
                     </p>
                     <Command prompt={o.prompt} cmd={o.uv} />
                   </Step>
-                  <Step
-                    n={2}
-                    title="Install DividendCase"
-                    badge={
-                      <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10.5px] tracking-[0.06em] text-ink-3 uppercase">
-                        Coming soon
-                      </span>
-                    }
-                  >
-                    <p>Works once the first release is on PyPI. Until then, run it from source.</p>
+                  <Step n={2} title="Install DividendCase">
+                    <p>The app and everything it needs, kept apart from the rest of your computer.</p>
                     <Command prompt={o.prompt} cmd="uv tool install dividendcase" />
                   </Step>
                   <Step n={3} title="Run it">
@@ -155,11 +147,19 @@ export function Install() {
                 <FlaskConical className="size-4" aria-hidden />
               </span>
               <div>
-                <p className="text-[16px] font-semibold tracking-[-0.01em] text-ink">Early access</p>
+                <p className="text-[16px] font-semibold tracking-[-0.01em] text-ink">An early release</p>
                 <p className="mt-1 text-[15px] leading-[1.6] text-ink-2">
-                  The first release on PyPI is coming soon. Until then, run it from source:
+                  DividendCase is new, so updates come often. The app tells you when one is out, and saves a copy of
+                  your data before an update changes anything.
                 </p>
               </div>
+            </div>
+
+            <div className="mt-5 space-y-2">
+              <Command prompt="$" cmd="uv tool upgrade dividendcase" />
+              <p className="pl-1 font-mono text-[11.5px] text-ink-3">
+                To remove it: uv tool uninstall dividendcase (your data folder stays)
+              </p>
             </div>
 
             <details className="group mt-5 rounded-xl border border-line bg-well">

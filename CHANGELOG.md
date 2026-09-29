@@ -3,6 +3,10 @@
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
 while the version starts with 0, a minor release (0.2, 0.3…) may change things.
 
+## Unreleased
+
+- The website's install steps no longer say "coming soon".
+
 ## 0.1.0
 
 The first release of DividendCase as an app that runs on your own computer.

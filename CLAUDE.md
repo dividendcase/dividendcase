@@ -90,8 +90,9 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   Before upgrading a file with data, a VACUUM INTO copy goes to `<data dir>/backups/` (last 5 kept).
 - Update check: once a day (scheduler), unless Settings → Check for updates is off or
   `DIVIDENDCASE_CHECK_UPDATES=false`; PyPI JSON API only; shown in the sidebar (UpdateNotice).
-- Releases (`.github/workflows/release.yml`): bump `version` in pyproject.toml, add a matching
-  `## <version>` section to CHANGELOG.md, `uv lock`, merge, then push the tag `v<version>`. The
+- Releases (`.github/workflows/release.yml`): set `version` in pyproject.toml, rename CHANGELOG.md's
+  `## Unreleased` to `## <version>`, `uv lock`, merge, then push the tag `v<version>`; afterwards
+  bump main to the next `.dev0` and add a fresh `## Unreleased`. The
   workflow checks tag = version = changelog, tests, builds the interface into the wheel
   (`scripts/check_dist.py`), installs it on Linux/macOS/Windows and runs `scripts/smoke_test.py`,
   publishes to PyPI by trusted publishing (no tokens in the repo; PyPI publisher: owner
@@ -134,9 +135,7 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 
 ## Next milestones
 
-1. Publish 0.1.0 (the workflow is ready; needs Pratik's PyPI account + pending publisher), flip the
-   website's "coming soon" install step, decide when to make the repo public, then bump main to
-   the next `.dev0` version.
+1. Early testers on 0.1.0 (published 29 Sep 2026); collect issues on GitHub.
 2. Deploy `site/` as dividendcase.com after the hosted accounts close on 1 Nov 2026.
 3. Withholding tax v1 (IE, UK, IN, CA, AU, US) using `tax_residence`: income after tax.
 4. beats_benchmark for the screener (the hosted pipeline computed it; not ported yet).
