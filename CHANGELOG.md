@@ -3,7 +3,7 @@
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
 while the version starts with 0, a minor release (0.2, 0.3…) may change things.
 
-## Unreleased
+## 0.2.0
 
 - **Screener:** a "Beat their index" filter and a "Vs index" column: price change plus dividends over the last ten years (or since the first stored payment, if at least three years ago) against the stock's local index over the same period, recomputed weekly and after each screener refresh.
 - **Docker image** at `ghcr.io/dividendcase/dividendcase`, for Intel and ARM.

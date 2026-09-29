@@ -1,6 +1,6 @@
 [project]
 name = "dividendcase"
-version = "0.2.0.dev0"
+version = "0.2.0"
 description = "A free, open-source dividend tracker that runs on your own computer. Your data stays with you."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
