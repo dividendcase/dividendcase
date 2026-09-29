@@ -5,6 +5,7 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- Adding a holding no longer fails with an error when the same stock is being downloaded in the background at that moment (just added to a watchlist, say): saving a stock and its dividends is now one step, so two downloads can't clash.
 - The "Beat their index" comparison reads the stocks after downloading the indices, so a stock updated during the download is judged on its new data.
 - "Report a problem" fills in Docker, not uv, as the install method when you run the Docker image.
 - CONTRIBUTING.md: DividendCase takes ideas and bug reports as issues and writes every change itself, so pull requests are open to the maintainers only.

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.dialects.sqlite import insert
 from typing import Optional
 from dividendcase.models.stock import Stock
 
@@ -61,18 +62,18 @@ async def get_top_performers(
 
 
 async def upsert_stock(db: AsyncSession, stock_data: dict) -> Stock:
-    ticker = stock_data["ticker_symbol"]
-    existing = await get_stock(db, ticker)
-    if existing:
-        for key, value in stock_data.items():
-            if hasattr(existing, key):
-                setattr(existing, key, value)
-        await db.commit()
-        await db.refresh(existing)
-        return existing
-    else:
-        stock = Stock(**stock_data)
-        db.add(stock)
-        await db.commit()
-        await db.refresh(stock)
-        return stock
+    """Insert or update a stock in one statement, so two fetches of the same stock at once (a
+    background refresh and adding a holding, say) can't both try to insert it. Only the fields
+    in stock_data are written: a screener fetch without a profile leaves the profile alone."""
+    columns = set(Stock.__table__.columns.keys()) - {"id", "created_at", "updated_at"}
+    values = {k: v for k, v in stock_data.items() if k in columns}
+    stmt = insert(Stock).values(**values)
+    changes = {k: stmt.excluded[k] for k in values if k != "ticker_symbol"}
+    changes["updated_at"] = func.now()
+    await db.execute(stmt.on_conflict_do_update(index_elements=["ticker_symbol"], set_=changes))
+    await db.commit()
+    result = await db.execute(
+        select(Stock).where(Stock.ticker_symbol == values["ticker_symbol"])
+        .execution_options(populate_existing=True)  # a copy loaded earlier in this session is stale
+    )
+    return result.scalar_one()

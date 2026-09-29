@@ -214,6 +214,53 @@ def test_removing_from_one_watchlist_keeps_the_others(client, payers):
     assert [(i["ticker_symbol"], i["watchlist_group_id"]) for i in left] == [("TESTA", second)]
 
 
+def test_two_saves_of_the_same_stock_at_once_both_succeed(client, market):
+    """A background refresh and adding a holding can download the same stock at the same moment."""
+    import asyncio
+    import sqlite3
+
+    from conftest import DATA_DIR
+    from dividendcase.crud.dividend import upsert_dividend_records
+    from dividendcase.crud.stock import upsert_stock
+    from dividendcase.database import AsyncSessionLocal
+
+    market.add("TESTTWICE")
+    stock, records = market.fetch_stock_light("TESTTWICE")
+
+    async def save():
+        async with AsyncSessionLocal() as db:
+            saved = await upsert_stock(db, stock)
+            await upsert_dividend_records(db, saved.id, "TESTTWICE", records)
+
+    async def twice_at_once():
+        await asyncio.gather(save(), save())
+
+    client.portal.call(twice_at_once)
+    con = sqlite3.connect(DATA_DIR / "dividendcase.db")
+    try:
+        stored = con.execute("SELECT COUNT(*) FROM dividend_records WHERE ticker_symbol = 'TESTTWICE'").fetchone()[0]
+    finally:
+        con.close()
+    assert stored == len(records)
+
+
+def test_a_holding_is_added_even_when_saving_its_download_fails(client, market, monkeypatch):
+    from dividendcase.api.v1 import portfolio
+
+    market.add("TESTOOPS")
+
+    async def failing_save(db, stock_id, ticker, records):
+        from dividendcase.models.dividend import DividendRecord
+
+        db.add(DividendRecord(stock_id=stock_id, ticker_symbol=ticker, dividend_date=records[0]["dividend_date"],
+                              dividend_per_share=None))  # not allowed: the flush fails
+        await db.flush()
+
+    monkeypatch.setattr(portfolio, "upsert_dividend_records", failing_save)
+    holding = add_holding(client, "TESTOOPS")
+    assert holding["ticker_symbol"] == "TESTOOPS"
+
+
 # ── Excel and deleting data ──────────────────────────────────────────────────
 def test_excel_export_then_import_restores_holdings(client, payers):
     isa = client.post("/api/v1/portfolios", json={"name": "ISA"}).json()["id"]

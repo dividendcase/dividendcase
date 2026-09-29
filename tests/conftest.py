@@ -179,9 +179,11 @@ def clean_database(request):
     yield
     if "client" not in request.fixturenames:
         return
-    # A job the test started in the background (the index comparison after a screener refresh,
-    # say) must finish first, or it writes into the next test's rows
-    request.getfixturevalue("client").portal.call(_finish_background_jobs)
+    # Downloads the test queued and jobs it started in the background (the index comparison
+    # after a screener refresh, say) must finish first, or they write into the next test's rows
+    client = request.getfixturevalue("client")
+    wait_until_idle(client)
+    client.portal.call(_finish_background_jobs)
     import sqlite3
 
     con = sqlite3.connect(DATA_DIR / "dividendcase.db")

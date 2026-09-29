@@ -148,6 +148,7 @@ async def fetch_custom_stock(
             del _fetch_counter[ticker]
         except Exception as e:
             logger.warning(f"Failed to auto-persist {ticker}: {e}")
+            await db.rollback()
 
     # Build response from fetched data
     from dividendcase.schemas.dividend import DividendRecord

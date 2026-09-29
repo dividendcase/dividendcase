@@ -79,6 +79,7 @@ async def add_investment(
                 logger.warning(f"Yahoo Finance returned no data for {ticker}")
         except Exception as e:
             logger.warning(f"Could not auto-fetch {ticker}: {type(e).__name__}: {e}")
+            await db.rollback()  # the holding is still added; the refresh retries the fetch
     else:
         logger.info(f"Stock {ticker} already in DB, skipping fetch")
 

@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.dialects.sqlite import insert
 from datetime import date, timedelta
 from dividendcase.models.dividend import DividendRecord
 
@@ -27,31 +28,21 @@ async def upsert_dividend_records(
     ticker: str,
     records: list[dict],
 ) -> int:
-    """Insert or update dividend records. Returns count of inserted records."""
-    inserted = 0
-    for record in records:
-        # Check if exists
-        existing = await db.execute(
-            select(DividendRecord).where(
-                DividendRecord.ticker_symbol == ticker,
-                DividendRecord.dividend_date == record["dividend_date"],
-            )
-        )
-        row = existing.scalar_one_or_none()
-        if row:
-            row.dividend_per_share = record["dividend_per_share"]
-            row.share_price_on_dividend_date = record.get("share_price_on_dividend_date")
-            row.dividend_yield_pct = record.get("dividend_yield_pct")
-        else:
-            db.add(DividendRecord(
-                stock_id=stock_id,
-                ticker_symbol=ticker,
-                dividend_date=record["dividend_date"],
-                dividend_per_share=record["dividend_per_share"],
-                share_price_on_dividend_date=record.get("share_price_on_dividend_date"),
-                dividend_yield_pct=record.get("dividend_yield_pct"),
-            ))
-            inserted += 1
-
+    """Insert or update dividend records, each batch in one statement (see upsert_stock).
+    Returns the number of records written."""
+    rows = [{
+        "stock_id": stock_id,
+        "ticker_symbol": ticker,
+        "dividend_date": r["dividend_date"],
+        "dividend_per_share": r["dividend_per_share"],
+        "share_price_on_dividend_date": r.get("share_price_on_dividend_date"),
+        "dividend_yield_pct": r.get("dividend_yield_pct"),
+    } for r in records]
+    for start in range(0, len(rows), 500):  # well inside SQLite's limit on statement parameters
+        stmt = insert(DividendRecord).values(rows[start:start + 500])
+        await db.execute(stmt.on_conflict_do_update(
+            index_elements=["ticker_symbol", "dividend_date"],
+            set_={c: stmt.excluded[c] for c in ("dividend_per_share", "share_price_on_dividend_date", "dividend_yield_pct")},
+        ))
     await db.commit()
-    return inserted
+    return len(rows)
