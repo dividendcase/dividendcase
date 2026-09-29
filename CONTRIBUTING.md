@@ -4,7 +4,7 @@ Thanks for helping. DividendCase is young, and the most useful thing right now i
 
 ## Reporting a problem or an idea
 
-- **Something isn't working:** [open a bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml). The app's **Send feedback** link (in the sidebar) fills in your version for you.
+- **Something isn't working:** [open a bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml). **Report a problem** in the app's ⌘K menu fills in your version and system for you.
 - **An idea:** [describe what you're trying to do](https://github.com/dividendcase/dividendcase/issues/new?template=idea.yml).
 - **A security problem:** please don't open a public issue; see [SECURITY.md](SECURITY.md).
 
@@ -12,7 +12,9 @@ Please leave out anything private: no portfolio files, account numbers or unblur
 
 ## Code
 
-Before writing code, **open an issue** to talk it through, so your time isn't spent on something that clashes with work in progress. The terms for outside code contributions are still being settled, so pull requests from outside contributors may have to wait for them.
+DividendCase is open source, but not open to outside code: we write every change ourselves, so pull requests are open to the maintainers only. If you'd like something built or fixed, **open an issue** describing what you need and why, and we'll pick it up from there. Please describe the change in words rather than pasting code; we write it from the description.
+
+You're free to run, study and change the code for yourself under the [licence](LICENSE). The notes below are how we build and check it.
 
 ### Setting up
 
@@ -29,7 +31,7 @@ uv run dividendcase                      # http://127.0.0.1:8765/dashboard/
 
 For interface work, run the API with `uv run dividendcase --no-browser` and the interface with hot reload with `npm run dev:app` (http://localhost:3000).
 
-### Before opening a pull request
+### Checks before a change
 
 ```bash
 uv run pytest                                # real SQLite, no network

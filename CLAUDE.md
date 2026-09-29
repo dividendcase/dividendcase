@@ -159,6 +159,7 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 2. Deploy `site/` as dividendcase.com after the hosted accounts close on 1 Nov 2026.
 3. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
    CH, ES, JP); Australian unfranked parts; Irish DWT exemptions.
-4. Contribution terms (CLA or not) before merging outside pull requests; CONTRIBUTING.md says
-   they're still being settled.
+4. Contributions: no CLA and no outside code (decided 29 Sep 2026). People propose work in issues and
+   we write it, so Pratik stays the sole copyright holder; pull requests are limited to collaborators.
+   Never copy code pasted into an issue or comment: write it from the description.
 Billing and any paid Cloud launch come later; for now the focus is this app and a Cloud prototype.

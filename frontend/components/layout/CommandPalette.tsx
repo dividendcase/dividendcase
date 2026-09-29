@@ -110,7 +110,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
     { key: "export", label: "Export everything to Excel", Icon: Download, keywords: "backup xlsx download", fn: onExport },
     { key: "report", label: "Download income report", Icon: FileSpreadsheet, keywords: "xlsx summary", fn: onReport },
     { key: "refresh", label: "Refresh my stocks now", Icon: RefreshCw, keywords: "update fetch yahoo data", fn: () => startRefresh("holdings", true) },
-    { key: "bug", label: "Report a problem", Icon: Bug, keywords: "bug issue feedback broken wrong github", fn: () => { window.open(bugReportUrl(appInfo?.version), "_blank", "noopener"); } },
+    { key: "bug", label: "Report a problem", Icon: Bug, keywords: "bug issue feedback broken wrong github", fn: () => { window.open(bugReportUrl(appInfo?.version, appInfo?.install_method), "_blank", "noopener"); } },
     { key: "idea", label: "Suggest an idea", Icon: Lightbulb, keywords: "feature request feedback github", fn: () => { window.open(ideaUrl(), "_blank", "noopener"); } },
   ];
 
