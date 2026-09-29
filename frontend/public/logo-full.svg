@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 680">
+
+  <!-- Ground shadow under vault -->
+  <ellipse cx="260" cy="436" rx="152" ry="9" fill="#000000" opacity="0.18"/>
+
+  <!-- ====== LEAVES ====== -->
+
+  <!-- Left leaf -->
+  <path d="M233,218 C220,196 200,162 208,112 C222,144 230,178 245,215Z" fill="#4a8c1a"/>
+  <path d="M233,218 C226,200 219,172 208,112 C222,144 230,178 245,215Z" fill="#7abf50" opacity="0.4"/>
+  <line x1="233" y1="218" x2="208" y2="112" stroke="#639922" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Right leaf -->
+  <path d="M287,218 C300,196 320,162 312,112 C298,144 290,178 275,215Z" fill="#4a8c1a"/>
+  <path d="M287,218 C294,200 301,172 312,112 C298,144 290,178 275,215Z" fill="#7abf50" opacity="0.4"/>
+  <line x1="287" y1="218" x2="312" y2="112" stroke="#639922" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Center leaf (tallest) -->
+  <path d="M260,220 C238,186 232,132 260,38 C288,132 282,186 260,220Z" fill="#2d6010"/>
+  <path d="M260,220 C252,186 247,132 260,38 C260,132 260,186 260,220Z" fill="#5a9e2f" opacity="0.5"/>
+  <line x1="260" y1="220" x2="260" y2="38" stroke="#639922" stroke-width="1.8" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- ====== VAULT BODY ====== -->
+
+  <!-- Outer shell (depth/shadow) -->
+  <rect x="82" y="213" width="356" height="218" rx="26" fill="#2c2c3c"/>
+
+  <!-- Main face -->
+  <rect x="90" y="220" width="340" height="205" rx="22" fill="#5c5c70"/>
+
+  <!-- Gloss reflection top-left -->
+  <ellipse cx="182" cy="258" rx="56" ry="22" fill="white" opacity="0.055" transform="rotate(-18,182,258)"/>
+
+  <!-- Corner accent top-right -->
+  <path d="M412,230 Q432,230 432,252 L426,252 Q426,236 412,236Z" fill="#7878a0" opacity="0.3"/>
+
+  <!-- ====== HINGE ====== -->
+  <rect x="70" y="242" width="22" height="42" rx="7" fill="#8888a0"/>
+  <rect x="72" y="244" width="9" height="38" rx="4" fill="#aaaabc" opacity="0.3"/>
+  <rect x="70" y="300" width="22" height="42" rx="7" fill="#8888a0"/>
+  <rect x="72" y="302" width="9" height="38" rx="4" fill="#aaaabc" opacity="0.3"/>
+
+  <!-- ====== COMBINATION DIAL ====== -->
+
+  <!-- Outer bezel -->
+  <circle cx="312" cy="323" r="72" fill="#3a3a4e"/>
+
+  <!-- Dial ring -->
+  <circle cx="312" cy="323" r="63" fill="#7070a0"/>
+
+  <!-- 12 tick marks -->
+  <g transform="translate(312,323)">
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(0)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(30)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(60)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(90)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(120)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(150)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(180)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(210)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(240)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(270)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(300)"/>
+    <rect x="-5.5" y="-62" width="11" height="17" rx="3" fill="#c0c0d8" transform="rotate(330)"/>
+  </g>
+
+  <!-- Dial face -->
+  <circle cx="312" cy="323" r="42" fill="#d0d0e0"/>
+  <circle cx="312" cy="323" r="41" fill="none" stroke="#9090b0" stroke-width="2"/>
+
+  <!-- Dial centre knob -->
+  <circle cx="312" cy="323" r="16" fill="#707090"/>
+  <circle cx="312" cy="323" r="10" fill="#9090b0"/>
+  <circle cx="312" cy="323" r="5" fill="#d0d0e0"/>
+
+  <!-- Indicator notch at top -->
+  <rect x="308.5" y="261" width="7" height="18" rx="3" fill="#2a2a38"/>
+
+  <!-- ====== FEET ====== -->
+  <rect x="116" y="420" width="72" height="23" rx="7" fill="#888898"/>
+  <rect x="120" y="422" width="26" height="8" rx="3" fill="#b0b0c8" opacity="0.4"/>
+  <rect x="332" y="420" width="72" height="23" rx="7" fill="#888898"/>
+  <rect x="336" y="422" width="26" height="8" rx="3" fill="#b0b0c8" opacity="0.4"/>
+
+  <!-- ====== WORDMARK ====== -->
+
+  <!-- DIVIDEND -->
+  <text x="260" y="510" text-anchor="middle"
+    font-family="sans-serif" font-size="50" font-weight="500" letter-spacing="10"
+    fill="#4a8c1a">DIVIDEND</text>
+
+  <!-- Divider line -->
+  <line x1="128" y1="530" x2="392" y2="530" stroke="#3B6D11" stroke-width="0.9" opacity="0.5"/>
+
+  <!-- CASE -->
+  <text x="260" y="568" text-anchor="middle"
+    font-family="sans-serif" font-size="28" font-weight="400" letter-spacing="18"
+    fill="#639922">CASE</text>
+
+  <!-- Tagline -->
+  <text x="260" y="628" text-anchor="middle"
+    font-family="sans-serif" font-size="12" font-weight="400" letter-spacing="5"
+    fill="#555555">TRACK · COMPOUND · PROSPER</text>
+
+</svg>

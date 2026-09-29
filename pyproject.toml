@@ -1,0 +1,93 @@
+[project]
+name = "dividendcase"
+version = "0.1.0"
+description = "A free, open-source dividend tracker that runs on your own computer. Your data stays with you."
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "DividendCase contributors" }]
+requires-python = ">=3.11"
+keywords = ["dividends", "portfolio", "investing", "income", "local-first"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: End Users/Desktop",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+    # Local web server and API
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    # Storage: one SQLite file in the user's data folder
+    "sqlalchemy[asyncio]>=2.0.30",
+    "aiosqlite>=0.20",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "platformdirs>=4.2",
+    # Market data, fetched on the user's own machine for their own use
+    "yfinance>=1.7",
+    "curl_cffi>=0.7",
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "requests>=2.31",
+    "lxml>=5.2",
+    "html5lib>=1.1",
+    # Scheduled refreshes while the app is open
+    "apscheduler>=3.10,<4",
+    # Excel import/export and reports
+    "openpyxl>=3.1.3",
+    "alembic>=1.13",
+    "packaging>=24",
+]
+
+[project.scripts]
+dividendcase = "dividendcase.cli:main"
+
+[project.urls]
+Homepage = "https://dividendcase.com"
+Source = "https://github.com/dividendcase/dividendcase"
+Issues = "https://github.com/dividendcase/dividendcase/issues"
+Changelog = "https://github.com/dividendcase/dividendcase/blob/main/CHANGELOG.md"
+
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dividendcase"]
+# The built interface is gitignored; include it in the wheel anyway
+artifacts = ["src/dividendcase/web/**"]
+
+[tool.hatch.build.targets.sdist]
+# `uv build` makes the wheel from the sdist, so the sdist needs the built interface too;
+# the JavaScript sources and workspaces stay out of the Python package
+artifacts = ["src/dividendcase/web/**"]
+exclude = ["/frontend", "/frontend/.env.development", "/site", "/packages", "/package.json", "/package-lock.json", "/CLAUDE.md", "node_modules", ".test-data", "*.db"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = "-ra"
+filterwarnings = [
+    "ignore::DeprecationWarning:yfinance.*",
+    "ignore::DeprecationWarning:apscheduler.*",
+    # The database stores naive UTC times; moving off utcnow() is its own change
+    "ignore:datetime.datetime.utcnow:DeprecationWarning",
+]

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Interface, website and shared packages (npm workspaces)
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# The built interface is copied into the package at release time
+src/dividendcase/web/*
+!src/dividendcase/web/.gitkeep
+
+# Local data and secrets: never commit these
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+!.env.example
+# Only points `npm run dev` at the local API; no secrets
+!frontend/.env.development
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Personal Claude Code settings
+.claude/
+
+# Throwaway data folder for testing (DIVIDENDCASE_DATA_DIR)
+.test-data/

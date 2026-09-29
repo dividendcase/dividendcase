@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "@dividendcase/brand/tokens.css";
+@import "tw-animate-css";
+
+/* The logo component lives in the shared brand package */
+@source "../../packages/brand/src";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Component names (shadcn/ui) mapped onto the brand tokens.
+ * Prefer the brand names in new code: text-ink-2, bg-raised, text-sprout, text-watch, text-cut.
+ */
+@theme inline {
+  --color-background: var(--color-ground);
+  --color-foreground: var(--color-ink);
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-raised);
+  --color-popover-foreground: var(--color-ink);
+  --color-primary: var(--color-sprout);
+  --color-primary-foreground: var(--color-sprout-ink);
+  --color-secondary: var(--color-raised);
+  --color-secondary-foreground: var(--color-ink);
+  --color-muted: var(--color-raised);
+  --color-muted-foreground: var(--color-ink-2);
+  --color-accent: var(--color-overlay);
+  --color-accent-foreground: var(--color-ink);
+  --color-destructive: var(--color-cut);
+  --color-destructive-foreground: var(--color-ink);
+  --color-border: var(--color-line);
+  --color-input: var(--color-line);
+  --color-ring: var(--color-sprout);
+
+  /* Money earned: the brighter green reads better as text on the dark ground */
+  --color-money: var(--color-sprout-hi);
+  --color-faint: var(--color-ink-3);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-line);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+  }
+
+  ::selection {
+    background: rgb(122 191 80 / 0.28);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sprout);
+    outline-offset: 2px;
+  }
+
+  /* Thin, quiet scrollbars */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    opacity: 0.4;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.75);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

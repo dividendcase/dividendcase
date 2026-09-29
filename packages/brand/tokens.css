@@ -1,0 +1,109 @@
+/*
+ * DividendCase brand tokens, shared by the app (frontend/) and the website (site/).
+ * Import after Tailwind:  @import "tailwindcss";  @import "@dividendcase/brand/tokens.css";
+ *
+ * Every colour has one job:
+ *   green (sprout, leaf, stem)  money you've earned; buttons that lead to income
+ *   lavender (dial)             Keeper, the AI assistant. Nothing else
+ *   amber (watch), red (cut)    risk only, always with a second signal (arrow, label)
+ *   neutrals                    lean slightly violet, like the vault's steel
+ *
+ * The fonts are loaded by each app with next/font, which sets --font-geist,
+ * --font-geist-mono and --font-instrument-serif.
+ */
+
+@theme static {
+  /* Surfaces, darkest to lightest */
+  --color-ground: #0e0e13;
+  --color-well: #101016;
+  --color-surface: #15151c;
+  --color-raised: #1c1c25;
+  --color-overlay: #23232e;
+  --color-grid: #22222c;
+  --color-line: #282834;
+  --color-line-strong: #363645;
+
+  /* Text */
+  --color-ink: #ececf3;
+  --color-ink-2: #a9a9bd;
+  --color-ink-3: #80809a;
+
+  /* Money: taken from the logo's leaves */
+  --color-sprout: #7abf50;
+  --color-sprout-hi: #9bd96b;
+  --color-sprout-ink: #0e1a06;
+  --color-leaf: #4a8c1a;
+  --color-stem: #2d6010;
+  --color-bud: #639922;
+
+  /* Keeper (AI): the dial that unlocks the vault */
+  --color-dial: #8f8fc2;
+  --color-dial-hi: #b3b3e6;
+
+  /* Risk */
+  --color-watch: #e3a33b;
+  --color-cut: #e5604f;
+
+  /* The vault itself, for illustrations */
+  --color-vault-shell: #2c2c3c;
+  --color-vault-face: #5c5c70;
+  --color-vault-ring: #7070a0;
+  --color-vault-dial: #d0d0e0;
+
+  /* Chart series, in order */
+  --color-s1: #8ccf5c;
+  --color-s2: #4a8c1a;
+  --color-s3: #b3b3e6;
+  --color-s4: #6d6db0;
+
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 20px;
+
+  --shadow-card: 0 1px 0 0 rgb(255 255 255 / 0.03) inset, 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-pop: 0 1px 0 0 rgb(255 255 255 / 0.04) inset, 0 12px 32px -8px rgb(0 0 0 / 0.6);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* One italic serif word per headline, in green */
+@utility serif-accent {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--color-sprout);
+}
+
+/* Every number: Geist Mono with tabular figures, so columns line up */
+@utility num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Small uppercase labels above numbers */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+/* The pulsing lavender dot that marks Keeper */
+@utility keeper-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  flex: none;
+  background: var(--color-dial-hi);
+  box-shadow: 0 0 0 4px rgb(179 179 230 / 0.16);
+}

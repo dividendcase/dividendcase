@@ -1,0 +1,19 @@
+{
+  "name": "dividendcase-workspace",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "site",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:app": "npm run dev -w frontend",
+    "dev:site": "npm run dev -w site",
+    "build:app": "npm run build -w frontend",
+    "build:site": "npm run build -w site"
+  },
+  "overrides": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0"
+  }
+}

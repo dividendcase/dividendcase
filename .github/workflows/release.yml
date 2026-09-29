@@ -1,0 +1,151 @@
+name: Release
+
+# A release is a tag: bump `version` in pyproject.toml, add a CHANGELOG.md section with the
+# same number, merge, then push the tag `v<version>`. PyPI trusts this workflow directly
+# (trusted publishing), so there are no tokens or passwords in the repository.
+#
+# Run it by hand ("Run workflow") for a dry run on TestPyPI instead.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      testpypi:
+        description: Publish to TestPyPI (a dry run; real releases come from a v* tag)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Version matches the tag
+        id: version
+        run: |
+          version=$(uv run --no-project python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF_TYPE" = "tag" ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::The tag $GITHUB_REF_NAME doesn't match the version in pyproject.toml ($version)"
+            exit 1
+          fi
+          if ! grep -q "^## $version\$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## $version' section"
+            exit 1
+          fi
+      - name: Tests
+        run: |
+          uv sync --locked
+          uv run pytest
+          uv run python -m dividendcase.migrate check
+      - name: Build the interface into the package
+        run: uv run python scripts/build_web.py
+      - name: Build the wheel and sdist
+        run: uv build
+      - name: Check them
+        run: uv run python scripts/check_dist.py "${{ steps.version.outputs.version }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 30
+
+  install:
+    name: Install and run (${{ matrix.os }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v6
+      - name: uv tool install, as the README says
+        run: |
+          uv tool install "$(ls dist/*.whl)"
+          echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
+      - name: Start it and check it works
+        run: uv run --no-project python scripts/smoke_test.py
+
+  testpypi:
+    name: Publish to TestPyPI
+    if: github.event_name == 'workflow_dispatch' && inputs.testpypi
+    needs: [build, install]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  pypi:
+    name: Publish to PyPI
+    if: github.ref_type == 'tag'
+    needs: [build, install]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: GitHub release
+    if: github.ref_type == 'tag'
+    needs: [build, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+      - name: Create the release with the changelog's notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          awk -v heading="## $VERSION" '$0 == heading {found = 1; next} /^## / {found = 0} found' CHANGELOG.md > notes.md
+          printf '\n**Install:** `uv tool install dividendcase` · **Update:** `uv tool upgrade dividendcase`\n' >> notes.md
+          prerelease=""
+          if echo "$VERSION" | grep -q '[a-z]'; then prerelease="--prerelease"; fi
+          gh release create "$GITHUB_REF_NAME" dist/* --title "DividendCase $VERSION" --notes-file notes.md $prerelease

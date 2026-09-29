@@ -1,0 +1,12 @@
+{
+  "name": "@dividendcase/brand",
+  "version": "0.0.0",
+  "private": true,
+  "description": "DividendCase colours, type and logo, shared by the app and the website",
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./logo": "./src/logo.tsx",
+    "./logo-icon.svg": "./assets/logo-icon.svg",
+    "./logo-full.svg": "./assets/logo-full.svg"
+  }
+}

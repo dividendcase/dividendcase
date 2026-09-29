@@ -1,0 +1,109 @@
+@import "tailwindcss";
+@import "@dividendcase/brand/tokens.css";
+
+/* The logo component lives in the shared brand package */
+@source "../../packages/brand/src";
+
+@theme {
+  /* The vault dial behind the hero card: one slow turn every two minutes */
+  --animate-dial: dial-spin 120s linear infinite;
+  /* The small card that floats next to the hero card */
+  --animate-float: float 5s ease-in-out infinite alternate;
+
+  @keyframes dial-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes float {
+    from {
+      transform: translateY(4px);
+    }
+    to {
+      transform: translateY(-4px);
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Anchored sections land below the sticky nav */
+    scroll-padding-top: 5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    letter-spacing: -0.003em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-line);
+  }
+
+  ::selection {
+    background: rgb(122 191 80 / 0.28);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-sprout);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  summary {
+    list-style: none;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* Container used by every section: 16px gutters on phones, ~1180px wide on desktop */
+@utility container-page {
+  width: 100%;
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: 16px;
+
+  @media (width >= 40rem) {
+    padding-inline: 24px;
+  }
+
+  @media (width >= 64rem) {
+    padding-inline: 32px;
+  }
+}
+
+/* Big headings: Geist 600, tight tracking */
+@utility heading {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--color-ink);
+  text-wrap: balance;
+}
