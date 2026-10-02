@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ArrowsLeftRight } from "@phosphor-icons/react";
 import { LogoMark } from "@dividendcase/brand/logo";
 import { landPoints } from "./land";
 
@@ -20,16 +21,24 @@ const EXCHANGES = [
 
 const TILT = (18 * Math.PI) / 180;
 const DEG = Math.PI / 180;
+/** The view when the section arrives (the Atlantic: New York, Toronto, London, Dublin facing you) and
+ * how far scrolling through it turns the globe (on to Mumbai and Sydney), in degrees of longitude */
+const START = -40;
+const SPAN = 160;
+/** Degrees of turn per pixel dragged */
+const DRAG = 0.4;
 
 /**
- * A dotted globe on a 2D canvas (no WebGL, so it works everywhere). It turns as the section
- * scrolls past and drifts slowly on its own; each exchange lights up as it comes round to the
- * front and sends a stream of payments to "Your computer". With reduced motion it is drawn once.
+ * A dotted globe on a 2D canvas (no WebGL, so it works everywhere). It turns only while its
+ * section is held on screen, from the Atlantic to Sydney, sways a little on its own, and can be
+ * dragged round by hand. Each exchange lights up as it comes round to the front and sends a stream
+ * of payments to "Your computer". With reduced motion it sits still unless dragged.
  */
 export function Globe({ className = "" }: { className?: string }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const box = boxRef.current;
@@ -53,14 +62,42 @@ export function Globe({ className = "" }: { className?: string }) {
     };
     resize();
 
-    let scrolled = 0; // smoothed scroll progress through the section
+    // Turn only while the section's stage is pinned, so the view you arrive at is the start
+    let scrolled = 0; // smoothed scroll progress through the pinned stretch
     let target = 0;
     const trigger = ScrollTrigger.create({
-      trigger: box,
-      start: "top bottom",
-      end: "bottom top",
+      trigger: box.closest("section") ?? box,
+      start: "top top",
+      end: "bottom bottom",
       onUpdate: (self) => (target = self.progress),
     });
+
+    // Dragging turns it too, and lets go with a little momentum
+    const drag = { lon: 0, velocity: 0, active: false, x: 0 };
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      drag.active = true;
+      drag.x = e.clientX;
+      drag.velocity = 0;
+      box.setPointerCapture(e.pointerId);
+      hintRef.current?.style.setProperty("opacity", "0");
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!drag.active) return;
+      const turn = -(e.clientX - drag.x) * DRAG;
+      drag.x = e.clientX;
+      drag.lon += turn;
+      drag.velocity = turn;
+      if (still) draw(0);
+    };
+    const onUp = (e: PointerEvent) => {
+      drag.active = false;
+      if (box.hasPointerCapture(e.pointerId)) box.releasePointerCapture(e.pointerId);
+    };
+    box.addEventListener("pointerdown", onDown);
+    box.addEventListener("pointermove", onMove);
+    box.addEventListener("pointerup", onUp);
+    box.addEventListener("pointercancel", onUp);
 
     const project = (pLat: number, pLon: number, lon0: number) => {
       const cosLat = Math.cos(pLat);
@@ -74,8 +111,13 @@ export function Globe({ className = "" }: { className?: string }) {
 
     const draw = (time: number) => {
       scrolled += (target - scrolled) * 0.08;
-      // Start over the Atlantic; scrolling and time turn it eastwards, past Mumbai to Sydney
-      const lon0 = (-38 + scrolled * 200 + (still ? 0 : time * 0.5)) * DEG;
+      if (!drag.active && !still) {
+        drag.lon += drag.velocity;
+        drag.velocity *= 0.93;
+      }
+      // A gentle sway that never adds up, so where you arrive doesn't depend on how long you waited
+      const sway = still ? 0 : Math.sin(time * 0.3) * 4;
+      const lon0 = (START + scrolled * SPAN + drag.lon + sway) * DEG;
       const R = Math.min(w * 0.4, h * 0.42);
       const cx = w * 0.56;
       const cy = h * 0.44;
@@ -194,12 +236,27 @@ export function Globe({ className = "" }: { className?: string }) {
       visible.disconnect();
       sized.disconnect();
       trigger.kill();
+      box.removeEventListener("pointerdown", onDown);
+      box.removeEventListener("pointermove", onMove);
+      box.removeEventListener("pointerup", onUp);
+      box.removeEventListener("pointercancel", onUp);
     };
   }, []);
 
   return (
-    <div ref={boxRef} className={`relative ${className}`} aria-hidden="true">
+    <div
+      ref={boxRef}
+      className={`relative cursor-grab touch-pan-y select-none active:cursor-grabbing ${className}`}
+      aria-hidden="true"
+    >
       <canvas ref={canvasRef} className="absolute inset-0 size-full" />
+      <div
+        ref={hintRef}
+        className="pointer-events-none absolute right-[6%] bottom-[6%] flex items-center gap-1.5 font-mono text-[11.5px] text-ink-3 transition-opacity duration-500"
+      >
+        <ArrowsLeftRight className="size-3.5" aria-hidden />
+        Drag to turn
+      </div>
       <div
         ref={nodeRef}
         className="absolute bottom-[4%] left-[6%] inline-flex items-center gap-2.5 rounded-[11px] border border-sprout/45 bg-surface py-2 pr-3.5 pl-2.5 font-mono text-[13px] shadow-[0_0_0_4px_rgb(122_191_80/0.08)]"
