@@ -5,6 +5,7 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- **Import from Zerodha:** in Import, choose Zerodha and add the tradebooks you download from Console (Reports, Tradebook; CSV or Excel, one per year). The app matches each sale with the earliest buy of the same stock, combines buys made on the same day, and shows the holdings it worked out before adding anything. Lots already in the app are skipped, so importing again adds only what's new. DividendCase never connects to Zerodha: the files are read on your computer and not kept.
 - Adding a holding no longer fails with an error when the same stock is being downloaded in the background at that moment (just added to a watchlist, say): saving a stock and its dividends is now one step, so two downloads can't clash.
 - The "Beat their index" comparison reads the stocks after downloading the indices, so a stock updated during the download is judged on its new data.
 - "Report a problem" fills in Docker, not uv, as the install method when you run the Docker image.

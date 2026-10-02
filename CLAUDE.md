@@ -34,6 +34,12 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
                        review before 1.0.
   services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
                        the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
+  services/brokers/    broker exports → purchase lots: Trade, open_lots (FIFO sells, one lot per stock
+                       per day, oversold/closed counts); zerodha.py reads Console tradebooks (CSV or
+                       Excel, header found by name; EQ only; NSE → .NS, BSE → .BO, NSE wins per ISIN)
+  api/v1/imports.py    POST /imports/zerodha/preview and /imports/zerodha (files read in memory, not
+                       kept; lots already there by ticker + date are skipped). UI: Import → Zerodha
+                       (components/investments/BrokerImport.tsx)
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
   web/                 built interface (gitignored; filled by scripts/build_web.py)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)

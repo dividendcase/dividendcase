@@ -140,6 +140,9 @@ hands over to the next without a cut.
 | Revolut | Trading account statement (CSV) | Ticker | Buys, sells and dividends |
 | Degiro | Transactions and account statement (CSV) | ISIN + exchange | Dividends and dividend tax are separate rows |
 
+**Progress:** Zerodha tradebooks import (October 2026), tested on invented trades; waiting for a real,
+anonymised export to check the format before 0.4.0. Next: Angel One.
+
 **Follow-up once imports work:** import the dividends actually received and the tax withheld, then
 compare them with what the app expected. When a broker withheld a different rate from our estimate,
 offer to use the broker's rate for that country.
