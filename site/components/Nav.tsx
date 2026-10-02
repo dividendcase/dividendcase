@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { List, X } from "@phosphor-icons/react";
 import { Logo } from "@dividendcase/brand/logo";
 import { GitHubIcon } from "./icons";
 import { GITHUB_URL, NAV_LINKS, buttonPrimary } from "./site";
@@ -35,7 +35,7 @@ export function Nav() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b backdrop-blur-md transition-colors duration-200 ${
+      className={`fixed inset-x-0 top-0 z-50 border-b backdrop-blur-md transition-colors duration-200 ${
         solid ? "border-line bg-ground/85" : "border-transparent bg-ground/60"
       }`}
     >
@@ -65,7 +65,7 @@ export function Nav() {
             <GitHubIcon className="size-[18px]" />
           </a>
           <a href="#install" className={`${buttonPrimary} py-2! max-sm:hidden`}>
-            Install free
+            Install for free
           </a>
           <button
             type="button"
@@ -75,7 +75,7 @@ export function Nav() {
             aria-label={open ? "Close menu" : "Open menu"}
             onClick={() => setOpen((o) => !o)}
           >
-            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
+            {open ? <X className="size-5" aria-hidden /> : <List className="size-5" aria-hidden />}
           </button>
         </div>
       </div>
@@ -85,7 +85,7 @@ export function Nav() {
         hidden={!open}
         className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto border-y border-line bg-ground shadow-pop lg:hidden"
       >
-        <nav aria-label="Menu" className="container-page py-3">
+        <nav aria-label="List" className="container-page py-3">
           <ul className="flex flex-col">
             {NAV_LINKS.map((l) => (
               <li key={l.href}>
@@ -100,7 +100,7 @@ export function Nav() {
             ))}
           </ul>
           <a href="#install" onClick={() => setOpen(false)} className={`${buttonPrimary} mt-3 mb-2 w-full`}>
-            Install free
+            Install for free
           </a>
         </nav>
       </div>

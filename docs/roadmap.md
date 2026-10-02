@@ -98,12 +98,29 @@ hands over to the next without a cut.
     - the page works without WebGL.
   - The page stays a static export.
 
+### Progress
+
+- 2 Oct 2026: storyboard reviewed (a private Design canvas; the link is in Claude's project memory).
+- Decisions:
+  - headline emphasis in green, no serif on the website;
+  - Phosphor icons;
+  - real screenshots of the app for product previews, taken with an example portfolio of invented numbers;
+  - the site stays in this public repo, so we write our own scenes.
+- Frames 1 to 6 (hero and the pinned film) are built in `site/components/film/`. The vault and dial are
+  SVG with CSS 3D rather than WebGL, so they match the logo exactly and work on phones; three.js draws
+  the payment particles on desktop. After review the hero gained labelled payment trails, a smaller
+  dial with numbers 0 to 90, and a slower, smoother hand-over to the vault.
+- Frames 7 to 12 are built too: a dotted globe (2D canvas), the privacy wires, research tiles and the
+  install frame with real screenshots, open source with the FAQ, and the footer. The screenshots come
+  from `scripts/demo_server.py` (an invented example portfolio, network blocked), and the film uses the
+  same figures. The hosted site's export imports into the app as is (same Excel layout).
+
 ### Steps
 
 1. **Set up** (Pratik approves each step):
    - install taste-skill;
    - connect the Originkit and 21st MCP servers;
-   - add GSAP, `@gsap/react`, Lenis and three, @react-three/fiber and @react-three/drei to `site/`.
+   - add GSAP, `@gsap/react`, Lenis, three and Phosphor to `site/` (done; react-three-fiber wasn't needed).
 2. **Storyboard for review before any code:** a frame and the copy for each scene, published as a
    private page for Pratik.
 3. **Build in this order:**
