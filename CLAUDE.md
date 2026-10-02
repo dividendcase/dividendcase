@@ -47,7 +47,13 @@ site/                  dividendcase.com: Next 16 static export; not deployed yet
                        timeline (vault and dial in SVG + CSS 3D, payment particles in three.js loaded
                        when idle, desktop only); FilmStatic for reduced motion; example.ts holds the
                        invented example portfolio. Lenis smooth scroll (SmoothScroll.tsx); GSAP drives
-                       scroll scenes, Motion interaction, never both on one element; Phosphor icons
+                       scroll scenes, Motion interaction, never both on one element; Phosphor icons.
+                       Then Markets (globe/: a dotted 2D-canvas globe; land.ts is a Natural Earth
+                       bitmask), Privacy, Research (tiles with real app screenshots), Install,
+                       OpenSource (+ FAQ), Footer. public/shots/ holds the screenshots
+scripts/demo_server.py the app on an invented example portfolio, network blocked (like the tests), for
+                       screenshots: `uv run python scripts/demo_server.py` → :8770. The website's
+                       screenshots and the film's figures (film/example.ts) come from it, so they agree
 scripts/build_web.py   npm ci (root) + build frontend + copy frontend/out into src/dividendcase/web
 scripts/smoke_test.py  start an installed `dividendcase` on a temp data folder and check it (pass the
                        full path locally: `uv run` puts this repo's own environment first on PATH)

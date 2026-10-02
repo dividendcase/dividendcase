@@ -65,8 +65,8 @@ export function IncomeChart({ afterTax = false }: { afterTax?: boolean }) {
   return (
     <div>
       <div className="flex h-[30vh] items-end md:h-[34vh]">
-        {MONTHS.map((m) => (
-          <div key={m.month} className="flex h-full flex-1 items-end justify-center">
+        {MONTHS.map((m, i) => (
+          <div key={`${m.month}-${i}`} className="flex h-full flex-1 items-end justify-center">
             <div
               data-bar=""
               className="relative flex w-[clamp(14px,4.1vw,58px)] origin-bottom flex-col"
@@ -99,8 +99,8 @@ export function IncomeChart({ afterTax = false }: { afterTax?: boolean }) {
       </div>
       <div className="h-px bg-line" />
       <div data-months="" className="mt-3 flex font-mono text-[10px] text-ink-3 md:text-[12px]">
-        {MONTHS.map((m) => (
-          <span key={m.month} className="flex-1 text-center">
+        {MONTHS.map((m, i) => (
+          <span key={`${m.month}-${i}`} className="flex-1 text-center">
             <span className="md:hidden">{m.month[0]}</span>
             <span className="hidden md:inline">{m.month}</span>
           </span>

@@ -1,7 +1,6 @@
 /** Facts and links shared across the page. Keep these true to the app as it ships today. */
 
 export const GITHUB_URL = "https://github.com/dividendcase/dividendcase";
-export const LOCAL_URL = "http://127.0.0.1:8765";
 
 export const NAV_LINKS = [
   { href: "#features", label: "Features" },
@@ -10,7 +9,6 @@ export const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ] as const;
 
-export const MARKETS = ["NYSE", "NASDAQ", "LSE", "Euronext Dublin", "NSE", "BSE", "TSX", "ASX"] as const;
 
 export const DATA_FOLDERS = {
   macos: "~/Library/Application Support/DividendCase",

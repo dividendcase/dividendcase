@@ -1,18 +1,25 @@
+"use client";
+
+import { useRef } from "react";
 import { Dial } from "./Dial";
 import { EXCHANGE_COUNT, GROSS_TOTAL, HOLDINGS, NET_TOTAL, WITHHELD_TOTAL, formatEuro } from "./example";
 import { HeroCopy, HoldingCard, IncomeChart, RateChips } from "./parts";
+import { PaymentTrails } from "./PaymentTrails";
 
 /**
  * The film for visitors who ask for less motion: the same words and pictures, still and in order.
  * Each scene shows its final frame.
  */
 export function FilmStatic() {
+  const hero = useRef<HTMLElement>(null);
+  const dial = useRef<SVGSVGElement>(null);
   return (
     <>
-      <section aria-labelledby="hero-title" className="relative overflow-hidden">
-        <div className="container-page grid min-h-[calc(100dvh-4rem)] grid-cols-1 items-center gap-10 py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+      <section ref={hero} aria-labelledby="hero-title" className="relative overflow-hidden">
+        <PaymentTrails stageRef={hero} dialRef={dial} still />
+        <div className="container-page relative grid min-h-dvh grid-cols-1 items-center gap-10 pt-28 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
           <HeroCopy />
-          <Dial glow className="mx-auto w-full max-w-[560px]" />
+          <Dial ref={dial} glow className="mx-auto w-full max-w-[480px]" />
         </div>
       </section>
 

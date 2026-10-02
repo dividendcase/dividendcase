@@ -1,242 +1,217 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { CaretDown, Check, Copy, Flask } from "@phosphor-icons/react";
-import { DATA_FOLDERS, GITHUB_URL, LOCAL_URL } from "./site";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+import { Check, Copy } from "@phosphor-icons/react";
+import { GITHUB_URL } from "./site";
 
-type OsKey = "macos" | "windows" | "linux";
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-const OSES: { key: OsKey; label: string; prompt: string; uv: string; shell: string }[] = [
+type Tab = { key: string; label: string; prompt: string; commands: string[] };
+
+/** The install commands, as in the README */
+const TABS: Tab[] = [
   {
-    key: "macos",
-    label: "macOS",
+    key: "unix",
+    label: "macOS and Linux",
     prompt: "$",
-    shell: "Terminal",
-    uv: "curl -LsSf https://astral.sh/uv/install.sh | sh",
+    commands: ["curl -LsSf https://astral.sh/uv/install.sh | sh", "uv tool install dividendcase", "dividendcase"],
   },
   {
     key: "windows",
     label: "Windows",
     prompt: ">",
-    shell: "PowerShell",
-    uv: 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
+    commands: [
+      'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
+      "uv tool install dividendcase",
+      "dividendcase",
+    ],
   },
   {
-    key: "linux",
-    label: "Linux",
+    key: "docker",
+    label: "Docker",
     prompt: "$",
-    shell: "a terminal",
-    uv: "curl -LsSf https://astral.sh/uv/install.sh | sh",
+    commands: [
+      "docker run -d --name dividendcase --restart unless-stopped -p 127.0.0.1:8765:8765 -v dividendcase-data:/data ghcr.io/dividendcase/dividendcase:latest",
+    ],
   },
 ];
 
-const FROM_SOURCE = [
-  { cmd: `git clone ${GITHUB_URL}` },
-  { cmd: "cd dividendcase" },
-  { cmd: "uv sync" },
-  { cmd: "uv run python scripts/build_web.py", note: "needs Node.js 20 or newer" },
-  { cmd: "uv run dividendcase" },
-];
+const APP_URL = "http://127.0.0.1:8765/dashboard/";
 
+/**
+ * Frame 10: install. When the section comes into view the commands type themselves, the app's
+ * startup lines follow and the browser opens on the app (a real screenshot, with an example
+ * portfolio of invented numbers).
+ */
 export function Install() {
-  const [os, setOs] = useState<OsKey>("macos");
-  const tabRefs = useRef<Record<OsKey, HTMLButtonElement | null>>({ macos: null, windows: null, linux: null });
+  const section = useRef<HTMLElement>(null);
+  const [tab, setTab] = useState(TABS[0].key);
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const current = TABS.find((t) => t.key === tab)!;
 
   // Start on the visitor's own system
   useEffect(() => {
-    const ua = navigator.userAgent;
-    if (/Windows/i.test(ua)) setOs("windows");
-    else if (/Linux|X11|CrOS/i.test(ua) && !/Android/i.test(ua)) setOs("linux");
+    if (/Windows/i.test(navigator.userAgent)) setTab("windows");
   }, []);
 
+  useGSAP(
+    () => {
+      const q = gsap.utils.selector(section);
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      gsap.set(q("[data-output], [data-browser]"), { autoAlpha: 0 });
+      // Type each command by uncovering it a character at a time (the text itself is never changed)
+      const tl = gsap.timeline({ paused: true });
+      q("[data-command]").forEach((el) => {
+        const chars = el.textContent?.length ?? 1;
+        tl.fromTo(
+          el,
+          { clipPath: "inset(0 100% 0 0)" },
+          { clipPath: "inset(0 0% 0 0)", duration: Math.min(1.1, chars * 0.022), ease: `steps(${chars})` },
+        ).to({}, { duration: 0.25 });
+      });
+      tl.to(q("[data-output]"), { autoAlpha: 1, duration: 0.3, stagger: 0.35 })
+        .fromTo(
+          q("[data-browser]"),
+          { autoAlpha: 0, y: 40, scale: 0.96 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" },
+          "+=0.2",
+        );
+      ScrollTrigger.create({ trigger: section.current, start: "top 55%", once: true, onEnter: () => tl.play() });
+      gsap.from(q("[data-reveal]"), {
+        autoAlpha: 0,
+        y: 24,
+        duration: 0.8,
+        ease: "power3.out",
+        stagger: 0.08,
+        scrollTrigger: { trigger: section.current, start: "top 70%", once: true },
+      });
+    },
+    { scope: section },
+  );
+
   function onTabKey(e: KeyboardEvent<HTMLButtonElement>) {
-    const i = OSES.findIndex((o) => o.key === os);
+    const i = TABS.findIndex((t) => t.key === tab);
     let next = i;
-    if (e.key === "ArrowRight") next = (i + 1) % OSES.length;
-    else if (e.key === "ArrowLeft") next = (i - 1 + OSES.length) % OSES.length;
+    if (e.key === "ArrowRight") next = (i + 1) % TABS.length;
+    else if (e.key === "ArrowLeft") next = (i - 1 + TABS.length) % TABS.length;
     else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = OSES.length - 1;
+    else if (e.key === "End") next = TABS.length - 1;
     else return;
     e.preventDefault();
-    const key = OSES[next].key;
-    setOs(key);
-    tabRefs.current[key]?.focus();
+    setTab(TABS[next].key);
+    tabRefs.current[TABS[next].key]?.focus();
   }
 
   return (
-    <section id="install" aria-labelledby="install-title" className="py-24 sm:py-28">
-      <div className="container-page">
-        <div className="max-w-[640px]">
-          <p className="eyebrow">Install</p>
-          <h2 id="install-title" className="heading mt-4 text-[34px] sm:text-[44px]">
-            Up and running in three <span className="text-sprout">steps</span>.
+    <section ref={section} id="install" aria-labelledby="install-title" className="container-page py-28 md:py-40">
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
+        <div className="lg:pt-10">
+          <h2 id="install-title" data-reveal="" className="heading text-[clamp(32px,3.6vw,52px)]">
+            Install it in a minute.
           </h2>
-          <p className="mt-4 text-[17px] leading-[1.6] text-ink-2">
-            DividendCase installs with uv, a small tool that also sets up Python for you. It&apos;s free, and there
-            is nothing to sign up for.
+          <p data-reveal="" className="mt-4 max-w-[440px] text-[17px] leading-[1.6] text-pretty text-ink-2 md:text-[19px]">
+            Free. It installs with uv, which sets up Python for you, then opens in your browser.
+          </p>
+          <dl data-reveal="" className="mt-10 space-y-3 text-[14px]">
+            <div className="flex flex-wrap gap-x-3">
+              <dt className="w-16 text-ink-3">Update</dt>
+              <dd className="num text-ink-2">uv tool upgrade dividendcase</dd>
+            </div>
+            <div className="flex flex-wrap gap-x-3">
+              <dt className="w-16 text-ink-3">Remove</dt>
+              <dd className="num text-ink-2">uv tool uninstall dividendcase</dd>
+            </div>
+          </dl>
+          <p data-reveal="" className="mt-8 text-[14px] text-ink-3">
+            Prefer to build it yourself?{" "}
+            <a href={`${GITHUB_URL}#readme`} className="text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink">
+              Run it from source
+            </a>
+            .
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          {/* Install with uv, per system */}
-          <div className="rounded-2xl border border-line bg-surface shadow-card">
+        <div className="relative">
+          <div className="relative z-10 overflow-hidden rounded-2xl border border-line-strong bg-well shadow-pop">
+            <div className="flex items-center justify-between gap-3 border-b border-line bg-surface px-2.5 py-2">
+              <div role="tablist" aria-label="Your system" className="flex gap-1 overflow-x-auto">
+                {TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    ref={(el) => {
+                      tabRefs.current[t.key] = el;
+                    }}
+                    type="button"
+                    role="tab"
+                    id={`install-tab-${t.key}`}
+                    aria-selected={t.key === tab}
+                    aria-controls="install-panel"
+                    tabIndex={t.key === tab ? 0 : -1}
+                    onClick={() => setTab(t.key)}
+                    onKeyDown={onTabKey}
+                    className={`h-8 rounded-lg px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${
+                      t.key === tab ? "bg-overlay text-ink" : "text-ink-3 hover:text-ink-2"
+                    }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+              <CopyButton text={current.commands.join("\n")} />
+            </div>
             <div
-              role="tablist"
-              aria-label="Operating system"
-              className="flex gap-1 border-b border-line p-2"
+              id="install-panel"
+              role="tabpanel"
+              aria-labelledby={`install-tab-${tab}`}
+              className="space-y-1.5 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.75] md:px-6 md:text-[14px]"
             >
-              {OSES.map((o) => (
-                <button
-                  key={o.key}
-                  ref={(el) => {
-                    tabRefs.current[o.key] = el;
-                  }}
-                  id={`tab-${o.key}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={os === o.key}
-                  aria-controls={`panel-${o.key}`}
-                  tabIndex={os === o.key ? 0 : -1}
-                  onClick={() => setOs(o.key)}
-                  onKeyDown={onTabKey}
-                  className={`rounded-lg px-4 py-2 text-[14px] font-medium transition-colors ${
-                    os === o.key ? "bg-raised text-ink" : "text-ink-3 hover:text-ink"
-                  }`}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
-
-            {OSES.map((o) => (
-              <div
-                key={o.key}
-                id={`panel-${o.key}`}
-                role="tabpanel"
-                aria-labelledby={`tab-${o.key}`}
-                hidden={os !== o.key}
-                className="p-5 sm:p-6"
-              >
-                <ol className="space-y-7">
-                  <Step n={1} title="Install uv">
-                    <p>
-                      Open {o.shell} and paste this. uv installs Python for you when it&apos;s needed.
-                    </p>
-                    <Command prompt={o.prompt} cmd={o.uv} />
-                  </Step>
-                  <Step n={2} title="Install DividendCase">
-                    <p>The app and everything it needs, kept apart from the rest of your computer.</p>
-                    <Command prompt={o.prompt} cmd="uv tool install dividendcase" />
-                  </Step>
-                  <Step n={3} title="Run it">
-                    <Command prompt={o.prompt} cmd="dividendcase" />
-                    <p>
-                      It opens <span className="num text-ink">{LOCAL_URL}</span> in your browser once it&apos;s ready (the first
-                      start takes up to a minute). Your data is kept in{" "}
-                      <span className="num text-ink [overflow-wrap:anywhere]">{DATA_FOLDERS[o.key]}</span>.
-                    </p>
-                  </Step>
-                </ol>
-              </div>
-            ))}
-          </div>
-
-          {/* Early access: run from source */}
-          <div className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
-            <div className="flex gap-3.5">
-              <span className="grid size-9 flex-none place-items-center rounded-xl border border-line bg-raised text-ink">
-                <Flask className="size-4" aria-hidden />
-              </span>
-              <div>
-                <p className="text-[16px] font-semibold tracking-[-0.01em] text-ink">An early release</p>
-                <p className="mt-1 text-[15px] leading-[1.6] text-ink-2">
-                  DividendCase is new, so updates come often. The app tells you when one is out, and saves a copy of
-                  your data before an update changes anything.
+              {current.commands.map((c, i) => (
+                <p key={`${tab}-${i}`} className="whitespace-pre text-ink">
+                  <span className="text-ink-3 select-none">{current.prompt} </span>
+                  {/* Typed in on first view; switching tabs shows the others whole */}
+                  <span data-command={tab === TABS[0].key ? "" : undefined} className="inline-block">
+                    {c}
+                  </span>
                 </p>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2">
-              <Command prompt="$" cmd="uv tool upgrade dividendcase" />
-              <p className="pl-1 font-mono text-[11.5px] text-ink-3">
-                To remove it: uv tool uninstall dividendcase (your data folder stays)
+              ))}
+              <p data-output="" className="pt-2 whitespace-pre text-ink-3">
+                Starting DividendCase at {APP_URL}
+              </p>
+              <p data-output="" className="whitespace-pre">
+                <span className="text-sprout-hi">Ready.</span>
+                <span className="text-ink-2"> Opening {APP_URL}</span>
               </p>
             </div>
-
-            <details className="group mt-5 rounded-xl border border-line bg-well">
-              <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3 text-[14.5px] font-medium text-ink">
-                Run it from source
-                <CaretDown
-                  className="size-4 flex-none text-ink-3 transition-transform duration-200 group-open:rotate-180"
-                  aria-hidden
-                />
-              </summary>
-              <div className="space-y-3 border-t border-line p-4">
-                <p className="text-[13.5px] leading-[1.6] text-ink-2">
-                  You need uv (step 1), git, and Node.js 20 or newer to build the interface.
-                </p>
-                <ol className="space-y-2">
-                  {FROM_SOURCE.map((s) => (
-                    <li key={s.cmd}>
-                      <Command prompt="$" cmd={s.cmd} />
-                      {s.note && <p className="mt-1 pl-1 font-mono text-[11.5px] text-ink-3">{s.note}</p>}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </details>
           </div>
+
+          <figure data-browser="" className="relative mt-5 overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop lg:mt-6 lg:ml-12">
+            <div className="flex h-10 items-center justify-center border-b border-line bg-raised">
+              <span className="rounded-md bg-well px-3 py-1 font-mono text-[12px] text-ink-2">127.0.0.1:8765/dashboard/</span>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element -- a static export serves images as files */}
+            <img
+              src="/shots/income-home.webp"
+              srcSet="/shots/income-home.webp 2x"
+              width={1440}
+              height={900}
+              alt="The DividendCase Income page with an example portfolio: expected dividends for the next 12 months, after tax, by month"
+              loading="lazy"
+              className="block h-auto w-full"
+            />
+            <figcaption className="sr-only">Example portfolio with invented numbers</figcaption>
+          </figure>
         </div>
       </div>
     </section>
   );
 }
 
-function Step({
-  n,
-  title,
-  badge,
-  children,
-}: {
-  n: number;
-  title: string;
-  badge?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="grid grid-cols-[28px_minmax(0,1fr)] gap-x-4">
-      <span className="num grid size-7 place-items-center rounded-full border border-line-strong text-[12.5px] text-ink">
-        {n}
-      </span>
-      <div className="min-w-0 space-y-3 text-[14.5px] leading-[1.6] text-ink-2">
-        <h3 className="flex flex-wrap items-center gap-2.5 pt-0.5 text-[16px] font-semibold tracking-[-0.01em] text-ink">
-          {title}
-          {badge}
-        </h3>
-        {children}
-      </div>
-    </li>
-  );
-}
-
-function Command({ prompt, cmd }: { prompt: string; cmd: string }) {
-  return (
-    <div className="flex items-start gap-2 rounded-lg border border-line bg-ground py-1.5 pr-1.5 pl-3.5">
-      <span className="py-1.5 font-mono text-[13px] text-ink-3 select-none" aria-hidden="true">
-        {prompt}
-      </span>
-      <code className="min-w-0 flex-1 py-1.5 font-mono text-[13px] leading-[1.55] whitespace-pre-wrap text-ink [overflow-wrap:anywhere]">
-        {cmd}
-      </code>
-      <CopyButton text={cmd} />
-    </div>
-  );
-}
-
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
-
+  const timer = useRef(0);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   async function copy() {
@@ -264,13 +239,13 @@ function CopyButton({ text }: { text: string }) {
       <button
         type="button"
         onClick={copy}
-        aria-label={copied ? "Copied" : `Copy command: ${text}`}
-        className={`inline-flex h-8 flex-none items-center gap-1.5 rounded-md px-2.5 text-[12.5px] font-medium transition-colors ${
+        aria-label={copied ? "Copied" : "Copy the commands"}
+        className={`inline-flex h-8 flex-none items-center gap-1.5 rounded-lg border border-line-strong px-2.5 text-[12.5px] font-medium transition-colors active:translate-y-px ${
           copied ? "text-sprout-hi" : "text-ink-2 hover:bg-raised hover:text-ink"
         }`}
       >
         {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
-        <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+        {copied ? "Copied" : "Copy"}
       </button>
       <span className="sr-only" role="status">
         {copied ? "Copied to clipboard" : ""}

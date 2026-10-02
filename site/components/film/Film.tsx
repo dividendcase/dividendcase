@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { Dial, TICK_RING } from "./Dial";
 import { FilmStatic } from "./FilmStatic";
 import { ParticleCanvas } from "./ParticleCanvas";
+import { PaymentTrails } from "./PaymentTrails";
 import type { ParticleControls } from "./particles";
 import { HeroCopy, HoldingCard, IncomeChart, RateChips } from "./parts";
 import { EXCHANGE_COUNT, GROSS_TOTAL, HOLDINGS, NET_TOTAL, WITHHELD_TOTAL, formatEuro } from "./example";
@@ -53,6 +54,9 @@ function FilmScroll() {
   const vault = useRef<HTMLDivElement>(null);
   const dial = useRef<SVGSVGElement>(null);
   const [particles] = useState<ParticleControls>(() => ({ inside: 0, opacity: 0 }));
+  // New payments arrive only while the hero is on screen
+  const heroOnScreen = useRef(true);
+  const heroActive = useCallback(() => heroOnScreen.current, []);
 
   useGSAP(
     () => {
@@ -71,13 +75,35 @@ function FilmScroll() {
           scale,
         };
       };
+      /** Where the hero's words end, measured on the text itself rather than its boxes */
+      const words = () => {
+        const box = stage.current!.getBoundingClientRect();
+        let right = 0;
+        let bottom = 0;
+        for (const el of q("[data-hero] h1, [data-hero] p")) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const r = range.getBoundingClientRect();
+          right = Math.max(right, r.right - box.left);
+          bottom = Math.max(bottom, r.bottom - box.top);
+        }
+        return { right, bottom };
+      };
+      /** The dial beside the words when there's room for it, else below them, cut off by the bottom edge */
       const hero = () => {
         const { clientWidth: W, clientHeight: H } = stage.current!;
-        return W < 768 ? place(W * 0.5, H * 0.82, W * 0.95) : place(W * 0.74, H * 0.54, Math.min(W * 0.44, H * 0.76));
+        const text = words();
+        const room = W - text.right - 48;
+        if (W >= 768 && room >= 300) {
+          return place(text.right + 48 + room / 2, H * 0.55, Math.min(room - 24, W * 0.36, H * 0.64));
+        }
+        const d = Math.min(W * 0.84, 520);
+        return place(W / 2, Math.max(text.bottom + d * 0.62, H * 0.8), d);
       };
+      // Filling the screen, set right of centre so the caption at the bottom left has dark ground
       const turn = () => {
         const { clientWidth: W, clientHeight: H } = stage.current!;
-        return place(W / 2, H / 2, Math.max(Math.min(W, H) * 1.25, 560));
+        return place(W >= 768 ? W * 0.62 : W / 2, H / 2, Math.max(Math.min(W, H) * 1.25, 560));
       };
 
       // The dial: rotation of the turning parts plus a little pointer play in the hero
@@ -110,13 +136,17 @@ function FilmScroll() {
           trigger: section.current,
           start: "top top",
           end: "bottom bottom",
-          scrub: 0.7,
+          // A second and a half of catch-up: a fast flick of the wheel plays the film through
+          // instead of jumping to the end of it
+          scrub: 1.5,
           invalidateOnRefresh: true,
+          onUpdate: (self) => (heroOnScreen.current = self.progress < 0.06),
         },
       });
 
       // 0-1: the hero leaves and the dial moves to the centre
       tl.to(one("[data-hero]"), { autoAlpha: 0, y: -70, duration: 0.7, ease: "power2.in" }, 0)
+        .to(one("[data-trails]"), { autoAlpha: 0, duration: 0.5 }, 0)
         .fromTo(
           vault.current,
           { x: () => hero().x, y: () => hero().y, scale: () => hero().scale },
@@ -130,8 +160,8 @@ function FilmScroll() {
         .to(one("[data-caption='turn']"), { autoAlpha: 0, y: -26, duration: 0.3 }, 2.6);
 
       // 3-4: pull back to the whole vault
-      tl.to(vault.current, { x: 0, y: 0, scale: 1, duration: 1 }, 3)
-        .fromTo(q("[data-shell]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 }, 3.25);
+      tl.to(vault.current, { x: 0, y: () => -stage.current!.clientHeight * 0.05, scale: 1, duration: 1.1, ease: "power3.inOut" }, 3)
+        .fromTo(q("[data-shell]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.85, ease: "power1.out" }, 3.1);
 
       // 4-5.2: the door opens and light spills out
       tl.fromTo(
@@ -145,10 +175,11 @@ function FilmScroll() {
         .to(one("[data-caption='open']"), { autoAlpha: 0, y: -26, duration: 0.3 }, 4.95);
 
       // 5.2-6.2: through the opening
-      tl.to(vault.current, { scale: 11, duration: 1, ease: "power3.in" }, 5.2)
-        .to(vault.current, { autoAlpha: 0, duration: 0.3, ease: "none" }, 5.95)
-        .fromTo(one("[data-interior]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, 5.65)
-        .to(particles, { inside: 1, duration: 0.8 }, 5.4);
+      // The opening's light grows until it is the room; the vault fades only once it fills the screen
+      tl.to(vault.current, { scale: 11, duration: 1.2, ease: "power2.in" }, 5.2)
+        .fromTo(one("[data-interior]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.7, ease: "power1.inOut" }, 5.5)
+        .to(vault.current, { autoAlpha: 0, duration: 0.55, ease: "power1.in" }, 5.85)
+        .to(particles, { inside: 1, duration: 0.9 }, 5.35);
 
       // 6.2-7.4: holdings arrive
       const cards = q("[data-card]");
@@ -221,7 +252,7 @@ function FilmScroll() {
   );
 
   return (
-    <section ref={section} id="how-it-works" aria-labelledby="hero-title" className="relative h-[760dvh]">
+    <section ref={section} id="how-it-works" aria-labelledby="hero-title" className="relative h-[880dvh]">
       <div ref={stage} className="sticky top-0 h-dvh w-full overflow-hidden">
         {/* Inside the vault: green light and a floor that runs away from you */}
         <div data-interior="" className="invisible absolute inset-0 opacity-0" aria-hidden="true">
@@ -248,7 +279,11 @@ function FilmScroll() {
             <div
               data-shell=""
               className="invisible opacity-0 absolute inset-0 rounded-[2.6%/3.8%] border border-[#7a7a92] bg-gradient-to-r from-[#4c4c60] via-[#66667e] to-[#5a5a70] shadow-[30px_0_60px_rgb(0_0_0/0.55),inset_0_1px_0_rgb(255_255_255/0.12)]"
-            />
+            >
+              {/* The door's inset panel, and the faint sheen of brushed steel */}
+              <div className="absolute inset-[6%_5%] rounded-[2%/3%] border border-[#7c7c96]/60 shadow-[inset_0_2px_10px_rgb(0_0_0/0.25),0_1px_0_rgb(255_255_255/0.08)]" />
+              <div className="absolute inset-0 rounded-[inherit] bg-[repeating-linear-gradient(90deg,rgb(255_255_255/0.025)_0_1px,transparent_1px_4px)]" />
+            </div>
             <Dial
               ref={dial}
               glow
@@ -256,6 +291,8 @@ function FilmScroll() {
             />
           </div>
         </div>
+
+        <PaymentTrails stageRef={stage} dialRef={dial} active={heroActive} />
 
         {/* 1: the hero */}
         <div data-hero="" className="container-page relative flex h-full flex-col pt-24 md:justify-center md:pt-0">
@@ -312,7 +349,7 @@ function FilmScroll() {
                     <span className="num">{formatEuro(WITHHELD_TOTAL)}</span> kept at source from{" "}
                     <span className="num">{formatEuro(GROSS_TOTAL)}</span>, for a resident of Ireland
                   </p>
-                  <RateChips className="mt-3 md:max-w-[560px] md:justify-end" />
+                  <RateChips className="mt-3 md:max-w-[640px] md:justify-end" />
                 </div>
               </div>
             </div>
@@ -342,13 +379,13 @@ function Caption({ name, title, body, align = "left" }: { name: string; title: s
   return (
     <div
       data-caption={name}
-      className="pointer-events-none invisible absolute inset-x-0 bottom-0 pb-[10vh] opacity-0"
+      className="pointer-events-none invisible absolute inset-x-0 bottom-0 pb-[8vh] opacity-0"
     >
       <div
-        className={`absolute inset-0 ${
+        className={`absolute -inset-y-24 inset-x-0 ${
           right
-            ? "bg-[radial-gradient(ellipse_70%_100%_at_100%_100%,rgb(14_14_19/0.97)_30%,rgb(14_14_19/0.7)_60%,transparent_100%)]"
-            : "bg-[radial-gradient(ellipse_70%_100%_at_0%_100%,rgb(14_14_19/0.97)_30%,rgb(14_14_19/0.7)_60%,transparent_100%)]"
+            ? "bg-[radial-gradient(ellipse_62%_90%_at_100%_100%,rgb(14_14_19/0.98)_38%,rgb(14_14_19/0.8)_62%,transparent_100%)]"
+            : "bg-[radial-gradient(ellipse_62%_90%_at_0%_100%,rgb(14_14_19/0.98)_38%,rgb(14_14_19/0.8)_62%,transparent_100%)]"
         }`}
       />
       <div className={`container-page relative flex flex-col ${right ? "md:items-end md:text-right" : ""}`}>

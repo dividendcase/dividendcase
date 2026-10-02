@@ -108,7 +108,12 @@ hands over to the next without a cut.
   - the site stays in this public repo, so we write our own scenes.
 - Frames 1 to 6 (hero and the pinned film) are built in `site/components/film/`. The vault and dial are
   SVG with CSS 3D rather than WebGL, so they match the logo exactly and work on phones; three.js draws
-  the payment particles on desktop.
+  the payment particles on desktop. After review the hero gained labelled payment trails, a smaller
+  dial with numbers 0 to 90, and a slower, smoother hand-over to the vault.
+- Frames 7 to 12 are built too: a dotted globe (2D canvas), the privacy wires, research tiles and the
+  install frame with real screenshots, open source with the FAQ, and the footer. The screenshots come
+  from `scripts/demo_server.py` (an invented example portfolio, network blocked), and the film uses the
+  same figures. The hosted site's export imports into the app as is (same Excel layout).
 
 ### Steps
 

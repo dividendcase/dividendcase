@@ -1,5 +1,3 @@
-import { Faq } from "@/components/Faq";
-import { Features } from "@/components/Features";
 import { Film } from "@/components/film/Film";
 import { Footer } from "@/components/Footer";
 import { Install } from "@/components/Install";
@@ -8,6 +6,7 @@ import { MotionProvider } from "@/components/MotionProvider";
 import { Nav } from "@/components/Nav";
 import { OpenSource } from "@/components/OpenSource";
 import { Privacy } from "@/components/Privacy";
+import { Research } from "@/components/Research";
 import { SmoothScroll } from "@/components/SmoothScroll";
 
 export default function Home() {
@@ -25,11 +24,10 @@ export default function Home() {
           <main id="main">
             <Film />
             <Markets />
-            <Features />
             <Privacy />
+            <Research />
             <Install />
             <OpenSource />
-            <Faq />
           </main>
           <Footer />
         </div>
