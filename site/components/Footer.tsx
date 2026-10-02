@@ -14,7 +14,7 @@ const LINKS = [
   { href: "https://pypi.org/project/dividendcase/", label: "PyPI" },
   { href: `${GITHUB_URL}/pkgs/container/dividendcase`, label: "Docker image" },
   { href: `${GITHUB_URL}/blob/main/SECURITY.md`, label: "Security" },
-  { href: "#privacy", label: "Privacy" },
+  { href: "/privacy/", label: "Privacy policy" },
 ];
 
 /**
@@ -54,7 +54,7 @@ export function Footer() {
             <p className="heading max-w-[620px] text-[clamp(32px,3.8vw,56px)]">Your dividends, on your computer.</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">
               <a
-                href="#install"
+                href="/#install"
                 className={`${buttonPrimary} px-5 py-3 text-[15px] shadow-[0_10px_30px_-12px_rgb(122_191_80/0.55)] active:translate-y-px`}
               >
                 Install for free

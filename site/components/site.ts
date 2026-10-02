@@ -2,13 +2,13 @@
 
 export const GITHUB_URL = "https://github.com/dividendcase/dividendcase";
 
+/** Section links start with "/" so they also work from other pages, such as /privacy/ */
 export const NAV_LINKS = [
-  { href: "#features", label: "Features" },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#privacy", label: "Privacy" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#features", label: "Features" },
+  { href: "/#how-it-works", label: "How it works" },
+  { href: "/#privacy", label: "Privacy" },
+  { href: "/#faq", label: "FAQ" },
 ] as const;
-
 
 export const DATA_FOLDERS = {
   macos: "~/Library/Application Support/DividendCase",

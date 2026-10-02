@@ -8,7 +8,7 @@ import { DATA_FOLDERS, GITHUB_URL } from "./site";
 const code = "font-mono text-[0.92em] text-ink";
 
 /** Short, plain answers; each one true of the app as it ships */
-const FAQS: { q: string; a: React.ReactNode }[] = [
+const FAQS: { q: string; a: React.ReactNode; id?: string }[] = [
   {
     q: "Is it really free?",
     a: <>Yes. It&apos;s open source under the AGPL, with no account and no subscription, and the app stays free.</>,
@@ -55,10 +55,15 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "I had an account on dividendcase.com.",
+    // Old addresses of the hosted app redirect here (site/vercel.json)
+    id: "hosted-account",
     a: (
       <>
-        Hosted accounts closed on 1 November 2026. If you exported your data, choose Import in the app and pick that
-        file: your portfolios and watchlists come back as they were.
+        Hosted accounts closed on 1&nbsp;November 2026. If you exported your data,{" "}
+        <a href="#install" className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-sprout">
+          install the app
+        </a>
+        , choose Import and pick that file: your portfolios and watchlists come back as they were.
       </>
     ),
   },
@@ -102,11 +107,12 @@ export function OpenSource() {
           {FAQS.map((f, i) => (
             <m.div
               key={f.q}
+              id={f.id}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.6, delay: i * 0.04, ease: [0.22, 1, 0.36, 1] }}
-              className="grid grid-cols-1 gap-2 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-10"
+              className="grid scroll-mt-8 grid-cols-1 gap-2 md:grid-cols-[minmax(0,240px)_minmax(0,1fr)] md:gap-10"
             >
               <dt className="text-[16px] leading-[1.45] font-medium text-ink md:text-[17px]">{f.q}</dt>
               <dd className="text-[15px] leading-[1.65] text-ink-2 md:text-[16px]">{f.a}</dd>
