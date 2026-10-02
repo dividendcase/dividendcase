@@ -11,8 +11,8 @@ const RIM = 274 / 680;
 type Point = { x: number; y: number };
 
 /**
- * Dividend payments arriving at the dial: a curved trail drawn in from the edge of the screen,
- * with the ticker and amount riding along it, absorbed into the dial's rim. New payments keep
+ * The dividends to expect, gathering at the dial: a curved trail drawn in from the edge of the
+ * screen, with the ticker, the expected amount and its date riding along it, absorbed into the rim. New payments keep
  * arriving while `active()` is true (the hero is on screen). `still` draws three finished trails
  * instead, for visitors who ask for less motion.
  */
@@ -106,7 +106,10 @@ export function PaymentTrails({
       const amount = document.createElement("span");
       amount.className = "text-sprout-hi";
       amount.textContent = payment.amount;
-      label.append(ticker, amount);
+      const when = document.createElement("span");
+      when.className = "text-ink-3";
+      when.textContent = payment.date;
+      label.append(ticker, amount, when);
       layer.appendChild(label);
 
       const length = path.getTotalLength();

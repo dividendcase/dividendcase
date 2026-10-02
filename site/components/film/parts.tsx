@@ -10,7 +10,7 @@ export function HeroCopy() {
         See what your dividends <span className="text-sprout">really</span> pay.
       </h1>
       <p className="mt-5 max-w-[520px] text-[17px] leading-[1.6] text-pretty text-ink-2 sm:text-[19px]">
-        Track dividend income from New York to Mumbai, after tax and in your currency. Free, open source, on your
+        Enter the shares you own and see what they should pay, after tax, in your currency. Free, on your
         computer.
       </p>
       <div className="mt-8 flex flex-wrap items-center gap-x-7 gap-y-4">

@@ -14,6 +14,15 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
     a: <>Yes. It&apos;s open source under the AGPL, with no account and no subscription, and the app stays free.</>,
   },
   {
+    q: "Does it connect to my broker or bank?",
+    a: (
+      <>
+        No. You enter your holdings yourself, by hand or from a spreadsheet, and the app estimates the dividends to
+        expect from each company&apos;s history. What you actually receive can differ.
+      </>
+    ),
+  },
+  {
     q: "Where is my data stored?",
     a: (
       <>
@@ -42,7 +51,7 @@ const FAQS: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is this financial advice?",
-    a: <>No. It shows what your holdings have paid and are expected to pay. The decisions are yours.</>,
+    a: <>No. It shows what your holdings have paid and estimates what they should pay. The decisions are yours.</>,
   },
   {
     q: "I had an account on dividendcase.com.",

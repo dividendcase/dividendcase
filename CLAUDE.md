@@ -144,6 +144,10 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 - Geist for UI, Geist Mono (`num`) for every number. Sentence case labels. No emoji. The app
   may use Instrument Serif italic (`serif-accent`) for one hero word; the website doesn't (decided
   2 Oct 2026): emphasis there is green Geist. No em dashes in website copy.
+- Website copy says what the app really does: the user enters holdings (by hand or from a spreadsheet),
+  the app estimates dividends from each company's history, and it never connects to a broker or bank.
+  Say "expected" or "estimate", never "received" or "arrives", and no "+" on amounts as if paid. Don't
+  mention broker imports on the site until they ship.
 - Use the brand classes (`bg-surface`, `bg-raised`, `border-line`, `text-ink-2`, `text-money`,
   `text-watch`, `text-cut`) rather than Tailwind palette colours.
 - `next dev` would write AGENTS.md/CLAUDE.md into the workspace; `agentRules: false` stops it.

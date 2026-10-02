@@ -317,13 +317,15 @@ function FilmScroll() {
           <div className="container-page flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-10">
             <div className="grid max-w-[640px]">
               <Heading name="holdings" title="Add what you own, from any market.">
-                Holdings and purchase lots in any currency, from New York to Mumbai.
+                You enter your holdings and purchase lots, by hand or from a spreadsheet. Nothing connects to your
+                broker or bank.
               </Heading>
-              <Heading name="calendar" title="See every payment coming.">
-                A 12-month calendar, projected from each holding&apos;s own payment history.
+              <Heading name="calendar" title="See what to expect, month by month.">
+                An estimate for the next 12 months, from the shares you entered and each company&apos;s past dividends.
               </Heading>
-              <Heading name="tax" title="And what actually reaches you.">
-                Tax kept at source by each country, for where you live. Then everything in your currency, at ECB rates.
+              <Heading name="tax" title="And what's left after tax.">
+                The tax each country usually keeps at source, for where you live. Then everything in your currency, at
+                ECB rates.
               </Heading>
             </div>
             <div className="grid md:justify-items-end md:text-right">
@@ -339,10 +341,10 @@ function FilmScroll() {
               <div data-meta="total" className="invisible opacity-0 [grid-area:1/1]">
                 <p className="grid text-[13px] text-ink-3 md:text-[14px]">
                   <span data-total-label="gross" className="[grid-area:1/1]">
-                    Next 12 months, example portfolio
+                    Expected in the next 12 months, example portfolio
                   </span>
                   <span data-total-label="net" className="invisible opacity-0 [grid-area:1/1]">
-                    After tax, next 12 months
+                    Expected after tax, next 12 months
                   </span>
                 </p>
                 <p data-total="" className="num mt-1 text-[clamp(30px,3.4vw,48px)] font-medium tracking-[-0.035em] text-ink">
@@ -350,7 +352,7 @@ function FilmScroll() {
                 </p>
                 <div data-tax-meta="" className="invisible opacity-0">
                   <p className="text-[13px] text-ink-2 md:text-[14px]">
-                    <span className="num">{formatEuro(WITHHELD_TOTAL)}</span> kept at source from{" "}
+                    About <span className="num">{formatEuro(WITHHELD_TOTAL)}</span> kept at source from{" "}
                     <span className="num">{formatEuro(GROSS_TOTAL)}</span>, for a resident of Ireland
                   </p>
                   <RateChips className="mt-3 md:max-w-[640px] md:justify-end" />

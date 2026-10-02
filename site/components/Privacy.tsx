@@ -139,7 +139,8 @@ export function Privacy() {
         Your holdings stay on your computer.
       </h2>
       <p data-reveal="" className="mt-4 max-w-[600px] text-[17px] leading-[1.6] text-pretty text-ink-2 md:text-[19px]">
-        The app only downloads public data. There&apos;s no account, no tracking, and nothing is sent to us.
+        The app only downloads public market data and never connects to your broker or bank. There&apos;s no account,
+        no tracking, and nothing is sent to us.
       </p>
 
       <div data-diagram="" className="relative mt-14 grid grid-cols-1 gap-12 md:mt-20 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] md:items-center md:gap-28">
