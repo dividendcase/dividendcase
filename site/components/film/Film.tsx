@@ -95,23 +95,27 @@ function FilmScroll() {
         const text = words();
         const room = W - text.right - 48;
         if (W >= 768 && room >= 300) {
-          return place(text.right + 48 + room / 2, H * 0.55, Math.min(room - 24, W * 0.36, H * 0.64));
+          return place(text.right + 48 + room / 2, H * 0.55, Math.min(room - 40, W * 0.3, H * 0.54));
         }
-        const d = Math.min(W * 0.84, 520);
+        const d = Math.min(W * 0.76, 440);
         return place(W / 2, Math.max(text.bottom + d * 0.62, H * 0.8), d);
       };
-      // Filling the screen, set right of centre so the caption at the bottom left has dark ground
+      // Large but whole, below the nav and right of centre, so the caption at the bottom left
+      // has dark ground
       const turn = () => {
         const { clientWidth: W, clientHeight: H } = stage.current!;
-        return place(W >= 768 ? W * 0.62 : W / 2, H / 2, Math.max(Math.min(W, H) * 1.25, 560));
+        const d = Math.min(W * (W >= 768 ? 0.62 : 0.9), (H - 64) * 0.84);
+        return place(W >= 768 ? W * 0.62 : W / 2, 64 + (H - 64) / 2, d);
       };
 
-      // The dial: rotation of the turning parts plus a little pointer play in the hero
-      const dialState = { theta: 0, pointer: 0 };
+      // The dial: the scroll's turn plus a little pointer play in the hero. They live in separate
+      // objects, so the pointer's tween can never replace the timeline's.
+      const dialState = { theta: 0 };
+      const pointer = { turn: 0 };
       const rotors = q("[data-rotor]");
       const lit = one("[data-lit]");
       const drawDial = () => {
-        gsap.set(rotors, { rotation: dialState.theta + dialState.pointer, svgOrigin: "340 340" });
+        gsap.set(rotors, { rotation: dialState.theta + pointer.turn, svgOrigin: "340 340" });
         lit.setAttribute("stroke-dasharray", `${(dialState.theta / 360) * TICK_RING} ${TICK_RING}`);
       };
       drawDial();
@@ -237,8 +241,8 @@ function FilmScroll() {
       const mouse = window.matchMedia("(pointer: fine)").matches;
       const onMove = (e: PointerEvent) => {
         if (tl.scrollTrigger && tl.scrollTrigger.progress > 0.05) return;
-        gsap.to(dialState, {
-          pointer: (e.clientX / window.innerWidth - 0.5) * 28,
+        gsap.to(pointer, {
+          turn: (e.clientX / window.innerWidth - 0.5) * 28,
           duration: 1.2,
           ease: "power3.out",
           onUpdate: drawDial,
