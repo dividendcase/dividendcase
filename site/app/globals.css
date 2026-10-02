@@ -1,30 +1,9 @@
 @import "tailwindcss";
 @import "@dividendcase/brand/tokens.css";
+@import "lenis/dist/lenis.css";
 
 /* The logo component lives in the shared brand package */
 @source "../../packages/brand/src";
-
-@theme {
-  /* The vault dial behind the hero card: one slow turn every two minutes */
-  --animate-dial: dial-spin 120s linear infinite;
-  /* The small card that floats next to the hero card */
-  --animate-float: float 5s ease-in-out infinite alternate;
-
-  @keyframes dial-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes float {
-    from {
-      transform: translateY(4px);
-    }
-    to {
-      transform: translateY(-4px);
-    }
-  }
-}
 
 @layer base {
   :root {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Check, ChevronDown, Copy, FlaskConical } from "lucide-react";
+import { CaretDown, Check, Copy, Flask } from "@phosphor-icons/react";
 import { DATA_FOLDERS, GITHUB_URL, LOCAL_URL } from "./site";
 
 type OsKey = "macos" | "windows" | "linux";
@@ -69,7 +69,7 @@ export function Install() {
         <div className="max-w-[640px]">
           <p className="eyebrow">Install</p>
           <h2 id="install-title" className="heading mt-4 text-[34px] sm:text-[44px]">
-            Up and running in three <em className="serif-accent text-[1.1em]">steps</em>.
+            Up and running in three <span className="text-sprout">steps</span>.
           </h2>
           <p className="mt-4 text-[17px] leading-[1.6] text-ink-2">
             DividendCase installs with uv, a small tool that also sets up Python for you. It&apos;s free, and there
@@ -145,7 +145,7 @@ export function Install() {
           <div className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
             <div className="flex gap-3.5">
               <span className="grid size-9 flex-none place-items-center rounded-xl border border-line bg-raised text-ink">
-                <FlaskConical className="size-4" aria-hidden />
+                <Flask className="size-4" aria-hidden />
               </span>
               <div>
                 <p className="text-[16px] font-semibold tracking-[-0.01em] text-ink">An early release</p>
@@ -166,7 +166,7 @@ export function Install() {
             <details className="group mt-5 rounded-xl border border-line bg-well">
               <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3 text-[14.5px] font-medium text-ink">
                 Run it from source
-                <ChevronDown
+                <CaretDown
                   className="size-4 flex-none text-ink-3 transition-transform duration-200 group-open:rotate-180"
                   aria-hidden
                 />

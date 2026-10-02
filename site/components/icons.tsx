@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-/** GitHub mark (lucide-react v1 no longer ships brand icons) */
+/** GitHub's own mark (icon sets only approximate it) */
 export function GitHubIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>

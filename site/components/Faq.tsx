@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { CaretDown } from "@phosphor-icons/react/ssr";
 import { DATA_FOLDERS, GITHUB_URL, LOCAL_URL } from "./site";
 
 const code = "num rounded bg-raised px-1.5 py-0.5 text-[0.9em] text-ink [overflow-wrap:anywhere]";
@@ -105,7 +105,7 @@ export function Faq() {
         <div className="lg:sticky lg:top-24 lg:self-start">
           <p className="eyebrow">FAQ</p>
           <h2 id="faq-title" className="heading mt-4 text-[34px] sm:text-[44px]">
-            Questions, <em className="serif-accent text-[1.1em]">answered</em>.
+            Questions, <span className="text-sprout">answered</span>.
           </h2>
           <p className="mt-4 max-w-[380px] text-[17px] leading-[1.6] text-ink-2">
             Something else?{" "}
@@ -125,7 +125,7 @@ export function Faq() {
               <summary className="flex cursor-pointer items-center justify-between gap-6 rounded-md py-5 text-[16.5px] font-medium tracking-[-0.01em] text-ink transition-colors hover:text-ink">
                 {f.q}
                 <span className="grid size-8 flex-none place-items-center rounded-full border border-line text-ink-3 transition-colors group-hover:border-line-strong group-hover:text-ink">
-                  <ChevronDown
+                  <CaretDown
                     className="size-4 transition-transform duration-200 group-open:rotate-180"
                     aria-hidden
                   />

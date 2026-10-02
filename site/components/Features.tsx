@@ -1,26 +1,16 @@
-import {
-  CalendarDays,
-  ChartLine,
-  ChartPie,
-  Columns3,
-  Layers,
-  Repeat,
-  ShieldCheck,
-  SlidersHorizontal,
-  TriangleAlert,
-  type LucideIcon,
-} from "lucide-react";
+import { CalendarDots, ChartLine, ChartPie, Columns, Repeat, ShieldCheck, SlidersHorizontal, Stack, Warning } from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
-type Feature = { icon: LucideIcon; title: string; body: string };
+type Feature = { icon: Icon; title: string; body: string };
 
 const FEATURES: Feature[] = [
   {
-    icon: Layers,
+    icon: Stack,
     title: "Portfolios with real lots",
     body: "Up to 4 portfolios, each with individual purchase lots in any currency. Import and export them as Excel files.",
   },
   {
-    icon: CalendarDays,
+    icon: CalendarDots,
     title: "12-month income calendar",
     body: "The payments you can expect over the next year, projected from each holding's payment history.",
   },
@@ -40,7 +30,7 @@ const FEATURES: Feature[] = [
     body: "Roughly 700 stocks: members of the S&P 500, NIFTY 50, TSX 60, FTSE 100, ISEQ 20 and ASX 200, plus high-yield groups.",
   },
   {
-    icon: Columns3,
+    icon: Columns,
     title: "Watchlists and compare",
     body: "Up to 4 watchlists, and side-by-side comparison of up to 4 stocks.",
   },
@@ -52,8 +42,8 @@ const YEARS = ["'16", "'17", "'18", "'19", "'20", "'21", "'22", "'23", "'24", "'
 
 const SAFETY = [
   { label: "Safe", score: 82, tone: "text-sprout-hi", bar: "bg-sprout", icon: ShieldCheck },
-  { label: "Moderate", score: 55, tone: "text-watch", bar: "bg-watch", icon: TriangleAlert },
-  { label: "At risk", score: 24, tone: "text-cut", bar: "bg-cut", icon: TriangleAlert },
+  { label: "Moderate", score: 55, tone: "text-watch", bar: "bg-watch", icon: Warning },
+  { label: "At risk", score: 24, tone: "text-cut", bar: "bg-cut", icon: Warning },
 ] as const;
 
 export function Features() {
@@ -63,7 +53,7 @@ export function Features() {
         <div className="max-w-[640px]">
           <p className="eyebrow">Features</p>
           <h2 id="features-title" className="heading mt-4 text-[34px] sm:text-[44px]">
-            The numbers behind every <em className="serif-accent text-[1.1em]">payout</em>.
+            The numbers behind every <span className="text-sprout">payout</span>.
           </h2>
           <p className="mt-4 text-[17px] leading-[1.6] text-ink-2">
             From one stock&apos;s payout record to your whole portfolio&apos;s next twelve months, in one app on

@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Ban, Database, Globe, Laptop, Lock, RefreshCw, ServerOff } from "lucide-react";
+import { ArrowsClockwise, ArrowsLeftRight, CloudSlash, Database, Globe, Laptop, Lock, Prohibit } from "@phosphor-icons/react/ssr";
 import { LogoMark } from "@dividendcase/brand/logo";
 import { LOCAL_URL } from "./site";
 
@@ -38,7 +38,7 @@ export function Privacy() {
         <div className="max-w-[640px]">
           <p className="eyebrow">Privacy</p>
           <h2 id="privacy-title" className="heading mt-4 text-[34px] sm:text-[44px]">
-            Your data stays <em className="serif-accent text-[1.1em]">yours</em>.
+            Your data stays <span className="text-sprout">yours</span>.
           </h2>
           <p className="mt-4 text-[17px] leading-[1.6] text-ink-2">
             DividendCase is an app on your computer, not a website you sign in to.
@@ -96,7 +96,7 @@ function DataFlow() {
 
         {/* Connection that happens */}
         <div className="flex items-center justify-center gap-2 py-1 text-ink-2 md:flex-col md:gap-1.5 md:px-1">
-          <ArrowLeftRight className="size-5 rotate-90 md:rotate-0" aria-hidden />
+          <ArrowsLeftRight className="size-5 rotate-90 md:rotate-0" aria-hidden />
           <span className="font-mono text-[10.5px] tracking-[0.06em] text-ink-3 uppercase md:max-w-[84px] md:text-center">
             Market data
           </span>
@@ -111,14 +111,14 @@ function DataFlow() {
 
         {/* Connection that never happens */}
         <div className="flex items-center justify-center gap-2 py-1 text-ink-3 md:flex-col md:gap-1.5 md:px-1">
-          <Ban className="size-5" aria-hidden />
+          <Prohibit className="size-5" aria-hidden />
           <span className="font-mono text-[10.5px] tracking-[0.06em] uppercase md:max-w-[84px] md:text-center">
             Nothing sent
           </span>
         </div>
         <div className="rounded-xl border border-dashed border-line-strong p-4 text-ink-3 md:self-stretch">
           <p className="eyebrow flex items-center gap-2">
-            <ServerOff className="size-3.5" aria-hidden /> Not involved
+            <CloudSlash className="size-3.5" aria-hidden /> Not involved
           </p>
           <p className="mt-2.5 text-[15px] font-medium line-through decoration-ink-3/80">DividendCase servers</p>
           <p className="mt-0.5 text-[12.5px] leading-snug">no account, no sync, no tracking</p>
@@ -126,7 +126,7 @@ function DataFlow() {
       </div>
 
       <figcaption className="mt-5 flex gap-3 border-t border-line pt-5 text-[13.5px] leading-[1.6] text-ink-2">
-        <RefreshCw className="mt-1 size-4 flex-none text-ink-3" aria-hidden />
+        <ArrowsClockwise className="mt-1 size-4 flex-none text-ink-3" aria-hidden />
         <span>
           While the app is open it keeps data current in the background: holdings and watchlist stocks when it
           starts and daily, screener stocks weekly. It fetches about one stock a second and pauses whenever Yahoo

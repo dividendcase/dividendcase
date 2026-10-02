@@ -1,4 +1,4 @@
-import { ArrowUpRight, GitPullRequest, Scale } from "lucide-react";
+import { ArrowUpRight, GitPullRequest, Scales } from "@phosphor-icons/react/ssr";
 import { GitHubIcon } from "./icons";
 import { GITHUB_URL, buttonOutline } from "./site";
 
@@ -9,7 +9,7 @@ export function OpenSource() {
         <div className="rounded-2xl border border-line bg-surface p-6 shadow-card sm:p-10">
           <p className="eyebrow">Open source</p>
           <h2 id="oss-title" className="heading mt-4 text-[32px] sm:text-[40px]">
-            Built in the <em className="serif-accent text-[1.1em]">open</em>.
+            Built in the <span className="text-sprout">open</span>.
           </h2>
           <p className="mt-4 max-w-[560px] text-[17px] leading-[1.6] text-ink-2">
             Every line of DividendCase is on GitHub under the AGPL-3.0-or-later licence. Read the code, run it,
@@ -17,7 +17,7 @@ export function OpenSource() {
           </p>
           <ul className="mt-7 flex flex-wrap gap-x-7 gap-y-3 text-[14px] text-ink-2">
             <li className="flex items-center gap-2">
-              <Scale className="size-4 text-ink-3" aria-hidden />
+              <Scales className="size-4 text-ink-3" aria-hidden />
               AGPL-3.0-or-later
             </li>
             <li className="flex items-center gap-2">
