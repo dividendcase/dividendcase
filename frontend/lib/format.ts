@@ -56,6 +56,7 @@ export function timeAgo(iso: string | null | undefined): string {
 export function frequencyLabel(freq: string | null | undefined): string {
   if (!freq) return "—";
   const f = freq.toLowerCase();
+  if (f === "none") return "No dividends";
   if (f.includes("month")) return "Monthly";
   if (f.includes("quarter")) return "Quarterly";
   if (f.includes("semi") || f.includes("half")) return "Half-yearly";

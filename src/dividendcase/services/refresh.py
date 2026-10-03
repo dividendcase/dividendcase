@@ -1,8 +1,9 @@
 """Background data refresh for the local app.
 
 A single worker fetches one ticker at a time from Yahoo Finance, on this machine, for the
-user's own use. Holdings and watchlist stocks go first and include company profiles;
-screener stocks follow with chart data only. The worker paces itself and waits out
+user's own use. Holdings and watchlist stocks go first and include company profiles, and
+are stored even when they pay no dividends (their price gives the holding a value);
+screener stocks follow with chart data only, payers only. The worker paces itself and waits out
 Yahoo's rate-limit cooldowns instead of retrying through them.
 """
 import asyncio
@@ -53,8 +54,8 @@ class _Job:
 class _Progress:
     total: int = 0
     done: int = 0
-    saved: int = 0  # stored: the stock pays dividends
-    skipped: int = 0  # no dividend history found
+    saved: int = 0  # stored: a payer, or any holding or watchlist stock
+    skipped: int = 0  # nothing found, or a screener stock without dividends
     failed: int = 0
     started_at: Optional[datetime] = None
 
@@ -172,7 +173,9 @@ class Refresher:
         except Exception as e:
             logger.warning("Refresh %s failed: %s", job.ticker, e)
             return "failed"
-        if not stock_data:
+        # Holdings and watchlist stocks are kept without dividends too, for their price and
+        # profile; the screener lists payers only
+        if not stock_data or (job.kind == SCREENER and not records):
             return "skipped"
         if job.kind == SCREENER and job.source:
             stock_data["data_source"] = job.source
@@ -201,8 +204,9 @@ class Refresher:
                 await db.commit()
         except Exception as e:
             logger.warning("Could not record the %s refresh: %s", kind, e)
-        logger.info("Refresh %s finished: %d saved, %d without dividends, %d failed",
-                    kind, progress.saved, progress.skipped, progress.failed)
+        logger.info("Refresh %s finished: %d saved, %d %s, %d failed",
+                    kind, progress.saved, progress.skipped,
+                    "not found" if kind == HOLDINGS else "without dividends", progress.failed)
         self._progress[kind] = _Progress()
         if kind == SCREENER and progress.saved:
             # New prices and dividends: compare the screener's stocks with their indices again

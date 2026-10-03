@@ -5,6 +5,8 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- **Holdings that pay no dividends now have a value.** Index funds, gold ETFs and growth stocks are stored with their price and company profile, so Holdings shows their price, value and total return, and "Current value" counts every stock. Before, they showed "—" and the Income page said they were still waiting for data. The diversification charts show them as "No dividends" under payment frequency. The screener still lists dividend payers only.
+- Current value uses each stock's latest close, not the price on its last dividend date.
 - Adding a holding no longer fails with an error when the same stock is being downloaded in the background at that moment (just added to a watchlist, say): saving a stock and its dividends is now one step, so two downloads can't clash.
 - The "Beat their index" comparison reads the stocks after downloading the indices, so a stock updated during the download is judged on its new data.
 - "Report a problem" fills in Docker, not uv, as the install method when you run the Docker image.
