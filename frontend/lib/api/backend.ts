@@ -258,6 +258,36 @@ export async function importPortfolios(file: File): Promise<ImportSummary> {
   return res.json() as Promise<ImportSummary>;
 }
 
+// ── Broker imports ──────────────────────────────────────────────────────────
+
+import type { BrokerImportResult, BrokerPreview } from "@/lib/types";
+
+async function postFiles<T>(path: string, files: File[], extra: Record<string, string> = {}): Promise<T> {
+  const form = new FormData();
+  files.forEach((f) => form.append("files", f));
+  Object.entries(extra).forEach(([k, v]) => form.append(k, v));
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: form });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "The import failed" }));
+    throw new Error(typeof body.detail === "string" ? body.detail : `API ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+/** What Zerodha tradebooks add up to, without changing anything */
+export function previewZerodha(files: File[]): Promise<BrokerPreview> {
+  return postFiles<BrokerPreview>("/api/v1/imports/zerodha/preview", files);
+}
+
+/** Add the lots from Zerodha tradebooks that aren't in the app yet */
+export function importZerodha(files: File[], portfolioId?: number): Promise<BrokerImportResult> {
+  return postFiles<BrokerImportResult>(
+    "/api/v1/imports/zerodha",
+    files,
+    portfolioId != null ? { portfolio_id: String(portfolioId) } : {},
+  );
+}
+
 // ── User Preferences ──────────────────────────────────────────────────────────
 
 import type { UserPreferences, UserPreferencesUpdate } from "@/lib/types";

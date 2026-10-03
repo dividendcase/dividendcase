@@ -227,6 +227,43 @@ export interface ImportSummary {
   details: ImportRowResult[];
 }
 
+/** A broker export read into holdings (POST /imports/zerodha/preview) */
+export interface ImportedLot {
+  purchase_date: string;
+  quantity: number;
+  price: number;
+  /** The same stock on the same date is already in the app, so importing skips it */
+  already_there: boolean;
+}
+
+export interface ImportedHolding {
+  ticker: string;
+  isin: string;
+  currency: string;
+  quantity: number;
+  average_price: number;
+  lots: ImportedLot[];
+}
+
+export interface BrokerPreview {
+  broker: string;
+  files: { name: string; trades: number; first: string | null; last: string | null }[];
+  holdings: ImportedHolding[];
+  new_lots: number;
+  closed: number;
+  oversold: string[];
+  not_equity: number;
+  duplicate_trades: number;
+  unreadable: string[];
+}
+
+export interface BrokerImportResult {
+  created: number;
+  already_there: number;
+  holdings: number;
+  portfolio_id: number;
+}
+
 export interface UserPreferences {
   default_benchmark: string;
   date_format: string;
