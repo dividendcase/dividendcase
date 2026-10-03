@@ -114,6 +114,12 @@ FAKE_RATES_BEFORE_2022 = {"USD": 1.25, "GBP": 0.90, "CAD": 1.50, "INR": 90.0, "A
 FAKE_RATES_FROM_2022 = {"USD": 1.10, "GBP": 0.85, "CAD": 1.45, "INR": 95.0, "AUD": 1.65}
 
 
+# ISINs for broker files that name securities by ISIN (invented, like everything here): NSE's lists
+# know the first two, only Yahoo's ISIN search knows the third, and nothing knows any other
+FAKE_NSE_ISINS = {"INE000A01011": "ALPHA", "INF000B01012": "BETABEES"}
+FAKE_YAHOO_ISINS = {"INE000C01013": "GAMMA.BO"}
+
+
 def fake_ecb_rates(start: date) -> dict[date, dict[str, float]]:
     days = {}
     day = start
@@ -149,7 +155,7 @@ def offline(market):
 
     mp.setattr(socket.socket, "connect", local_only)
 
-    from dividendcase.services import benchmark, fx, refresh, yahoo_fetcher
+    from dividendcase.services import benchmark, fx, isin, refresh, yahoo_fetcher
     from dividendcase.api.v1 import investment, portfolio, stocks
 
     mp.setattr(yahoo_fetcher.YahooFetcher, "fetch_stock_light", market.fetch_stock_light)
@@ -161,6 +167,8 @@ def offline(market):
     mp.setattr(fx, "_last_90_days", lambda: fake_ecb_rates(date.today() - timedelta(days=90)))
     mp.setattr(refresh, "PACE_SECONDS", (0, 0))
     mp.setattr(benchmark, "INDEX_PAUSE_SECONDS", 0)
+    mp.setattr(isin, "_download_nse_lists", lambda: dict(FAKE_NSE_ISINS))
+    mp.setattr(isin, "_yahoo_lookup", FAKE_YAHOO_ISINS.get)
     yield
     mp.undo()
 

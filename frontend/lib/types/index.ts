@@ -257,6 +257,44 @@ export interface BrokerPreview {
   unreadable: string[];
 }
 
+/** An Angel One holdings file read into holdings (POST /imports/angelone/preview). The file has no
+ *  purchase dates, so each part is dated as late as it could have been bought. */
+export interface HoldingsFileLot {
+  /** "long": held for more than a year before the file's date; "short": bought within that year */
+  held: "long" | "short";
+  purchase_date: string;
+  quantity: number;
+  price: number | null;
+  already_there: boolean;
+}
+
+export interface HoldingsFileRow {
+  name: string;
+  isin: string;
+  /** null when neither NSE nor Yahoo knows the ISIN (unlisted or delisted) */
+  ticker: string | null;
+  found_by: "nse" | "yahoo" | null;
+  currency: string;
+  quantity: number;
+  average_price: number | null;
+  lots: HoldingsFileLot[];
+}
+
+export interface HoldingsFilePreview {
+  broker: string;
+  as_of: string | null;
+  holdings: HoldingsFileRow[];
+  unreadable: string[];
+}
+
+export interface LotToAdd {
+  ticker: string;
+  purchase_date: string;
+  quantity: number;
+  price: number | null;
+  currency: string;
+}
+
 export interface BrokerImportResult {
   created: number;
   already_there: number;

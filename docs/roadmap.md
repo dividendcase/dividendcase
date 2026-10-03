@@ -155,13 +155,17 @@ hands over to the next without a cut.
 | Broker | Likely export (to confirm with a real file) | Identifies stocks by | Notes |
 |---|---|---|---|
 | Zerodha | Console tradebook and holdings (CSV/XLSX) | NSE/BSE symbol + ISIN | Map to Yahoo `.NS` / `.BO` |
-| Angel One | Trade book and holdings reports | NSE/BSE symbol + ISIN | Same mapping as Zerodha |
+| Angel One | Holdings file "Your Holding Details" (password-protected XLSX); the trade history only covers recent months | Company name + ISIN | ISIN → NSE list, then Yahoo; no purchase dates, only long-term (over a year) and short-term quantities |
 | Trading 212 | History export (CSV) | Ticker + ISIN | Includes dividends and the tax withheld |
 | Revolut | Trading account statement (CSV) | Ticker | Buys, sells and dividends |
 | Degiro | Transactions and account statement (CSV) | ISIN + exchange | Dividends and dividend tax are separate rows |
 
 **Progress:** Zerodha tradebooks import (October 2026), tested on invented trades; waiting for a real,
-anonymised export to check the format before 0.4.0. Next: Angel One.
+anonymised export to check the format before 0.4.0. Angel One's holdings file imports too (3 Oct 2026),
+checked against a real file (read locally, never committed): all 15 listed holdings found by ISIN.
+Angel One has no full trade history (its trade export covers about 90 days), so purchase dates are
+estimates the user confirms. Later: a CDSL/NSDL CAS import, which has the real dates for any Indian
+broker (no prices; combine with the average prices).
 
 **Follow-up once imports work:** import the dividends actually received and the tax withheld, then
 compare them with what the app expected. When a broker withheld a different rate from our estimate,
