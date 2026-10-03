@@ -40,7 +40,7 @@ export function Nav() {
       }`}
     >
       <div className="container-page flex h-16 items-center justify-between gap-4">
-        <a href="#top" className="rounded-md text-[17px] text-ink" aria-label="DividendCase, back to top">
+        <a href="/#top" className="rounded-md text-[17px] text-ink" aria-label="DividendCase home">
           <Logo />
         </a>
 
@@ -64,7 +64,7 @@ export function Nav() {
           >
             <GitHubIcon className="size-[18px]" />
           </a>
-          <a href="#install" className={`${buttonPrimary} py-2! max-sm:hidden`}>
+          <a href="/#install" className={`${buttonPrimary} py-2! max-sm:hidden`}>
             Install for free
           </a>
           <button
@@ -99,7 +99,7 @@ export function Nav() {
               </li>
             ))}
           </ul>
-          <a href="#install" onClick={() => setOpen(false)} className={`${buttonPrimary} mt-3 mb-2 w-full`}>
+          <a href="/#install" onClick={() => setOpen(false)} className={`${buttonPrimary} mt-3 mb-2 w-full`}>
             Install for free
           </a>
         </nav>

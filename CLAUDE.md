@@ -56,7 +56,12 @@ site/                  dividendcase.com: Next 16 static export; not deployed yet
                        scroll scenes, Motion interaction, never both on one element; Phosphor icons.
                        Then Markets (globe/: a dotted 2D-canvas globe; land.ts is a Natural Earth
                        bitmask), Privacy, Research (tiles with real app screenshots), Install,
-                       OpenSource (+ FAQ), Footer. public/shots/ holds the screenshots
+                       OpenSource (+ FAQ), Footer. public/shots/ holds the screenshots.
+                       app/privacy/ is the privacy page; app/not-found.tsx the 404. vercel.json
+                       redirects the hosted app's old addresses (307, so a Cloud app can reuse them):
+                       /login, /register, /dashboard/* … → /#hosted-account (that FAQ answer),
+                       /contact → GitHub issues, /terms → LICENSE. Section links start with "/#"
+                       so they work from every page
 scripts/demo_server.py the app on an invented example portfolio, network blocked (like the tests), for
                        screenshots: `uv run python scripts/demo_server.py` → :8770. The website's
                        screenshots and the film's figures (film/example.ts) come from it, so they agree

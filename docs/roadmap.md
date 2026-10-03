@@ -114,6 +114,9 @@ hands over to the next without a cut.
   install frame with real screenshots, open source with the FAQ, and the footer. The screenshots come
   from `scripts/demo_server.py` (an invented example portfolio, network blocked), and the film uses the
   same figures. The hosted site's export imports into the app as is (same Excel layout).
+- The privacy page (`/privacy/`), a 404 page and redirects for the hosted app's old addresses
+  (`site/vercel.json`) are built. The redirects were checked with Vercel's own routing code
+  (`@vercel/routing-utils`); check them again on the Vercel preview.
 
 ### Steps
 
