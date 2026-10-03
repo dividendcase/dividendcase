@@ -4,60 +4,26 @@ from dividendcase.database import get_db
 from dividendcase.crud.stock import get_stock, upsert_stock
 from dividendcase.crud.dividend import upsert_dividend_records
 from dividendcase.schemas.dividend import FetchStockRequest, DividendHistoryResponse, DividendMetrics
-from dividendcase.services.yahoo_fetcher import YahooFetcher, CooldownActiveError
+from dividendcase.services.yahoo_fetcher import YahooFetcher, CooldownActiveError, search_quotes
 from dividendcase.api.v1.dividends import _calculate_metrics
 import logging
-
-try:
-    from curl_cffi import requests as _curl_requests
-    _CURL_AVAILABLE = True
-except ImportError:
-    _curl_requests = None
-    _CURL_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.get("/symbols")
 async def search_symbols(q: str = Query(..., min_length=1), limit: int = Query(10, le=20)):
-    """Search Yahoo Finance for ticker symbols using curl_cffi to bypass TLS fingerprint blocking."""
-    url = (
-        f"https://query1.finance.yahoo.com/v1/finance/search"
-        f"?q={q}&quotesCount={limit}&newsCount=0&enableFuzzyQuery=true"
-        f"&enableNavLinks=false&enableEnhancedTriviaInfo=false"
-    )
-    headers = {
-        "Accept": "application/json",
-        "Referer": "https://finance.yahoo.com/",
-    }
-    try:
-        if _CURL_AVAILABLE:
-            resp = _curl_requests.get(url, impersonate="chrome120", headers=headers, timeout=5)
-        else:
-            import requests as _stdlib
-            headers["User-Agent"] = (
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            )
-            resp = _stdlib.get(url, headers=headers, timeout=5)
-
-        if resp.status_code != 200:
-            return []
-
-        quotes = resp.json().get("quotes", [])
-        return [
-            {
-                "symbol": r["symbol"],
-                "name": r.get("longname") or r.get("shortname") or r["symbol"],
-                "exchange": r.get("exchDisp", ""),
-                "type": r.get("typeDisp", "Equity"),
-            }
-            for r in quotes
-            if (r.get("typeDisp", "Equity") or "Equity").lower() in ("equity", "etf", "fund", "")
-        ]
-    except Exception as e:
-        logger.warning(f"Yahoo Finance symbol search failed: {e}")
-        return []
+    """Search Yahoo Finance for ticker symbols."""
+    return [
+        {
+            "symbol": r["symbol"],
+            "name": r.get("longname") or r.get("shortname") or r["symbol"],
+            "exchange": r.get("exchDisp", ""),
+            "type": r.get("typeDisp", "Equity"),
+        }
+        for r in search_quotes(q, limit)
+        if (r.get("typeDisp", "Equity") or "Equity").lower() in ("equity", "etf", "fund", "")
+    ]
 
 
 # Track how many times each custom ticker has been requested
