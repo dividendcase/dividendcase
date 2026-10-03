@@ -2,10 +2,16 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from dividendcase.database import get_db
 from dividendcase.crud.stock import get_stock
-from dividendcase.crud.dividend import get_dividends_for_ticker
+from dividendcase.crud.dividend import get_dividends_for_ticker, has_dividends
 from dividendcase.schemas.dividend import DividendHistoryResponse, DividendMetrics
 
 router = APIRouter()
+
+
+def no_dividends_message(ticker: str) -> str:
+    """For a stock stored for its price only (a holding that pays no dividends)."""
+    return f"No dividend history for {ticker}: this stock does not pay dividends."
+
 
 CURRENCY_SYMBOLS = {
     "USD": "$", "CAD": "C$", "GBP": "£", "EUR": "€",
@@ -221,6 +227,8 @@ async def dividend_history(
         raise HTTPException(status_code=404, detail=f"Stock {ticker} not found in database")
 
     records = await get_dividends_for_ticker(db, ticker, years=years)
+    if not records and not await has_dividends(db, ticker):
+        raise HTTPException(status_code=404, detail=no_dividends_message(ticker))
     metrics = _calculate_metrics(
         ticker,
         stock.company_name,

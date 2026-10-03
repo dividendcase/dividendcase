@@ -22,6 +22,12 @@ async def get_dividends_for_ticker(
     return result.scalars().all()
 
 
+async def has_dividends(db: AsyncSession, ticker: str) -> bool:
+    """Whether any dividend is stored for the stock (holdings are stored without any)."""
+    result = await db.execute(select(DividendRecord.id).where(DividendRecord.ticker_symbol == ticker).limit(1))
+    return result.first() is not None
+
+
 async def upsert_dividend_records(
     db: AsyncSession,
     stock_id: int,
