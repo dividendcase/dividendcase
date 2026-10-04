@@ -374,6 +374,9 @@ class YahooFetcher:
         (Docker) due to yfinance's broken cookie/crumb initialisation flow, even though
         the underlying API endpoints work fine.
 
+        Returns (stock_dict, dividend_records). A stock that paid no dividends in the period
+        comes back with its latest price and no records; (None, []) means Yahoo has neither.
+
         Raises CooldownActiveError if Yahoo Finance rate-limit cooldown is active.
         """
         if is_cooled_down():
@@ -441,25 +444,6 @@ class YahooFetcher:
             exchange = self._infer_exchange(symbol, meta.get("exchangeName"))
             company_name = meta.get("longName") or meta.get("shortName") or symbol
 
-            # Dividend events: {unix_ts_str: {amount, date}}
-            raw_divs = result.get("events", {}).get("dividends", {})
-            if not raw_divs:
-                logger.debug(f"fetch_light {symbol}: no dividends in chart response")
-                return None, []
-
-            # Build a sorted list of (date, amount) within the requested range
-            start_dt = datetime.now() - timedelta(days=365 * years)
-            div_list: list[tuple[datetime, float]] = []
-            for ts_str, d in raw_divs.items():
-                dt = datetime.fromtimestamp(int(ts_str))
-                if dt >= start_dt:
-                    div_list.append((dt, float(d["amount"])))
-            div_list.sort()
-
-            if not div_list:
-                logger.debug(f"fetch_light {symbol}: no dividends in range")
-                return None, []
-
             # Price timestamps and closes from the chart payload
             timestamps = result.get("timestamp", [])
             closes = (
@@ -473,6 +457,22 @@ class YahooFetcher:
                 if ts is not None and cl is not None:
                     prices.append((datetime.fromtimestamp(ts), float(cl)))
             prices.sort()
+
+            # Dividend events, {unix_ts_str: {amount, date}}, as a sorted list of (date, amount)
+            # within the requested range
+            start_dt = datetime.now() - timedelta(days=365 * years)
+            div_list: list[tuple[datetime, float]] = []
+            for ts_str, d in result.get("events", {}).get("dividends", {}).items():
+                dt = datetime.fromtimestamp(int(ts_str))
+                if dt >= start_dt:
+                    div_list.append((dt, float(d["amount"])))
+            div_list.sort()
+
+            # A stock without dividends still has a price, which holdings need for their value;
+            # the caller decides whether to keep it
+            if not div_list and not prices:
+                logger.debug(f"fetch_light {symbol}: no prices or dividends in chart response")
+                return None, []
 
             def _closest_price(target: datetime) -> Optional[float]:
                 """Return the most recent close on or before target."""
@@ -495,19 +495,19 @@ class YahooFetcher:
                     "dividend_yield_pct": yld,
                 })
 
-            if not dividend_records:
-                return None, []
-
             _record_success()
 
             current_price = prices[-1][1] if prices else 0.0
-            trailing_cutoff = datetime.now() - timedelta(days=366)
-            ttm_total = sum(a for dt, a in div_list if dt >= trailing_cutoff)
-            avg_yield = (
-                round((ttm_total / current_price) * 100, 3)
-                if ttm_total and current_price > 0
-                else round((div_list[-1][1] / current_price) * 100, 3) if current_price > 0 else 0.0
-            )
+            if div_list:
+                trailing_cutoff = datetime.now() - timedelta(days=366)
+                ttm_total = sum(a for dt, a in div_list if dt >= trailing_cutoff)
+                avg_yield = (
+                    round((ttm_total / current_price) * 100, 3)
+                    if ttm_total and current_price > 0
+                    else round((div_list[-1][1] / current_price) * 100, 3) if current_price > 0 else 0.0
+                )
+            else:
+                avg_yield = None  # no yield at all, which also keeps it out of the screener
 
             stock_dict = {
                 "ticker_symbol": symbol,
@@ -516,6 +516,7 @@ class YahooFetcher:
                 "currency": currency,
                 "market_cap": 0,
                 "avg_dividend_yield": avg_yield,
+                "last_price": round(current_price, 4) if prices else None,
                 "last_fetched_at": datetime.utcnow(),
             }
             if with_profile:

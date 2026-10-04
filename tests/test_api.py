@@ -181,6 +181,81 @@ def test_dividend_metrics(client, payers):
     assert 0 <= m["dividend_safety_score"] <= 100
 
 
+# ── stocks that pay no dividends ─────────────────────────────────────────────
+def test_a_held_stock_without_dividends_gets_a_price(client, payers):
+    payers.add_non_payer("TESTN", price=25.0)
+    add_holding(client, "TESTA", quantity=10, price=40.0)
+    add_holding(client, "TESTN", quantity=10, price=20.0)
+    assert client.get("/api/v1/stocks/TESTN").status_code == 200  # stored, though it pays nothing
+
+    # The Holdings page's value and return come from the analysis's latest point
+    data = client.get("/api/v1/portfolio/analysis").json()
+    last = data["data_points"][-1]
+    assert last["stock_values"]["TESTN"] == pytest.approx(250.0)  # 10 × 25, its latest close
+    assert last["stock_dividends"]["TESTN"] == 0
+    assert last["stock_values"]["TESTA"] == pytest.approx(500.0)
+    assert last["total_investment_value"] == pytest.approx(750.0)
+    # Its slice of the payment-frequency chart says it pays none, rather than "Unknown"
+    assert data["frequency_map"] == {"TESTA": "quarterly", "TESTN": "none"}
+
+
+def test_a_portfolio_of_only_non_payers_has_a_value(client, market):
+    market.add_non_payer("TESTN", price=25.0)
+    add_holding(client, "TESTN", quantity=4)
+    data = client.get("/api/v1/portfolio/analysis").json()
+    assert data["data_points"][-1]["total_investment_value"] == pytest.approx(100.0)
+
+    cal = client.get("/api/v1/portfolio/calendar").json()
+    assert cal["entries"] == [] and cal["annual_total"] == 0
+
+
+def test_current_value_uses_the_latest_close(client, market):
+    market.add("TESTP", price=50.0, last_price=55.0)  # up since its last payment
+    add_holding(client, "TESTP", quantity=10)
+    last = client.get("/api/v1/portfolio/analysis").json()["data_points"][-1]
+    assert last["stock_values"]["TESTP"] == pytest.approx(550.0)
+
+
+def test_non_payers_add_nothing_to_the_income_calendar(client, payers):
+    payers.add_non_payer("TESTN")
+    add_holding(client, "TESTA", quantity=10)
+    add_holding(client, "TESTN", quantity=10)
+    assert client.get("/api/v1/stocks/TESTN").status_code == 200
+
+    cal = client.get("/api/v1/portfolio/calendar").json()
+    # The Income page counts holdings without calendar entries as the ones that "don't pay"
+    assert {e["ticker_symbol"] for e in cal["entries"]} == {"TESTA"}
+    assert cal["currency_totals"] == {"USD": pytest.approx(20.0)}
+
+
+def test_the_stock_page_says_a_non_payer_has_no_dividend_history(client, market):
+    market.add_non_payer("TESTN")
+    market.add_non_payer("TESTQ")
+    add_holding(client, "TESTN")
+    assert client.get("/api/v1/stocks/TESTN").status_code == 200
+    # Stored because it's held, but there's no dividend history to show
+    assert client.get("/api/v1/dividends/TESTN").status_code == 404
+    assert client.post("/api/v1/search/fetch-stock", json={"ticker": "TESTN"}).status_code == 404
+    # Only looked up: not stored
+    assert client.post("/api/v1/search/fetch-stock", json={"ticker": "TESTQ"}).status_code == 404
+    assert client.get("/api/v1/stocks/TESTQ").status_code == 404
+
+
+def test_the_refresh_stores_watched_non_payers_but_not_screener_ones(client, market):
+    market.add_non_payer("TESTW")  # on a watchlist
+    market.add_non_payer("TESTS")  # only in the screener's lists
+    client.post("/api/v1/watchlist", json={"ticker": "TESTW"})
+    status = wait_until_idle(client)
+    assert status["your_tickers_missing"] == 0
+    assert client.get("/api/v1/stocks/TESTW").status_code == 200
+
+    client.post("/api/v1/data/refresh", json={"scope": "screener"})
+    wait_until_idle(client)
+    assert client.get("/api/v1/stocks/TESTS").status_code == 404
+    listed = {s["ticker_symbol"] for s in client.get("/api/v1/stocks/top-performers", params={"limit": 2000}).json()}
+    assert "TESTW" not in listed and "TESTS" not in listed
+
+
 # ── screener, watchlists and the background refresh ─────────────────────────
 def test_screener_lists_stored_payers_with_frequency(client, payers):
     r = client.post("/api/v1/data/refresh", json={"scope": "screener"})
