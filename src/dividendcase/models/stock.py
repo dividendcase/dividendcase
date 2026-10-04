@@ -24,6 +24,8 @@ class Stock(Base):
     benchmark_ticker = Column(String(20), nullable=True)
     payment_frequency = Column(String(20))  # monthly, quarterly, annual
     yield_consistency_score = Column(Numeric(4, 2))
+    # The latest close, from the fetch at last_fetched_at; stocks without dividends have only this
+    last_price = Column(Numeric(12, 4))
     last_fetched_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

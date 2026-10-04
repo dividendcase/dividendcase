@@ -5,7 +5,7 @@ from dividendcase.crud.stock import get_stock, upsert_stock
 from dividendcase.crud.dividend import upsert_dividend_records
 from dividendcase.schemas.dividend import FetchStockRequest, DividendHistoryResponse, DividendMetrics
 from dividendcase.services.yahoo_fetcher import YahooFetcher, CooldownActiveError
-from dividendcase.api.v1.dividends import _calculate_metrics
+from dividendcase.api.v1.dividends import _calculate_metrics, no_dividends_message
 import logging
 
 try:
@@ -80,8 +80,10 @@ async def fetch_custom_stock(
     # Fast path: already in DB
     stock = await get_stock(db, ticker)
     if stock:
-        from dividendcase.crud.dividend import get_dividends_for_ticker
+        from dividendcase.crud.dividend import get_dividends_for_ticker, has_dividends
         records = await get_dividends_for_ticker(db, ticker, years=10)
+        if not records and not await has_dividends(db, ticker):
+            raise HTTPException(status_code=404, detail=no_dividends_message(ticker))
         metrics = _calculate_metrics(ticker, stock.company_name, stock.currency or "USD", records)
         return DividendHistoryResponse(
             ticker_symbol=ticker,
@@ -129,9 +131,10 @@ async def fetch_custom_stock(
             ),
         )
 
-    if not stock_data:
+    if not stock_data or not dividend_records:
         # At this point we know it's genuinely "no dividends" — not a rate-limit issue,
-        # because CooldownActiveError would have been raised above.
+        # because CooldownActiveError would have been raised above. A stock that only has a
+        # price isn't stored either: only holdings and watchlist stocks are kept for that.
         raise HTTPException(
             status_code=404,
             detail=f"No dividend data found for {ticker}. This stock may not pay dividends, or Yahoo Finance is temporarily unavailable.",

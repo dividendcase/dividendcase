@@ -90,6 +90,15 @@ function ChartPanel({ title, note, warning, children }: {
   );
 }
 
+// Slices that aren't a category to be concentrated in: a missing profile (funds rarely have
+// one), or holdings that pay no dividends
+const NOT_A_CATEGORY = new Set(["Unknown", "Other", frequencyLabel("none")]);
+
+/** A warning when the biggest slice is over 30%, unless that slice isn't a real category. */
+function concentration(name: string | undefined, share: number) {
+  return name && share > 0.3 && !NOT_A_CATEGORY.has(name) ? <ConcentrationWarning name={name} share={share} /> : undefined;
+}
+
 function ConcentrationWarning({ name, share }: { name: string; share: number }) {
   return (
     <p className="flex items-center gap-1.5 text-[12px] text-watch">
@@ -124,7 +133,7 @@ function DonutChart({ title, data }: { title: string; data: { name: string; valu
   };
 
   return (
-    <ChartPanel title={title} warning={topShare > 0.3 ? <ConcentrationWarning name={data[0].name} share={topShare} /> : undefined}>
+    <ChartPanel title={title} warning={concentration(data[0].name, topShare)}>
       <EChart option={option} style={{ height: 280 }} />
     </ChartPanel>
   );
@@ -195,7 +204,7 @@ function SunburstChart({ sectorMap, industryMap, latestValues }: {
     <ChartPanel
       title="Sector and industry"
       note="Inner ring sector, outer ring industry"
-      warning={topShare > 0.3 ? <ConcentrationWarning name={sectorData[0].name} share={topShare} /> : undefined}
+      warning={concentration(sectorData[0]?.name, topShare)}
     >
       <EChart option={option} style={{ height: 280 }} />
     </ChartPanel>
