@@ -54,8 +54,12 @@ class FakeMarket:
         sector: str = "Consumer Defensive",
         price_start: float | None = None,
         country: str | None = None,
+        last_price: float | None = None,
     ) -> None:
-        """A payer with a steadily growing dividend, paid every `every_months` months."""
+        """A payer with a steadily growing dividend, paid every `every_months` months.
+
+        Its latest close is `price` unless `last_price` says otherwise (the price moved since
+        the last payment)."""
         per_year = 12 // every_months
         payments = years * per_year
         last = date.today() - timedelta(days=last_paid_days_ago)
@@ -86,8 +90,33 @@ class FakeMarket:
             "avg_dividend_yield": round(amount * per_year / price * 100, 3),
             "payment_frequency": payment_frequency(r["dividend_date"] for r in records),
             "yield_consistency_score": yield_consistency(r["dividend_yield_pct"] for r in records),
+            "last_price": price if last_price is None else last_price,
         }
         self.stocks[ticker] = (stock, records)
+
+    def add_non_payer(
+        self,
+        ticker: str,
+        *,
+        currency: str = "USD",
+        exchange: str = "NYSE",
+        price: float = 25.0,
+        sector: str = "Technology",
+    ) -> None:
+        """A stock or fund that has never paid a dividend: a price and a profile, no payments."""
+        self.stocks[ticker] = ({
+            "ticker_symbol": ticker,
+            "company_name": f"{ticker} Test Company",
+            "exchange": exchange,
+            "country": HOME_COUNTRY.get(exchange, "United States"),
+            "currency": currency,
+            "sector": sector,
+            "industry": "Testing",
+            "description": "An invented company that keeps its profits.",
+            "market_cap": 1_000_000,
+            "avg_dividend_yield": None,
+            "last_price": price,
+        }, [])
 
     def fetch_stock_light(self, symbol, years=10, with_profile=True):
         # Patched onto YahooFetcher as a bound method, so it gets the fetcher's arguments only
@@ -129,6 +158,10 @@ def _months_before(day: date, months: int) -> date:
     return date(year, month + 1, min(day.day, 28))
 
 
+# The real functions the fakes stand in for
+REAL: dict = {}
+
+
 @pytest.fixture(scope="session")
 def market():
     return FakeMarket()
@@ -152,6 +185,7 @@ def offline(market):
     from dividendcase.services import benchmark, fx, refresh, yahoo_fetcher
     from dividendcase.api.v1 import investment, portfolio, stocks
 
+    REAL["fetch_stock_light"] = yahoo_fetcher.YahooFetcher.fetch_stock_light  # for tests of its parsing
     mp.setattr(yahoo_fetcher.YahooFetcher, "fetch_stock_light", market.fetch_stock_light)
     mp.setattr(stocks, "_fetch_asset_profile", lambda ticker: {})
     mp.setattr(investment, "_get_benchmark_data", lambda ticker, year: (None, pd.DataFrame()))

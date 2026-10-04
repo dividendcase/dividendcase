@@ -374,6 +374,8 @@ async def portfolio_analysis(
         # Compute payment frequency from dividend records (rarely stored on stock)
         if stock.payment_frequency and stock.payment_frequency != "Unknown":
             frequency_map[ticker] = stock.payment_frequency
+        elif not info["records"]:
+            frequency_map[ticker] = "none"  # stored for its price: a holding that pays no dividends
         else:
             records = info["records"]
             if len(records) >= 2:
@@ -406,6 +408,16 @@ async def portfolio_analysis(
                 for inv in info["investments"]:
                     if r.dividend_date >= inv.purchase_date:
                         all_dates.add(r.dividend_date)
+
+    # And today, valued at each stock's latest close: the only price a stock that pays no
+    # dividends has, and more recent than the last payment's for the others
+    today = date.today()
+    latest_close = {
+        ticker: float(info["stock"].last_price)
+        for ticker, info in stock_data.items() if info["stock"].last_price
+    }
+    if any(inv.purchase_date <= today for t in latest_close for inv in stock_data[t]["investments"]):
+        all_dates.add(today)
 
     if not all_dates:
         inv_items = [InvestmentItem.model_validate(inv) for inv in investments]
@@ -507,6 +519,8 @@ async def portfolio_analysis(
 
             if record and record.share_price_on_dividend_date:
                 last_price[ticker] = float(record.share_price_on_dividend_date)
+            if d == today and ticker in latest_close:
+                last_price[ticker] = latest_close[ticker]
 
             ticker_value = 0.0
             ticker_divs = 0.0

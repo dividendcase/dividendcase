@@ -177,6 +177,13 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   Adding a holding fetches it at once (and queues a retry if that fails); adding to a watchlist
   or importing a file queues missing stocks. Schedules: startup, holdings
   every 6 h if older than 20 h, screener daily if older than 7 days.
+- Stocks without dividends: holdings and watchlist stocks are stored anyway, with their profile
+  and `stocks.last_price` (latest close) and no dividend records, so value and total return
+  cover every holding; screener stocks without dividends are skipped. avg_dividend_yield stays
+  NULL, which keeps them out of the screener; /dividends/{t} and fetch-stock answer 404 for them
+  (the stock page's "No dividend history"). The portfolio analysis ends with a point for today
+  at each stock's last_price, and gives them frequency "none" ("No dividends"); the calendar has
+  no entries for them, which is how the Income page counts "don't pay".
 - No mock DB in tests: run them against a real SQLite file.
 - Commit once at the end of a piece of work, not mid-task.
 

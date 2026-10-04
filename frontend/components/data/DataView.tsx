@@ -12,7 +12,18 @@ import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { isBusy, useDataStatus, type LastRun, type RefreshProgress } from "@/lib/hooks/useDataStatus";
 
-function Progress({ label, progress, last }: { label: string; progress: RefreshProgress; last: LastRun }) {
+function Progress({
+  label,
+  progress,
+  last,
+  skippedLabel,
+}: {
+  label: string;
+  progress: RefreshProgress;
+  last: LastRun;
+  /** What a skipped stock means here: holdings are kept even without dividends */
+  skippedLabel: string;
+}) {
   const running = progress.total > 0;
   const pct = running ? Math.round((progress.done / progress.total) * 100) : last.finished_at ? 100 : 0;
   return (
@@ -44,7 +55,7 @@ function Progress({ label, progress, last }: { label: string; progress: RefreshP
       </div>
       {running ? (
         <p className="text-[12px] text-ink-3">
-          <span className="num">{progress.saved}</span> stored · <span className="num">{progress.skipped}</span> without dividends
+          <span className="num">{progress.saved}</span> stored · <span className="num">{progress.skipped}</span> {skippedLabel}
           {progress.failed > 0 && (
             <span className="text-watch">
               {" "}
@@ -181,8 +192,18 @@ export function DataView() {
           <CardContent className="space-y-5">
             {status ? (
               <>
-                <Progress label="Your holdings and watchlists" progress={status.holdings} last={status.last_runs.holdings} />
-                <Progress label="Screener stocks" progress={status.screener} last={status.last_runs.screener} />
+                <Progress
+                  label="Your holdings and watchlists"
+                  progress={status.holdings}
+                  last={status.last_runs.holdings}
+                  skippedLabel="not found"
+                />
+                <Progress
+                  label="Screener stocks"
+                  progress={status.screener}
+                  last={status.last_runs.screener}
+                  skippedLabel="without dividends"
+                />
                 <div className="flex items-baseline justify-between gap-3 border-t border-line pt-4">
                   <div>
                     <p className="text-[13.5px] font-medium text-ink">Exchange rates</p>
