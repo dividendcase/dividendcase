@@ -40,6 +40,10 @@ class BrokerPreview(BaseModel):
     not_equity: int
     duplicate_trades: int
     unreadable: list[str]
+    # Anything else the user should know before importing (statement gaps, holdings that don't add up)
+    notes: list[str] = []
+    # Rows that aren't buys or sells (cash top-ups, dividends, fees), by type: listed, not imported
+    left_out: dict[str, int] = {}
 
 
 class BrokerImportResult(BaseModel):
