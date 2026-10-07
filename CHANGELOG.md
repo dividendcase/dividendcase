@@ -5,6 +5,7 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- **Import from Zerodha:** in Import, choose Zerodha and add the tradebooks you download from Console (Reports, Tradebook; CSV or Excel, one per year). The app matches each sale with the earliest buy of the same stock, combines buys made on the same day, and shows the holdings it worked out before adding anything. Lots already in the app are skipped, so importing again adds only what's new. DividendCase never connects to Zerodha: the files are read on your computer and not kept.
 - **Holdings that pay no dividends now have a value.** Index funds, gold ETFs and growth stocks are stored with their price and company profile, so Holdings shows their price, value and total return, and "Current value" counts every stock. Before, they showed "—" and the Income page said they were still waiting for data. The diversification charts show them as "No dividends" under payment frequency. The screener still lists dividend payers only.
 - Current value uses each stock's latest close, not the price on its last dividend date.
 - Adding a holding no longer fails with an error when the same stock is being downloaded in the background at that moment (just added to a watchlist, say): saving a stock and its dividends is now one step, so two downloads can't clash.

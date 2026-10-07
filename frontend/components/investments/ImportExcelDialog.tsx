@@ -11,8 +11,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Info, Loader2, Download, AlertCircle } from "lucide-react";
+import { Segmented } from "@/components/ui/segmented";
 import type { ImportSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { BrokerImport } from "./BrokerImport";
+
+type Source = "excel" | "zerodha";
+const SOURCES: { value: Source; label: string }[] = [
+  { value: "excel", label: "Spreadsheet" },
+  { value: "zerodha", label: "Zerodha" },
+];
 
 interface ImportExcelDialogProps {
   open: boolean;
@@ -31,6 +39,7 @@ export function ImportExcelDialog({
   onDownloadTemplate,
   onComplete,
 }: ImportExcelDialogProps) {
+  const [source, setSource] = useState<Source>("excel");
   const [state, setState] = useState<DialogState>("idle");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(null);
@@ -40,6 +49,7 @@ export function ImportExcelDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const reset = useCallback(() => {
+    setSource("excel");
     setState("idle");
     setSelectedFile(null);
     setResult(null);
@@ -107,14 +117,22 @@ export function ImportExcelDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Import from Excel</DialogTitle>
+          <DialogTitle>Import holdings</DialogTitle>
           <DialogDescription>
-            Add many purchases at once from a spreadsheet. Each sheet becomes a portfolio.
+            {source === "excel"
+              ? "Add many purchases at once from a spreadsheet. Each sheet becomes a portfolio."
+              : "Add your holdings from the trades in your Zerodha tradebook."}
           </DialogDescription>
         </DialogHeader>
 
+        {state === "idle" && (
+          <Segmented value={source} onChange={setSource} options={SOURCES} aria-label="Import from" className="w-fit" />
+        )}
+
+        {source === "zerodha" && <BrokerImport onComplete={handleDone} />}
+
         {/* Idle / Error state — file upload */}
-        {(state === "idle" || state === "error") && (
+        {source === "excel" && (state === "idle" || state === "error") && (
           <div className="space-y-4">
             <div
               role="button"
