@@ -23,12 +23,10 @@ export function BrokerImport({ onComplete }: { onComplete: () => void }) {
   const [preview, setPreview] = useState<BrokerPreview | null>(null);
   const [result, setResult] = useState<BrokerImportResult | null>(null);
   const [error, setError] = useState("");
-  const [isDragOver, setIsDragOver] = useState(false);
   const [portfolioId, setPortfolioId] = useState<number | undefined>(undefined);
-  const input = useRef<HTMLInputElement>(null);
   const { portfolios } = usePortfolios();
 
-  const add = (picked: FileList | File[]) => {
+  const add = (picked: File[]) => {
     const accepted = Array.from(picked).filter((f) => /\.(csv|xlsx)$/i.test(f.name));
     if (accepted.length < Array.from(picked).length) setError("Only .csv and .xlsx tradebooks can be read");
     else setError("");
@@ -210,46 +208,13 @@ export function BrokerImport({ onComplete }: { onComplete: () => void }) {
         </p>
       </div>
 
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Choose tradebook files"
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragOver(true);
-        }}
-        onDragLeave={() => setIsDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragOver(false);
-          add(e.dataTransfer.files);
-        }}
-        onClick={() => input.current?.click()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            input.current?.click();
-          }
-        }}
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-7 text-center transition-colors",
-          isDragOver ? "border-sprout bg-sprout/10" : "border-line-strong bg-well hover:border-ink-3/60 hover:bg-raised/40",
-        )}
-      >
-        <Upload className="size-5 text-ink-2" />
-        <p className="text-[13.5px] font-medium text-ink">Drop tradebook files here</p>
-        <p className="text-[12px] text-ink-3">or click to browse · .csv or .xlsx</p>
-      </div>
-      <input
-        ref={input}
-        type="file"
+      <FileDrop
         accept=".csv,.xlsx"
         multiple
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files) add(e.target.files);
-          e.target.value = "";
-        }}
+        label="Choose tradebook files"
+        title="Drop tradebook files here"
+        hint="or click to browse · .csv or .xlsx"
+        onFiles={add}
       />
 
       {files.length > 0 && (
@@ -287,11 +252,76 @@ export function BrokerImport({ onComplete }: { onComplete: () => void }) {
   );
 }
 
-function plural(n: number, one: string, many: string) {
+/** A drop zone that also opens the file picker (click, Enter or Space) */
+export function FileDrop({
+  accept,
+  multiple = false,
+  label,
+  title,
+  hint,
+  onFiles,
+}: {
+  accept: string;
+  multiple?: boolean;
+  label: string;
+  title: string;
+  hint: string;
+  onFiles: (files: File[]) => void;
+}) {
+  const [isDragOver, setIsDragOver] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label={label}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragOver(true);
+        }}
+        onDragLeave={() => setIsDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragOver(false);
+          onFiles(Array.from(e.dataTransfer.files));
+        }}
+        onClick={() => input.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            input.current?.click();
+          }
+        }}
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-6 py-7 text-center transition-colors",
+          isDragOver ? "border-sprout bg-sprout/10" : "border-line-strong bg-well hover:border-ink-3/60 hover:bg-raised/40",
+        )}
+      >
+        <Upload className="size-5 text-ink-2" />
+        <p className="text-[13.5px] font-medium text-ink">{title}</p>
+        <p className="text-[12px] text-ink-3">{hint}</p>
+      </div>
+      <input
+        ref={input}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) onFiles(Array.from(e.target.files));
+          e.target.value = "";
+        }}
+      />
+    </>
+  );
+}
+
+export function plural(n: number, one: string, many: string) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-function Tile({ label, value, money = false }: { label: string; value: number; money?: boolean }) {
+export function Tile({ label, value, money = false }: { label: string; value: number; money?: boolean }) {
   return (
     <div className={cn("rounded-lg border px-3 py-2.5 text-center", money ? "border-sprout/25 bg-sprout/10" : "border-line bg-raised")}>
       <p className={cn("num text-[22px] leading-none font-medium", money ? "text-money" : "text-ink")}>{value}</p>
@@ -300,7 +330,7 @@ function Tile({ label, value, money = false }: { label: string; value: number; m
   );
 }
 
-function Note({
+export function Note({
   icon: Icon,
   tone = "default",
   children,

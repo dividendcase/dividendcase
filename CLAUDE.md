@@ -35,11 +35,19 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
   services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
                        the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
   services/brokers/    broker exports → purchase lots: Trade, open_lots (FIFO sells, one lot per stock
-                       per day, oversold/closed counts); zerodha.py reads Console tradebooks (CSV or
-                       Excel, header found by name; EQ only; NSE → .NS, BSE → .BO, NSE wins per ISIN)
+                       per day, oversold/closed counts); files.py shared readers; zerodha.py reads
+                       Console tradebooks (CSV or Excel, header found by name; EQ only; NSE → .NS,
+                       BSE → .BO, NSE wins per ISIN); angelone.py reads "Your Holding Details"
+                       (password-protected XLSX via msoffcrypto, or CSV/PDF copies): no dates, so each
+                       holding → a long-held lot dated a year + a day before "Date of Download" and a
+                       recent lot on that day (LTCG/STCG quantities), dates confirmed by the user
+  services/isin.py     ISIN → ticker: NSE's EQUITY_L.csv + eq_etfseclist.csv (archives.nseindia.com,
+                       cached a day), then Yahoo symbol search by ISIN (.NS before .BO); never by name
   api/v1/imports.py    POST /imports/zerodha/preview and /imports/zerodha (files read in memory, not
-                       kept; lots already there by ticker + date are skipped). UI: Import → Zerodha
-                       (components/investments/BrokerImport.tsx)
+                       kept; lots already there by ticker + date are skipped); /imports/angelone/preview
+                       (file + password → rows with tickers and dated lots) and /imports/lots (the lots
+                       the user confirmed, as JSON). UI: Import → Zerodha (BrokerImport.tsx), Angel One
+                       (AngelOneImport.tsx)
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
   web/                 built interface (gitignored; filled by scripts/build_web.py)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)
