@@ -94,4 +94,6 @@ class LotToAdd(BaseModel):
 
 class LotsToAdd(BaseModel):
     portfolio_id: Optional[int] = None
+    # A portfolio to create for these lots, by name (instead of portfolio_id)
+    new_portfolio: Optional[str] = Field(default=None, max_length=100)
     lots: list[LotToAdd] = Field(min_length=1, max_length=5000)

@@ -293,13 +293,19 @@ export function previewZerodha(files: File[]): Promise<BrokerPreview> {
   return postFiles<BrokerPreview>("/api/v1/imports/zerodha/preview", files);
 }
 
+/** Where an import adds its lots: an existing portfolio, or a new one created with them */
+export type ImportTargetFields = { portfolio_id?: number; new_portfolio?: string };
+
+function targetForm(target: ImportTargetFields): Record<string, string> {
+  const fields: Record<string, string> = {};
+  if (target.portfolio_id != null) fields.portfolio_id = String(target.portfolio_id);
+  if (target.new_portfolio) fields.new_portfolio = target.new_portfolio;
+  return fields;
+}
+
 /** Add the lots from Zerodha tradebooks that aren't in the app yet */
-export function importZerodha(files: File[], portfolioId?: number): Promise<BrokerImportResult> {
-  return postFiles<BrokerImportResult>(
-    "/api/v1/imports/zerodha",
-    files,
-    portfolioId != null ? { portfolio_id: String(portfolioId) } : {},
-  );
+export function importZerodha(files: File[], target: ImportTargetFields = {}): Promise<BrokerImportResult> {
+  return postFiles<BrokerImportResult>("/api/v1/imports/zerodha", files, targetForm(target));
 }
 
 // ── User Preferences ──────────────────────────────────────────────────────────
@@ -336,12 +342,8 @@ export function previewRevolut(files: File[]): Promise<BrokerPreview> {
 }
 
 /** Add the lots from Revolut account statements that aren't in the app yet */
-export function importRevolut(files: File[], portfolioId?: number): Promise<BrokerImportResult> {
-  return postFiles<BrokerImportResult>(
-    "/api/v1/imports/revolut",
-    files,
-    portfolioId != null ? { portfolio_id: String(portfolioId) } : {},
-  );
+export function importRevolut(files: File[], target: ImportTargetFields = {}): Promise<BrokerImportResult> {
+  return postFiles<BrokerImportResult>("/api/v1/imports/revolut", files, targetForm(target));
 }
 
 /** Read an Angel One holdings file (and its password, if it has one) without changing anything */
@@ -353,10 +355,10 @@ export function previewAngelOne(file: File, password?: string): Promise<Holdings
 }
 
 /** Add lots the user confirmed; any stock already in the app on that date is skipped */
-export function importLots(lots: LotToAdd[], portfolioId?: number): Promise<BrokerImportResult> {
+export function importLots(lots: LotToAdd[], target: ImportTargetFields = {}): Promise<BrokerImportResult> {
   return importRequest<BrokerImportResult>("/api/v1/imports/lots", {
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ lots, portfolio_id: portfolioId ?? null }),
+    body: JSON.stringify({ lots, ...target }),
   });
 }
 

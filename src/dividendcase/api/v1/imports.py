@@ -185,8 +185,15 @@ async def _existing_lots(db: AsyncSession, user_id: UUID) -> set:
     return {(t, d) for t, d in rows.all()}
 
 
-async def _portfolio_id(db: AsyncSession, user_id: UUID, portfolio_id: Optional[int]) -> int:
-    """The portfolio to add to: the one asked for (it must be the user's), else the default one"""
+async def _portfolio_id(
+    db: AsyncSession, user_id: UUID, portfolio_id: Optional[int], new_portfolio: Optional[str] = None
+) -> int:
+    """The portfolio to add to: a new one with the name given, the one asked for (it must be the
+    user's), else the default one. A new portfolio is saved with the lots, or not at all."""
+    if new_portfolio and new_portfolio.strip():
+        from dividendcase.api.v1.portfolios import new_portfolio as create
+
+        return (await create(db, user_id, new_portfolio[:100])).id
     if portfolio_id is None:
         from dividendcase.api.v1.portfolios import _ensure_default_portfolio
 
@@ -246,11 +253,12 @@ async def preview_zerodha(
 async def import_zerodha(
     files: list[UploadFile] = File(...),
     portfolio_id: Optional[int] = Form(None),
+    new_portfolio: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(_get_user_id),
 ):
     positions, _, _ = await _read_zerodha(files)
-    portfolio_id = await _portfolio_id(db, user_id, portfolio_id)
+    portfolio_id = await _portfolio_id(db, user_id, portfolio_id, new_portfolio)
     created, already = await _add_lots(
         db,
         user_id,
@@ -276,11 +284,12 @@ async def preview_revolut(
 async def import_revolut(
     files: list[UploadFile] = File(...),
     portfolio_id: Optional[int] = Form(None),
+    new_portfolio: Optional[str] = Form(None),
     db: AsyncSession = Depends(get_db),
     user_id: UUID = Depends(_get_user_id),
 ):
     positions, _, _ = await _read_revolut(files)
-    portfolio_id = await _portfolio_id(db, user_id, portfolio_id)
+    portfolio_id = await _portfolio_id(db, user_id, portfolio_id, new_portfolio)
     created, already = await _add_lots(
         db,
         user_id,
@@ -352,7 +361,7 @@ async def import_lots(
 ):
     if any(lot.purchase_date > date.today() for lot in body.lots):
         raise HTTPException(status_code=400, detail="A purchase date can't be in the future")
-    portfolio_id = await _portfolio_id(db, user_id, body.portfolio_id)
+    portfolio_id = await _portfolio_id(db, user_id, body.portfolio_id, body.new_portfolio)
     created, already = await _add_lots(
         db,
         user_id,

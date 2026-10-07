@@ -66,12 +66,8 @@ async def list_portfolios(
     return result.scalars().all()
 
 
-@router.post("", response_model=PortfolioItem, status_code=201)
-async def create_portfolio(
-    body: PortfolioCreate,
-    db: AsyncSession = Depends(get_db),
-    user_id: UUID = Depends(_get_user_id),
-):
+async def new_portfolio(db: AsyncSession, user_id: UUID, name: str) -> UserPortfolio:
+    """Add a portfolio after the others (not committed: the caller commits it with whatever goes in it)"""
     count_result = await db.execute(
         select(sa_func.count())
         .select_from(UserPortfolio)
@@ -91,10 +87,21 @@ async def create_portfolio(
 
     portfolio = UserPortfolio(
         user_id=user_id,
-        name=body.name.strip(),
+        name=name.strip(),
         display_order=next_order,
     )
     db.add(portfolio)
+    await db.flush()
+    return portfolio
+
+
+@router.post("", response_model=PortfolioItem, status_code=201)
+async def create_portfolio(
+    body: PortfolioCreate,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(_get_user_id),
+):
+    portfolio = await new_portfolio(db, user_id, body.name)
     await db.commit()
     await db.refresh(portfolio)
     return portfolio

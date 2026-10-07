@@ -53,7 +53,9 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
                        the user confirmed, as JSON); /imports/revolut/preview and /imports/revolut (like
                        Zerodha, plus notes: a statement that starts with holdings, or trades that don't
                        add up to Revolut's Portfolio breakdown). UI: Import → Zerodha and Revolut
-                       (BrokerImport.tsx with a BrokerSpec each), Angel One (AngelOneImport.tsx)
+                       (BrokerImport.tsx with a BrokerSpec each), Angel One (AngelOneImport.tsx).
+                       Every import takes portfolio_id or new_portfolio (created with the lots, same
+                       limit as /portfolios); PortfolioChoice.tsx suggests one named after the broker
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
   web/                 built interface (gitignored; filled by scripts/build_web.py)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)

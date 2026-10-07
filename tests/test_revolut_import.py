@@ -142,3 +142,21 @@ def test_the_same_statement_twice_counts_each_trade_once(client):
     ).json()
     assert preview["duplicate_trades"] == 4
     assert {h["ticker"]: h["quantity"] for h in preview["holdings"]} == {"ALFA": 7.5, "BRK-B": 0.5}
+
+
+def test_importing_into_a_new_portfolio_creates_it_with_the_lots(client):
+    r = client.post("/api/v1/imports/revolut", files=upload(pdf(STATEMENT)), data={"new_portfolio": " Revolut "})
+    assert r.status_code == 200, r.text
+    new_id = r.json()["portfolio_id"]
+    assert {p["id"]: p["name"] for p in client.get("/api/v1/portfolios").json()}[new_id] == "Revolut"
+    held = {i["ticker_symbol"] for i in client.get("/api/v1/portfolio").json() if i["portfolio_id"] == new_id}
+    assert held == {"ALFA", "BRK-B"}
+
+
+def test_a_new_portfolio_past_the_limit_is_refused_and_nothing_is_added(client):
+    for n in range(4):
+        assert client.post("/api/v1/portfolios", json={"name": f"Account {n}"}).status_code == 201
+    r = client.post("/api/v1/imports/revolut", files=upload(pdf(STATEMENT)), data={"new_portfolio": "Revolut"})
+    assert r.status_code == 400 and "Maximum" in r.json()["detail"]
+    assert client.get("/api/v1/portfolio").json() == []
+    assert len(client.get("/api/v1/portfolios").json()) == 4

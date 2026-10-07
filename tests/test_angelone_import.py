@@ -247,3 +247,11 @@ def test_lots_dated_in_the_future_or_for_another_portfolio_are_refused(client):
     assert client.post("/api/v1/imports/lots", json={"lots": [lot]}).status_code == 400
     lot["purchase_date"] = "2021-06-01"
     assert client.post("/api/v1/imports/lots", json={"lots": [lot], "portfolio_id": 999}).status_code == 404
+
+
+def test_confirmed_lots_can_go_into_a_new_portfolio(client):
+    lot = {"ticker": "ALPHA.NS", "purchase_date": "2021-06-01", "quantity": 20, "price": 100.0, "currency": "INR"}
+    r = client.post("/api/v1/imports/lots", json={"lots": [lot], "new_portfolio": "Angel One"})
+    assert r.status_code == 200, r.text
+    names = {p["id"]: p["name"] for p in client.get("/api/v1/portfolios").json()}
+    assert names[r.json()["portfolio_id"]] == "Angel One"

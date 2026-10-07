@@ -4,11 +4,13 @@ import { useRef, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileText, Info, Loader2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
-import { importRevolut, importZerodha, previewRevolut, previewZerodha } from "@/lib/api/backend";
+import { type ImportTargetFields, importRevolut, importZerodha, previewRevolut, previewZerodha } from "@/lib/api/backend";
 import { formatMoney } from "@/lib/format";
 import { usePortfolios } from "@/lib/hooks/usePortfolios";
+import { mutate } from "swr";
 import type { BrokerImportResult, BrokerPreview } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { PortfolioChoice, type PortfolioTarget, suggestedTarget, targetFields } from "./PortfolioChoice";
 
 type Step = "choose" | "reading" | "preview" | "importing" | "done";
 
@@ -24,7 +26,7 @@ export interface BrokerSpec {
   /** What the files can't show, said under every preview */
   caveat: string;
   preview: (files: File[]) => Promise<BrokerPreview>;
-  commit: (files: File[], portfolioId?: number) => Promise<BrokerImportResult>;
+  commit: (files: File[], target: ImportTargetFields) => Promise<BrokerImportResult>;
 }
 
 function Steps({ title, steps, after }: { title: string; steps: string[]; after: string }) {
@@ -94,8 +96,11 @@ export function BrokerImport({ broker, onComplete }: { broker: BrokerSpec; onCom
   const [preview, setPreview] = useState<BrokerPreview | null>(null);
   const [result, setResult] = useState<BrokerImportResult | null>(null);
   const [error, setError] = useState("");
-  const [portfolioId, setPortfolioId] = useState<number | undefined>(undefined);
-  const { portfolios } = usePortfolios();
+  const [chosenTarget, setTarget] = useState<PortfolioTarget | null>(null);
+  const { portfolios, isLoading: portfoliosLoading } = usePortfolios();
+  const portfoliosLoaded = !portfoliosLoading;
+  // Until the user picks, suggest one (a portfolio named after the broker, or a new one)
+  const target = chosenTarget ?? suggestedTarget(portfolios, broker.name);
 
   const add = (picked: File[]) => {
     const accepted = picked.filter((f) => broker.extensions.some((ext) => f.name.toLowerCase().endsWith(ext)));
@@ -121,8 +126,9 @@ export function BrokerImport({ broker, onComplete }: { broker: BrokerSpec; onCom
     setStep("importing");
     setError("");
     try {
-      setResult(await broker.commit(files, portfolioId ?? portfolios[0]?.id));
+      setResult(await broker.commit(files, targetFields(target)));
       setStep("done");
+      mutate("portfolios"); // a new portfolio shows in the sidebar
     } catch (e) {
       setError(e instanceof Error ? e.message : "The import failed");
       setStep("preview");
@@ -253,21 +259,8 @@ export function BrokerImport({ broker, onComplete }: { broker: BrokerSpec; onCom
           </Note>
         )}
 
-        {portfolios.length > 1 && (
-          <label className="flex items-center justify-between gap-3 text-[13px] text-ink-2">
-            Add to
-            <select
-              value={portfolioId ?? portfolios[0]?.id}
-              onChange={(e) => setPortfolioId(Number(e.target.value))}
-              className="h-9 rounded-md border border-line bg-well px-2.5 text-[13px] text-ink"
-            >
-              {portfolios.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        {portfoliosLoaded && (
+          <PortfolioChoice portfolios={portfolios} broker={broker.name} target={target} onChange={setTarget} />
         )}
 
         {error && <Note icon={AlertTriangle} tone="cut">{error}</Note>}
@@ -276,7 +269,10 @@ export function BrokerImport({ broker, onComplete }: { broker: BrokerSpec; onCom
           <Button variant="ghost" size="sm" onClick={() => setStep("choose")}>
             Back
           </Button>
-          <Button onClick={commit} disabled={preview.new_lots === 0}>
+          <Button
+            onClick={commit}
+            disabled={preview.new_lots === 0 || ("newPortfolio" in target && !target.newPortfolio.trim())}
+          >
             <Upload className="size-4" />
             {preview.new_lots === 0 ? "Nothing new to add" : `Add ${preview.new_lots} ${preview.new_lots === 1 ? "lot" : "lots"}`}
           </Button>
