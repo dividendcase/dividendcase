@@ -330,6 +330,20 @@ export async function deleteAccount(): Promise<void> {
   }
 }
 
+/** What Revolut account statements add up to, without changing anything */
+export function previewRevolut(files: File[]): Promise<BrokerPreview> {
+  return postFiles<BrokerPreview>("/api/v1/imports/revolut/preview", files);
+}
+
+/** Add the lots from Revolut account statements that aren't in the app yet */
+export function importRevolut(files: File[], portfolioId?: number): Promise<BrokerImportResult> {
+  return postFiles<BrokerImportResult>(
+    "/api/v1/imports/revolut",
+    files,
+    portfolioId != null ? { portfolio_id: String(portfolioId) } : {},
+  );
+}
+
 /** Read an Angel One holdings file (and its password, if it has one) without changing anything */
 export function previewAngelOne(file: File, password?: string): Promise<HoldingsFilePreview> {
   const form = new FormData();

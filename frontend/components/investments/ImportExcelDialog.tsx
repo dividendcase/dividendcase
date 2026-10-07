@@ -15,19 +15,21 @@ import { Segmented } from "@/components/ui/segmented";
 import type { ImportSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AngelOneImport } from "./AngelOneImport";
-import { BrokerImport } from "./BrokerImport";
+import { BrokerImport, REVOLUT, ZERODHA } from "./BrokerImport";
 
-type Source = "excel" | "zerodha" | "angelone";
+type Source = "excel" | "zerodha" | "angelone" | "revolut";
 const SOURCES: { value: Source; label: string }[] = [
   { value: "excel", label: "Spreadsheet" },
   { value: "zerodha", label: "Zerodha" },
   { value: "angelone", label: "Angel One" },
+  { value: "revolut", label: "Revolut" },
 ];
 
 const DESCRIPTIONS: Record<Source, string> = {
   excel: "Add many purchases at once from a spreadsheet. Each sheet becomes a portfolio.",
   zerodha: "Add your holdings from the trades in your Zerodha tradebook.",
   angelone: "Add your holdings from Angel One's holdings file.",
+  revolut: "Add your holdings from the trades in your Revolut account statement.",
 };
 
 interface ImportExcelDialogProps {
@@ -133,7 +135,8 @@ export function ImportExcelDialog({
           <Segmented value={source} onChange={setSource} options={SOURCES} aria-label="Import from" className="w-fit" />
         )}
 
-        {source === "zerodha" && <BrokerImport onComplete={handleDone} />}
+        {source === "zerodha" && <BrokerImport key="zerodha" broker={ZERODHA} onComplete={handleDone} />}
+        {source === "revolut" && <BrokerImport key="revolut" broker={REVOLUT} onComplete={handleDone} />}
         {source === "angelone" && <AngelOneImport onComplete={handleDone} />}
 
         {/* Idle / Error state — file upload */}

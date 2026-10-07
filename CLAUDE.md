@@ -40,14 +40,20 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
                        BSE → .BO, NSE wins per ISIN); angelone.py reads "Your Holding Details"
                        (password-protected XLSX via msoffcrypto, or CSV/PDF copies): no dates, so each
                        holding → a long-held lot dated a year + a day before "Date of Download" and a
-                       recent lot on that day (LTCG/STCG quantities), dates confirmed by the user
+                       recent lot on that day (LTCG/STCG quantities), dates confirmed by the user;
+                       revolut.py reads the account statement PDF (a section per currency: Account
+                       summary, Portfolio breakdown with ISINs, Transactions) or a CSV/Excel copy;
+                       "Trade - …" rows with Side Buy/Sell become trades (BRK.B → BRK-B for USD),
+                       other rows are counted as left_out
   services/isin.py     ISIN → ticker: NSE's EQUITY_L.csv + eq_etfseclist.csv (archives.nseindia.com,
                        cached a day), then Yahoo symbol search by ISIN (.NS before .BO); never by name
   api/v1/imports.py    POST /imports/zerodha/preview and /imports/zerodha (files read in memory, not
                        kept; lots already there by ticker + date are skipped); /imports/angelone/preview
                        (file + password → rows with tickers and dated lots) and /imports/lots (the lots
-                       the user confirmed, as JSON). UI: Import → Zerodha (BrokerImport.tsx), Angel One
-                       (AngelOneImport.tsx)
+                       the user confirmed, as JSON); /imports/revolut/preview and /imports/revolut (like
+                       Zerodha, plus notes: a statement that starts with holdings, or trades that don't
+                       add up to Revolut's Portfolio breakdown). UI: Import → Zerodha and Revolut
+                       (BrokerImport.tsx with a BrokerSpec each), Angel One (AngelOneImport.tsx)
   api/v1/data.py       GET /data/status, POST /data/refresh (Data page)
   web/                 built interface (gitignored; filled by scripts/build_web.py)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)

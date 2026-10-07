@@ -255,6 +255,10 @@ export interface BrokerPreview {
   not_equity: number;
   duplicate_trades: number;
   unreadable: string[];
+  /** Anything else to know before importing: statement gaps, holdings that don't add up */
+  notes?: string[];
+  /** Rows that aren't buys or sells (cash top-ups, dividends, fees), by type: not imported */
+  left_out?: Record<string, number>;
 }
 
 /** An Angel One holdings file read into holdings (POST /imports/angelone/preview). The file has no
