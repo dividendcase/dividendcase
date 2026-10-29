@@ -10,8 +10,9 @@
     color-scheme: dark;
   }
 
+  /* No scroll-behavior: smooth here. Lenis animates anchor clicks; a smooth native jump would animate
+     a page opened at an anchor towards where it was before the page finished loading */
   html {
-    scroll-behavior: smooth;
     /* Anchored sections land below the sticky nav */
     scroll-padding-top: 5rem;
     -webkit-text-size-adjust: 100%;
@@ -54,11 +55,6 @@
     display: none;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    html {
-      scroll-behavior: auto;
-    }
-  }
 }
 
 /* Container used by every section: 16px gutters on phones, ~1180px wide on desktop */
