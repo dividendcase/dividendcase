@@ -20,11 +20,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <AppActionsProvider>
-      <div className="flex h-dvh overflow-hidden bg-background">
+      <div className="ambient flex h-dvh overflow-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <div className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden" id="main-scroll">
           <Header onMenuToggle={() => setSidebarOpen(true)} />
-          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 pb-6 pt-2 sm:px-6 sm:pb-8 sm:pt-3 lg:px-8">
             {children}
             <Footer />
           </main>

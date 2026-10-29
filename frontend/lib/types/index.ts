@@ -21,6 +21,26 @@ export interface DividendRecord {
   dividend_yield_pct?: number;
 }
 
+/** One trading day. Prices are split-adjusted; adj_close also folds in dividends (for total return). */
+export interface PriceBar {
+  date: string;
+  open: number | null;
+  high: number | null;
+  low: number | null;
+  close: number;
+  adj_close: number;
+  volume: number | null;
+}
+
+export interface PriceHistory {
+  ticker: string;
+  currency: string;
+  fetched_at: string | null;
+  /** Yahoo couldn't be reached, so these are the bars stored earlier */
+  stale: boolean;
+  bars: PriceBar[];
+}
+
 export interface DividendMetrics {
   ticker_symbol: string;
   company_name: string;

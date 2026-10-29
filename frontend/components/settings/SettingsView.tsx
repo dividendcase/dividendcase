@@ -259,7 +259,7 @@ export function SettingsView() {
                         const next = chosen ? current.filter((k) => k !== m.key) : [...current, m.key];
                         updatePreference({ screener_markets: next.length === (markets ?? []).length ? null : next });
                       }}
-                      title={`${m.country} · ${m.stocks} stocks`}
+                      title={`${m.country}, ${m.stocks} stocks`}
                     >
                       {m.name}
                     </Chip>

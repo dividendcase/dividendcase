@@ -172,13 +172,13 @@ export function ImportExcelDialog({
                 <div className="space-y-0.5">
                   <p className="text-[13.5px] font-medium text-ink">{selectedFile.name}</p>
                   <p className="text-[12px] text-ink-3">
-                    <span className="num">{(selectedFile.size / 1024).toFixed(1)} KB</span> · click to choose another file
+                    <span className="num">{(selectedFile.size / 1024).toFixed(1)} KB</span>. Click to choose another file.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-0.5">
                   <p className="text-[13.5px] font-medium text-ink">Drop an .xlsx file here</p>
-                  <p className="text-[12px] text-ink-3">or click to browse · up to 5 MB</p>
+                  <p className="text-[12px] text-ink-3">or click to browse, up to 5 MB</p>
                 </div>
               )}
             </div>
@@ -316,7 +316,7 @@ export function ImportExcelDialog({
                         )}
                       >
                         <span className="num shrink-0 text-ink-2">
-                          {item.sheet_name} · row {item.row_number} · <span className="text-ink">{item.ticker || "—"}</span>
+                          {item.sheet_name}, row {item.row_number}: <span className="text-ink">{item.ticker || "—"}</span>
                         </span>
                         <span className={cn("text-right", item.status === "skipped_invalid" ? "text-cut" : "text-ink-3")}>
                           {item.reason}

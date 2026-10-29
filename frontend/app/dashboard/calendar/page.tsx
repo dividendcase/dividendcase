@@ -11,11 +11,10 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Stat } from "@/components/ui/stat";
+import { Stat, StatGroup } from "@/components/ui/stat";
 import { Segmented } from "@/components/ui/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EChart } from "@/components/charts/EChart";
 import { categorical, chartColors } from "@/lib/chartTheme";
@@ -272,11 +271,7 @@ export default function CalendarPage() {
     return (
       <div className="space-y-6">
         {header}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-[104px] rounded-xl" />
-          ))}
-        </div>
+        <Skeleton className="h-[104px] rounded-xl" />
         <Skeleton className="h-[360px] rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
       </div>
@@ -370,14 +365,14 @@ export default function CalendarPage() {
             </span>
           </p>
         )}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat
+        <StatGroup className="grid-cols-2 lg:grid-cols-4">
+          <Stat bare
             label="Next 12 months"
             tone="money"
             value={formatMoney(annual, currency)}
             sub={showPicker ? `Estimated, in ${currencyLabel(currency)}` : "Estimated"}
           />
-          <Stat
+          <Stat bare
             label="Monthly average"
             value={formatMoney(annual / 12, currency)}
             sub={
@@ -386,20 +381,20 @@ export default function CalendarPage() {
               </>
             }
           />
-          <Stat
+          <Stat bare
             label="Next payment"
             value={next ? formatShortDate(next.expected_date) : "—"}
             sub={
               next && (
                 <>
-                  <span className="num text-ink-2">{next.ticker_symbol}</span> ·{" "}
-                  <span className="num text-money">{formatMoney(valueOf(next), currency)}</span>
-                  {whenLabel(next.expected_date) && <> · {whenLabel(next.expected_date)}</>}
+                  <span className="num text-money">{formatMoney(valueOf(next), currency)}</span> from{" "}
+                  <span className="num text-ink-2">{next.ticker_symbol}</span>
+                  {whenLabel(next.expected_date) && <>, {whenLabel(next.expected_date)}</>}
                 </>
               )
             }
           />
-          <Stat
+          <Stat bare
             label="Payments"
             value={curEntries.length}
             sub={
@@ -408,7 +403,7 @@ export default function CalendarPage() {
               </>
             }
           />
-        </div>
+        </StatGroup>
       </section>
 
       {gapMonths.length > 0 && (
@@ -493,7 +488,7 @@ export default function CalendarPage() {
                                 ...sumByCurrency(list.filter((e) => e.home == null)).map(([c, v]) => formatMoney(v, c)),
                               ]
                             : sumByCurrency(list).map(([c, v]) => formatMoney(v, c))
-                          ).join(" · ")}
+                          ).join(" + ")}
                         </td>
                       </tr>
                       {list.map((e, i) => (
@@ -577,7 +572,6 @@ export default function CalendarPage() {
 function StockCell({ ticker, name, color }: { ticker: string; name: string; color?: string }) {
   return (
     <Link href={stockHref(ticker)} className="group flex min-w-0 items-center gap-2.5">
-      <TickerBadge ticker={ticker} />
       <span className="min-w-0">
         <span className="flex items-center gap-1.5">
           {color && <span aria-hidden="true" className="size-2 shrink-0 rounded-full" style={{ backgroundColor: color }} />}

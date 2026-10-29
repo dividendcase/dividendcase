@@ -27,5 +27,7 @@ class Stock(Base):
     # The latest close, from the fetch at last_fetched_at; stocks without dividends have only this
     last_price = Column(Numeric(12, 4))
     last_fetched_at = Column(DateTime(timezone=True))
+    # When the daily price bars (price_bars) were last downloaded, on the first price chart request
+    prices_fetched_at = Column(DateTime(timezone=True))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

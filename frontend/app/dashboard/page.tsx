@@ -3,17 +3,16 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, CalendarClock, CalendarDays, Plus, Upload } from "lucide-react";
+import { CalendarClock, Plus, Upload } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAppActions } from "@/components/layout/AppActions";
 import { Welcome } from "@/components/home/Welcome";
 import { MonthlyIncomeChart } from "@/components/home/MonthlyIncomeChart";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Stat } from "@/components/ui/stat";
+import { Stat, StatGroup } from "@/components/ui/stat";
 import { Segmented } from "@/components/ui/segmented";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { InfoTip } from "@/components/ui/tooltip";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useIncomeCalendar } from "@/lib/hooks/useIncomeCalendar";
@@ -88,7 +87,7 @@ function IncomeContent() {
             Projected from each holding&apos;s latest dividend and how often it pays.{" "}
             <span className="text-ink-3">
               <span className="num">{model.holdings.length}</span> holdings
-              {model.currencies.length > 1 && <> · <span className="num">{model.currencies.length}</span> currencies</>}
+              {model.currencies.length > 1 && <> in <span className="num">{model.currencies.length}</span> currencies</>}.
             </span>
           </>
         }
@@ -156,14 +155,15 @@ function IncomeContent() {
               ▲ Left out: no exchange rate for <span className="num">{income.skipped!.map(currencyLabel).join(", ")}</span>.
             </p>
           )}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatGroup className="grid-cols-2 lg:grid-cols-4">
             <Stat
+              bare
               label={taxed && taxView === "net" ? "Next 12 months, after tax" : "Next 12 months"}
               value={formatMoney(income.annual, income.currency, { decimals: 0 })}
               sub={
                 withheld > 0 ? (
                   <>
-                    ≈ <span className="num">{formatMoney(income.annual / 12, income.currency, { decimals: 0 })}</span> a month ·{" "}
+                    ≈ <span className="num">{formatMoney(income.annual / 12, income.currency, { decimals: 0 })}</span> a month,{" "}
                     <span className="num">{formatMoney(withheld, income.currency, { decimals: 0 })}</span> withheld
                   </>
                 ) : (
@@ -173,6 +173,7 @@ function IncomeContent() {
               tone="money"
             />
             <Stat
+              bare
               label="Yield on cost"
               value={income.cost ? `${((income.annual / income.cost) * 100).toFixed(2)}%` : "—"}
               sub={
@@ -187,20 +188,22 @@ function IncomeContent() {
               }
             />
             <Stat
+              bare
               label="Next payment"
               value={next ? formatMoney(nextAmount!.amount, nextAmount!.currency) : "—"}
-              sub={next ? `${next.company_name} · ${formatShortDate(next.expected_date)}` : "None in the next year"}
+              sub={next ? `${next.company_name} on ${formatShortDate(next.expected_date)}` : "None in the next year"}
             />
             <Stat
+              bare
               label="Holdings"
               value={model.holdings.length}
               sub={
                 income.isHome
-                  ? `${income.payers.length} pay dividends${model.nonPayers.length ? ` · ${model.nonPayers.length} don't` : ""}`
-                  : `${income.payers.length} pay in ${currencyLabel(income.currency)}${model.nonPayers.length ? ` · ${model.nonPayers.length} don't pay` : ""}`
+                  ? `${income.payers.length} pay dividends${model.nonPayers.length ? `, ${model.nonPayers.length} ${model.nonPayers.length === 1 ? "doesn't" : "don't"}` : ""}`
+                  : `${income.payers.length} pay in ${currencyLabel(income.currency)}${model.nonPayers.length ? `, ${model.nonPayers.length} ${model.nonPayers.length === 1 ? "doesn't" : "don't"} pay` : ""}`
               }
             />
-          </div>
+          </StatGroup>
 
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
             <Card>
@@ -213,8 +216,8 @@ function IncomeContent() {
                     {income.isHome ? ", converted at the latest European Central Bank rates." : "."}
                   </InfoTip>
                 </div>
-                <Link href="/dashboard/calendar/" className="inline-flex items-center gap-1 text-[12.5px] text-ink-3 hover:text-ink">
-                  Calendar <ArrowRight className="size-3.5" />
+                <Link href="/dashboard/calendar/" className="text-[12.5px] text-ink-3 underline-offset-4 hover:text-ink hover:underline">
+                  Open the calendar
                 </Link>
               </CardHeader>
               <div className="px-3 pb-4 sm:px-4">
@@ -279,9 +282,8 @@ function ComingUp({ entries, income, fx }: { entries: CalendarEntry[]; income?: 
   const soon = entries.slice(0, 6);
   return (
     <Card className="flex flex-col">
-      <CardHeader className="flex-row items-center justify-between pb-1">
+      <CardHeader className="pb-1">
         <CardTitle>Coming up</CardTitle>
-        <CalendarDays className="size-4 text-ink-3" />
       </CardHeader>
       {soon.length === 0 ? (
         <p className="px-5 pb-5 text-[13px] text-ink-3">No payments expected in the next year.</p>
@@ -294,17 +296,17 @@ function ComingUp({ entries, income, fx }: { entries: CalendarEntry[]; income?: 
               <li key={`${e.ticker_symbol}-${e.expected_date}-${i}`}>
                 <Link
                   href={`/dashboard/stock/?t=${encodeURIComponent(e.ticker_symbol)}`}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-raised/60"
+                  className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
                 >
-                  <div className="flex w-10 shrink-0 flex-col items-center rounded-md border border-line bg-well py-1 leading-none">
+                  <div className="glass-well flex w-10 shrink-0 flex-col items-center rounded-[10px] border py-1 leading-none">
                     <span className="num text-[15px] font-medium text-ink">{d.getDate()}</span>
-                    <span className="mt-0.5 font-mono text-[9.5px] uppercase text-ink-3">{d.toLocaleDateString("en-GB", { month: "short" })}</span>
+                    <span className="mt-0.5 text-[10.5px] text-ink-3">{d.toLocaleDateString("en-GB", { month: "short" })}</span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13.5px] font-medium text-ink">{e.company_name}</p>
                     <p className="truncate text-[12px] text-ink-3">
-                      <span className="num">{e.ticker_symbol}</span> · {frequencyLabel(e.payment_frequency).toLowerCase()}
-                      {days <= 7 && <span className="text-sprout-hi"> · {days <= 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}</span>}
+                      <span className="num">{e.ticker_symbol}</span>, {frequencyLabel(e.payment_frequency).toLowerCase()}
+                      {days <= 7 && <span className="text-sprout-hi">, {days <= 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`}</span>}
                     </p>
                   </div>
                   {(() => {
@@ -334,14 +336,14 @@ function TopPayers({ income }: { income: CurrencyIncome }) {
     <Card>
       <CardHeader className="flex-row items-center justify-between pb-2">
         <CardTitle>Where it comes from</CardTitle>
-        <Link href="/dashboard/investments/" className="inline-flex items-center gap-1 text-[12.5px] text-ink-3 hover:text-ink">
-          All holdings <ArrowRight className="size-3.5" />
+        <Link href="/dashboard/investments/" className="text-[12.5px] text-ink-3 underline-offset-4 hover:text-ink hover:underline">
+          All holdings
         </Link>
       </CardHeader>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[13px] sm:min-w-[560px]">
           <thead>
-            <tr className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-ink-3">
+            <tr className="text-[12px] text-ink-3">
               <th className="py-2 pl-5 pr-3 text-left font-medium">Holding</th>
               <th className="hidden px-3 py-2 text-left font-medium sm:table-cell">Pays</th>
               <th className="hidden px-3 py-2 text-right font-medium md:table-cell">Shares</th>
@@ -352,11 +354,10 @@ function TopPayers({ income }: { income: CurrencyIncome }) {
           </thead>
           <tbody>
             {rows.map((p) => (
-              <tr key={p.ticker} className="group border-t border-line transition-colors hover:bg-raised/50">
+              <tr key={p.ticker} className="group border-t border-line transition-colors hover:bg-white/[0.025]">
                 <td className="py-2.5 pl-5 pr-3">
-                  <Link href={`/dashboard/stock/?t=${encodeURIComponent(p.ticker)}`} className="flex min-w-0 items-center gap-3">
-                    <TickerBadge ticker={p.ticker} />
-                    <span className="min-w-0">
+                  <Link href={`/dashboard/stock/?t=${encodeURIComponent(p.ticker)}`} className="block min-w-0">
+                    <span className="block min-w-0">
                       <span className="block max-w-[140px] truncate font-medium text-ink group-hover:text-sprout-hi sm:max-w-[220px]">{p.company}</span>
                       <span className="num block text-[12px] text-ink-3">{p.ticker}</span>
                     </span>
@@ -373,7 +374,7 @@ function TopPayers({ income }: { income: CurrencyIncome }) {
                 </td>
                 <td className="py-2.5 pl-3 pr-5">
                   <div className="flex items-center justify-end gap-2">
-                    <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-raised sm:block" aria-hidden="true">
+                    <span className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-white/[0.07] sm:block" aria-hidden="true">
                       <span className="block h-full rounded-full bg-sprout" style={{ width: `${Math.max(3, p.share * 100)}%` }} />
                     </span>
                     <span className="num w-11 text-right text-ink-2">{(p.share * 100).toFixed(1)}%</span>
@@ -553,9 +554,7 @@ function HomeSkeleton({ bare = false }: { bare?: boolean }) {
           <Skeleton className="h-4 w-80 max-w-full" />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-[104px] rounded-xl" />)}
-      </div>
+      <Skeleton className="h-[104px] rounded-xl" />
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Skeleton className="h-[340px] rounded-xl" />
         <Skeleton className="h-[340px] rounded-xl" />

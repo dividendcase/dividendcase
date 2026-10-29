@@ -155,6 +155,42 @@ class DemoMarket:
         }
         return stock, [dict(r) for r in records]
 
+    def fetch_price_history(self, symbol, years=10):
+        """Daily bars on weekdays: each close is the day's point on the smooth path (so it agrees
+        with the dividend-date prices), with open, high and low a small wobble around it.
+        adj_close takes out the dividends paid since, as Yahoo's adjusted close does."""
+        row = self.rows.get(symbol)
+        if row is None:
+            return []
+        now = row[6]
+        places = 2 if now < 1000 else 1
+        # Each later payment lowers the adjusted close of every day before it by its yield
+        payments = [(r["dividend_date"], 1 - r["dividend_yield_pct"] / 100) for r in _records(row)]
+        factor = math.prod(f for _, f in payments)
+        paid = 0
+        seed = sum(map(ord, symbol))
+        base_volume = 1_500_000 + 250_000 * (seed % 9)
+        bars, day = [], TODAY - timedelta(days=round(365.25 * years))
+        while day <= TODAY:
+            if day.weekday() < 5:
+                while paid < len(payments) and payments[paid][0] <= day:
+                    factor /= payments[paid][1]
+                    paid += 1
+                n = day.toordinal()  # the same wobble for a day whatever the range asked for
+                close = _price(row, day)
+                open_ = close * (1 + 0.006 * math.sin(n * 1.7))
+                bars.append({
+                    "bar_date": day,
+                    "open": round(open_, places),
+                    "high": round(max(open_, close) * (1.003 + 0.004 * abs(math.sin(n * 0.9))), places),
+                    "low": round(min(open_, close) * (0.997 - 0.004 * abs(math.sin(n * 1.1))), places),
+                    "close": close,
+                    "adj_close": round(close * factor, 4),
+                    "volume": int(round(base_volume * (1 + 0.3 * math.sin(n / 45 + seed) + 0.15 * math.sin(n * 0.8 + seed)), -2)),
+                })
+            day += timedelta(days=1)
+        return bars
+
     def universe(self, selected=None):
         return [(r[0], "demo") for r in STOCKS]
 
@@ -206,6 +242,7 @@ def go_offline(market: DemoMarket) -> None:
     from dividendcase.services import benchmark as beats, fx, refresh, yahoo_fetcher
 
     yahoo_fetcher.YahooFetcher.fetch_stock_light = market.fetch_stock_light
+    yahoo_fetcher.YahooFetcher.fetch_price_history = market.fetch_price_history
     stocks._fetch_asset_profile = lambda ticker: {}
     investment._get_benchmark_data = benchmark
     portfolio._get_benchmark_data = benchmark

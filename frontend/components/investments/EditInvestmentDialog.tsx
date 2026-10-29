@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import type { InvestmentItem } from "@/lib/types";
 import { LotPriceFields, PurchaseCurrencySelect, resolvePrice, type LotFields } from "./lotForm";
 
@@ -74,8 +73,7 @@ export function EditInvestmentDialog({ investment, open, onOpenChange, onSave }:
     <Dialog open={open} onOpenChange={(o) => !saving && onOpenChange(o)}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2.5">
-            <TickerBadge ticker={investment.ticker_symbol} />
+          <DialogTitle>
             <span>
               Edit lot <span className="num text-ink-2">{investment.ticker_symbol}</span>
             </span>

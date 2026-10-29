@@ -6,16 +6,19 @@ interface StatProps {
   sub?: React.ReactNode;
   icon?: React.ReactNode;
   tone?: "default" | "money" | "watch";
+  /** Inside a StatGroup: no panel of its own */
+  bare?: boolean;
   className?: string;
 }
 
 /** A key number with a label above it and context below. */
-export function Stat({ label, value, sub, icon, tone = "default", className }: StatProps) {
+export function Stat({ label, value, sub, icon, tone = "default", bare = false, className }: StatProps) {
   return (
     <div
       className={cn(
-        "relative flex min-w-0 flex-col gap-1.5 rounded-xl border border-line bg-surface p-4 shadow-card sm:p-5",
-        tone === "watch" && "border-watch/30",
+        "relative flex min-w-0 flex-col gap-1.5 p-4 sm:p-5",
+        bare ? "-ml-px -mt-px border-l border-t border-white/[0.06]" : "glass-panel rounded-xl border",
+        tone === "watch" && !bare && "border-watch/30",
         className
       )}
     >
@@ -34,4 +37,12 @@ export function Stat({ label, value, sub, icon, tone = "default", className }: S
       {sub && <div className="truncate text-[12.5px] text-ink-3">{sub}</div>}
     </div>
   );
+}
+
+/**
+ * Several Stats on one glass panel, split by hairlines, so a row of key numbers reads as one
+ * thing. Pass the grid columns, e.g. "grid-cols-2 lg:grid-cols-4", and give each Stat `bare`.
+ */
+export function StatGroup({ className, children }: { className?: string; children: React.ReactNode }) {
+  return <div className={cn("glass-panel grid overflow-hidden rounded-xl border", className)}>{children}</div>;
 }

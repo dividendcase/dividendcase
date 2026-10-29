@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-/** Data tables: quiet uppercase headers, hairline rows, numbers right-aligned in mono. */
+/** Data tables: quiet sentence-case headers, hairline rows, numbers right-aligned in mono. */
 export function Table({ className, ...props }: React.TableHTMLAttributes<HTMLTableElement>) {
   return (
     <div className="w-full overflow-x-auto">
@@ -19,14 +19,14 @@ export function TBody({ className, ...props }: React.HTMLAttributes<HTMLTableSec
 }
 
 export function TR({ className, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
-  return <tr className={cn("border-t border-line transition-colors first:border-t-0 hover:bg-raised/40", className)} {...props} />;
+  return <tr className={cn("border-t border-line transition-colors first:border-t-0 hover:bg-white/[0.025]", className)} {...props} />;
 }
 
 export function TH({ className, numeric, ...props }: React.ThHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean }) {
   return (
     <th
       className={cn(
-        "whitespace-nowrap border-b border-line px-3 py-2.5 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3 first:pl-4 last:pr-4",
+        "whitespace-nowrap border-b border-line px-3 py-2.5 text-[12px] font-medium text-ink-3 first:pl-4 last:pr-4",
         numeric ? "text-right" : "text-left",
         className
       )}

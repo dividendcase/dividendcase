@@ -7,9 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Stat } from "@/components/ui/stat";
+import { Stat, StatGroup } from "@/components/ui/stat";
 import { Segmented } from "@/components/ui/segmented";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EChart } from "@/components/charts/EChart";
@@ -220,8 +219,7 @@ export default function DripPage() {
             <div className="grid gap-1.5">
               <Label htmlFor="drip-stock">Start from a stock (optional)</Label>
               {stock ? (
-                <div className="flex h-9 items-center gap-2 rounded-md border border-line bg-well pl-1.5 pr-1">
-                  <TickerBadge ticker={stock.symbol} />
+                <div className="flex h-9 items-center gap-2 rounded-[10px] border border-line bg-well pl-3 pr-1">
                   <span className="num text-[13px] font-medium text-ink">{stock.symbol}</span>
                   <span className="min-w-0 flex-1 truncate text-[12px] text-ink-3">
                     {stockLoading ? "Loading…" : filledFrom === stock.symbol ? "Filled in" : stock.name}
@@ -279,8 +277,8 @@ export default function DripPage() {
 
         {/* Results */}
         <div className="min-w-0 space-y-6">
-          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-            <Stat
+          <StatGroup className="grid-cols-2 xl:grid-cols-4">
+            <Stat bare
               label={`Income, year ${years}`}
               tone="money"
               value={formatMoney(last.withDrip.annualIncome, currency)}
@@ -290,17 +288,17 @@ export default function DripPage() {
                 </>
               }
             />
-            <Stat
+            <Stat bare
               label="Income, no DRIP"
               value={formatMoney(last.noDrip.annualIncome, currency)}
               sub={`Year ${years}, dividends taken as cash`}
             />
-            <Stat
+            <Stat bare
               label={`Value, year ${years}`}
               value={compact(last.withDrip.value, currency)}
               sub={
                 <>
-                  <span className="num">{last.withDrip.shares.toLocaleString("en", { maximumFractionDigits: 1 })}</span> shares ·{" "}
+                  <span className="num">{last.withDrip.shares.toLocaleString("en", { maximumFractionDigits: 1 })}</span> shares,{" "}
                   <span className="num">
                     {growthPct >= 0 ? "+" : "−"}
                     {Math.abs(growthPct).toFixed(0)}%
@@ -308,7 +306,7 @@ export default function DripPage() {
                 </>
               }
             />
-            <Stat
+            <Stat bare
               label="Value without DRIP"
               value={compact(last.noDrip.value, currency)}
               sub={
@@ -317,7 +315,7 @@ export default function DripPage() {
                 </>
               }
             />
-          </div>
+          </StatGroup>
 
           {initialValue > 0 && annualDiv > 0 && (
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

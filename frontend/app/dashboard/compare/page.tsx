@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Chip } from "@/components/ui/segmented";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { DividendStreakChart } from "@/components/charts/DividendStreakChart";
 import { EChart } from "@/components/charts/EChart";
 import { StockSearchField } from "@/components/investments/StockSearchField";
@@ -346,14 +345,13 @@ function CompareContent() {
                 <table className="w-full min-w-[520px] border-collapse text-[13px]">
                   <thead>
                     <tr>
-                      <th className="sticky left-0 z-10 border-b border-line bg-surface px-4 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">
+                      <th className="sticky left-0 z-10 border-b border-line bg-surface px-4 py-2.5 text-left text-[12px] font-medium text-ink-3">
                         Metric
                       </th>
                       {loaded.map((s) => (
                         <th key={s.ticker} className="border-b border-line px-3 py-2.5 text-right last:pr-4">
                           <span className="inline-flex items-center justify-end gap-2">
                             <span aria-hidden="true" className="size-2 rounded-full" style={{ backgroundColor: s.color }} />
-                            <TickerBadge ticker={s.ticker} className="hidden sm:inline-flex" />
                             <span className="num text-[13px] font-medium text-ink">{s.ticker}</span>
                           </span>
                         </th>
@@ -362,7 +360,7 @@ function CompareContent() {
                   </thead>
                   <tbody>
                     {ROWS.map((row) => (
-                      <tr key={row.label} className="border-t border-line first:border-t-0 hover:bg-raised/40">
+                      <tr key={row.label} className="border-t border-line first:border-t-0 hover:bg-white/[0.025]">
                         <th scope="row" className="sticky left-0 z-10 bg-surface px-4 py-2.5 text-left font-normal">
                           <span className="block text-ink-2">{row.label}</span>
                           {row.hint && <span className="hidden text-[11.5px] text-ink-3 md:block">{row.hint}</span>}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Download, Layers, Lock, SlidersHorizontal, Upload } from "lucide-react";
+import { Download, Layers, Lock, SlidersHorizontal, Upload } from "lucide-react";
 import { LogoMark } from "@dividendcase/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -42,11 +42,11 @@ export function Welcome() {
         <div className="relative max-w-xl space-y-4">
           <LogoMark className="size-12" />
           <h1 className="text-[30px] font-semibold leading-[1.08] tracking-[-0.035em] text-ink sm:text-[40px]">
-            Your dividends, on your <span className="serif-accent text-[1.12em]">own</span> computer.
+            Your dividends, on your own computer.
           </h1>
           <p className="max-w-lg text-[15px] leading-relaxed text-ink-2">
-            Add what you own and DividendCase shows what lands in your account, month by month, in each
-            currency. Everything stays in one file on this computer.
+            Add what you own and DividendCase estimates what it should pay you, month by month, in each
+            currency, from each company&apos;s dividend history. Everything stays in one file on this computer.
           </p>
           <div className="flex items-center gap-2 pt-1 text-[12.5px] text-ink-3">
             <Lock className="size-3.5 text-sprout" />
@@ -57,7 +57,6 @@ export function Welcome() {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <Step
-          n={1}
           icon={<Upload />}
           title="Import from Excel"
           text="Bring your DividendCase export, or fill in the template with your broker's holdings: one row per purchase."
@@ -75,7 +74,6 @@ export function Welcome() {
           }
         />
         <Step
-          n={2}
           icon={<Layers />}
           title="Or add holdings by hand"
           text="Enter the ticker, number of shares, price and date of each purchase, in any currency."
@@ -83,13 +81,11 @@ export function Welcome() {
             <Button variant="outline" asChild>
               <Link href="/dashboard/investments/">
                 Add a holding
-                <ArrowRight className="size-4" />
               </Link>
             </Button>
           }
         />
         <Step
-          n={3}
           icon={<SlidersHorizontal />}
           title="Find dividend payers"
           text={
@@ -103,7 +99,6 @@ export function Welcome() {
             <Button variant="outline" asChild>
               <Link href="/dashboard/screener/">
                 Open the screener
-                <ArrowRight className="size-4" />
               </Link>
             </Button>
           }
@@ -113,13 +108,11 @@ export function Welcome() {
   );
 }
 
-function Step({ n, icon, title, text, action }: { n: number; icon: React.ReactNode; title: string; text: string; action: React.ReactNode }) {
+// Ways to start, not steps in order: two are alternatives, so they carry no numbers
+function Step({ icon, title, text, action }: { icon: React.ReactNode; title: string; text: string; action: React.ReactNode }) {
   return (
     <Card className="flex flex-col gap-4 p-5">
-      <div className="flex items-center justify-between">
-        <span className="flex size-9 items-center justify-center rounded-lg border border-line bg-raised text-sprout [&_svg]:size-[18px]">{icon}</span>
-        <span className="num text-[12px] text-ink-3">0{n}</span>
-      </div>
+      <span className="glass-control flex size-9 items-center justify-center rounded-[12px] border text-sprout [&_svg]:size-[18px]">{icon}</span>
       <div className="space-y-1.5">
         <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
         <p className="text-[13px] leading-relaxed text-ink-3">{text}</p>

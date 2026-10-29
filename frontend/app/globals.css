@@ -37,6 +37,78 @@
   --color-faint: var(--color-ink-3);
 }
 
+/*
+ * Corners nest: a panel is rounder than the tiles inside it, and buttons are capsules.
+ * The website keeps the brand radii; only the app changes them.
+ */
+@theme {
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 22px;
+}
+
+/*
+ * Liquid glass. What floats over the content (the toolbar, the sidebar, menus, dialogs and
+ * controls) is smoked glass: a translucent fill, a blur that picks up whatever passes beneath,
+ * and a rim of light that is brightest along the top edge, as if lit from above. Panels in the
+ * content use a lighter version of the same material, so the two layers read as one family.
+ * Elements using these set no bg-* class of their own: the material is the background.
+ */
+@utility glass {
+  background-color: rgb(22 22 31 / 0.66);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0) 52%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-color: rgb(255 255 255 / 0.075);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.11),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.3),
+    0 18px 44px -14px rgb(0 0 0 / 0.7);
+}
+
+@utility glass-panel {
+  background-color: rgb(24 24 32 / 0.6);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0) 120px);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  backdrop-filter: blur(16px) saturate(150%);
+  border-color: rgb(255 255 255 / 0.065);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.065),
+    0 1px 2px 0 rgb(0 0 0 / 0.35),
+    0 10px 30px -18px rgb(0 0 0 / 0.6);
+}
+
+/* Buttons, switches and chips: a glass capsule that brightens under the pointer */
+@utility glass-control {
+  background-color: rgb(255 255 255 / 0.045);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.075), rgb(255 255 255 / 0.01));
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(160%);
+  border-color: rgb(255 255 255 / 0.085);
+  box-shadow:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.12),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.22),
+    0 1px 2px 0 rgb(0 0 0 / 0.3);
+}
+
+/* The track a segmented control's thumb slides in: glass pressed into the surface */
+@utility glass-well {
+  background-color: rgb(0 0 0 / 0.22);
+  border-color: rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 1px 2px 0 rgb(0 0 0 / 0.35), inset 0 -1px 0 0 rgb(255 255 255 / 0.04);
+}
+
+/*
+ * The room the glass sits in: the ground, lit faintly green from the top right and steel from
+ * the bottom left. Without something behind it, glass is just a grey card.
+ */
+@utility ambient {
+  background-color: var(--color-ground);
+  background-image:
+    radial-gradient(1100px 680px at 100% -12%, rgb(122 191 80 / 0.075), transparent 62%),
+    radial-gradient(900px 700px at -8% 108%, rgb(112 112 160 / 0.11), transparent 60%);
+}
+
 @layer base {
   :root {
     color-scheme: dark;
@@ -87,6 +159,25 @@
 
   input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(0.75);
+  }
+}
+
+/* People who turn on Reduce transparency get solid surfaces with the same rims */
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-panel,
+  .glass-control {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass {
+    background-color: var(--color-raised);
+  }
+  .glass-panel {
+    background-color: var(--color-surface);
+  }
+  .glass-control {
+    background-color: var(--color-raised);
   }
 }
 

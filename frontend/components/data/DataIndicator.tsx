@@ -17,7 +17,7 @@ export function DataIndicator() {
   return (
     <Link
       href="/dashboard/data/"
-      className="flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-2 pr-3 text-[12px] text-ink-2 transition-colors hover:border-line-strong hover:text-ink"
+      className="glass flex h-10 shrink-0 items-center gap-2 rounded-full border pl-3 pr-3.5 text-[12px] text-ink-2 transition-colors hover:text-ink"
       title={status.message || "Fetching market data in the background"}
     >
       {waiting ? (

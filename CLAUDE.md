@@ -34,6 +34,10 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
                        review before 1.0.
   services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
                        the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
+  services/prices.py   daily OHLC bars for the price charts (price_bars): GET /stocks/{t}/prices?years=
+                       (1–10) downloads on first use and again when prices_fetched_at is over 12 h
+                       old, always 10 years, replacing the stored bars (one download per ticker at a
+                       time); a failed download serves stored bars with stale=true, else 503
   services/brokers/    broker exports → purchase lots: Trade, open_lots (FIFO sells, one lot per stock
                        per day, oversold/closed counts); files.py shared readers; zerodha.py reads
                        Console tradebooks (CSV or Excel, header found by name; EQ only; NSE → .NS,
@@ -93,8 +97,10 @@ Dockerfile             node → uv build wheel → uv pip install --system; list
 
 - `/dashboard/` Income home (lib/income.ts builds it from the calendar + holdings); welcome
   screen when there are no holdings. `/dashboard?ticker=X` redirects to the stock page.
-- `/dashboard/stock/?t=KO` stock analysis; `/dashboard/screener/` filters every stored payer
-  client-side (GET /stocks/top-performers?limit=2000); `/dashboard/compare/?tickers=KO,PEP`.
+- `/dashboard/stock/?t=KO` stock analysis (with the price chart); `/dashboard/screener/` filters every
+  stored payer client-side (GET /stocks/top-performers?limit=2000), and a row opens its price chart
+  under it; `/dashboard/charts/?t=KO` Advanced charts (indicator panes, performance over the range,
+  and three dividend-against-price analyses over all stored prices); `/dashboard/compare/?tickers=KO,PEP`.
 - `/dashboard/investments/` (+ `/portfolio/?id=N`, `?add=1` opens the add dialog), calendar,
   watchlist, drip, data, settings, about.
 - Shell: `components/layout/` Sidebar, Header, `AppActions` (context: `openImport`,
@@ -109,10 +115,15 @@ Dockerfile             node → uv build wheel → uv pip install --system; list
   future income, `usePortfolioCost` = lots at purchase-date rates from GET /portfolio/cost);
   `/portfolio/analysis?currency=EUR` converts every amount at its own date (benchmark too).
   Pages offer "All in {home}" first, then one currency at a time.
-- Building blocks: `PageHeader`, `ui/stat`, `ui/segmented` (Segmented, Chip), `ui/table`,
-  `ui/empty-state`, `ui/ticker-badge`, `ui/tooltip` (InfoTip), `lib/format.ts` (formatMoney
-  shows GBp pence as £; currencyLabel), charts through `components/charts/EChart.tsx` with the
-  theme in `lib/chartTheme.ts` (chartColors, categorical, lineSeries).
+- Building blocks: `PageHeader`, `ui/stat` (Stat; StatGroup puts a row of `bare` Stats on one
+  panel), `ui/segmented` (Segmented with a sliding thumb, Chip), `ui/table`, `ui/empty-state`,
+  `ui/tooltip` (InfoTip), `lib/format.ts` (formatMoney shows GBp pence as £; currencyLabel), charts
+  through `components/charts/EChart.tsx` with the theme in `lib/chartTheme.ts` (chartColors,
+  categorical, lineSeries). Price charts: `usePriceHistory` (10 years of daily bars), `lib/priceChart.ts`
+  (line / area / candles / OHLC bars, volume, tooltips), `lib/indicators.ts` (pure maths: SMA, EMA,
+  Bollinger, RSI, MACD, drawdown, performance, trailing yield, yield bands, ex-dividend moves, year
+  by year, yield against next-year return), `components/charts/PriceChart.tsx` (screener, stock page),
+  `AdvancedChart.tsx` and `DividendAnalysis.tsx` (Advanced charts).
 
 ## Commands
 
@@ -167,10 +178,20 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 ## Design rules (brand)
 
 - Dark first. Green (sprout #7abf50) = money earned and primary actions; lavender (dial) =
-  Keeper/AI only; amber (watch) / red (cut) = risk only, always with an arrow, sign or label.
-- Geist for UI, Geist Mono (`num`) for every number. Sentence case labels. No emoji. The app
-  may use Instrument Serif italic (`serif-accent`) for one hero word; the website doesn't (decided
-  2 Oct 2026): emphasis there is green Geist. No em dashes in website copy.
+  Keeper/AI only (chart series s3/s4 may use it); amber (watch) / red (cut) = risk only, always
+  with an arrow, sign or label. Price moves are green up, red down, with ▲/▼ and a sign.
+- Geist for UI, Geist Mono (`num`) for numbers only: labels, headers and words are Geist
+  (`eyebrow` is a sentence-case Geist label, not uppercase mono). Sentence case. No emoji. No
+  `serif-accent` hero words in the app either (29 Oct 2026). No middle-dot meta strings, no arrows
+  appended to link text, no numbers on things that aren't a sequence, no decorative icons on labels,
+  no gradient fills in charts. No em dashes in website copy.
+- Liquid glass (app only, utilities in `frontend/app/globals.css`): `glass` for what floats over
+  the content (toolbar capsules, sidebar pane, dialogs, menus, popovers, tooltips), `glass-panel`
+  for content panels (Card, Stat), `glass-control` for outline/secondary buttons, segmented thumbs
+  and icon tiles, `glass-well` for tracks and inset tiles; `ambient` lights the room behind them.
+  Elements with these take no `bg-*` of their own (a later `border-*`/`bg-*` utility overrides the
+  material's). Buttons are capsules that give a little on press. The app's radii are 12/16/22 px
+  (lg/xl/2xl); the website keeps the brand's. Reduce transparency turns the blur off.
 - Website copy says what the app really does: the user enters holdings (by hand or from a spreadsheet),
   the app estimates dividends from each company's history, and it never connects to a broker or bank.
   Say "expected" or "estimate", never "received" or "arrives", and no "+" on amounts as if paid. Don't

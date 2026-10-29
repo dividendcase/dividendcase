@@ -85,8 +85,8 @@ export function WatchlistPanel({
       ref={setNodeRef}
       aria-label={group.name}
       className={cn(
-        "flex min-w-0 flex-col rounded-xl border bg-surface shadow-card transition-colors",
-        isOver && draggingFromElsewhere ? "border-sprout/60 bg-sprout/5" : draggingFromElsewhere ? "border-line-strong border-dashed" : "border-line"
+        "glass-panel flex min-w-0 flex-col rounded-xl border transition-colors",
+        isOver && draggingFromElsewhere ? "border-sprout/60 bg-sprout/5" : draggingFromElsewhere ? "border-line-strong border-dashed" : ""
       )}
     >
       {/* Header */}
