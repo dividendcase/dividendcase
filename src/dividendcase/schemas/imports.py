@@ -40,6 +40,10 @@ class BrokerPreview(BaseModel):
     not_equity: int
     duplicate_trades: int
     unreadable: list[str]
+    # Anything else the user should know before importing (statement gaps, holdings that don't add up)
+    notes: list[str] = []
+    # Rows that aren't buys or sells (cash top-ups, dividends, fees), by type: listed, not imported
+    left_out: dict[str, int] = {}
 
 
 class BrokerImportResult(BaseModel):
@@ -90,4 +94,6 @@ class LotToAdd(BaseModel):
 
 class LotsToAdd(BaseModel):
     portfolio_id: Optional[int] = None
+    # A portfolio to create for these lots, by name (instead of portfolio_id)
+    new_portfolio: Optional[str] = Field(default=None, max_length=100)
     lots: list[LotToAdd] = Field(min_length=1, max_length=5000)

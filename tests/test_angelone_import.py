@@ -9,6 +9,7 @@ from openpyxl import Workbook
 
 from dividendcase.services import isin
 from dividendcase.services.brokers import angelone
+from documents import pdf
 
 AS_OF = date(2025, 3, 15)
 HEADER = [
@@ -68,30 +69,6 @@ def as_csv() -> bytes:
     out = io.StringIO()
     csv.writer(out).writerows(table())
     return out.getvalue().encode()
-
-
-def pdf(lines: list[str]) -> bytes:
-    """A one-page PDF with these lines of text, as a spreadsheet printed to PDF reads back"""
-    def escape(s: str) -> str:
-        return s.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
-
-    text = "BT /F1 6 Tf 20 580 Td 8 TL " + " ".join(f"({escape(line)}) Tj T*" for line in lines) + " ET"
-    objects = [
-        "<< /Type /Catalog /Pages 2 0 R >>",
-        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Contents 4 0 R "
-        "/Resources << /Font << /F1 5 0 R >> >> >>",
-        f"<< /Length {len(text)} >>\nstream\n{text}\nendstream",
-        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    ]
-    out, offsets = "%PDF-1.4\n", []
-    for n, body in enumerate(objects, start=1):
-        offsets.append(len(out))
-        out += f"{n} 0 obj\n{body}\nendobj\n"
-    xref = len(out)
-    out += f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n" + "".join(f"{o:010d} 00000 n \n" for o in offsets)
-    out += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n"
-    return out.encode("latin-1")
 
 
 # How PDF text extraction returns the printed sheet: wrapped cells, and cells run together
@@ -270,3 +247,11 @@ def test_lots_dated_in_the_future_or_for_another_portfolio_are_refused(client):
     assert client.post("/api/v1/imports/lots", json={"lots": [lot]}).status_code == 400
     lot["purchase_date"] = "2021-06-01"
     assert client.post("/api/v1/imports/lots", json={"lots": [lot], "portfolio_id": 999}).status_code == 404
+
+
+def test_confirmed_lots_can_go_into_a_new_portfolio(client):
+    lot = {"ticker": "ALPHA.NS", "purchase_date": "2021-06-01", "quantity": 20, "price": 100.0, "currency": "INR"}
+    r = client.post("/api/v1/imports/lots", json={"lots": [lot], "new_portfolio": "Angel One"})
+    assert r.status_code == 200, r.text
+    names = {p["id"]: p["name"] for p in client.get("/api/v1/portfolios").json()}
+    assert names[r.json()["portfolio_id"]] == "Angel One"

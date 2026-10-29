@@ -8,8 +8,10 @@ import { Input } from "@/components/ui/input";
 import { ImportRefused, importLots, previewAngelOne } from "@/lib/api/backend";
 import { formatMoney } from "@/lib/format";
 import { usePortfolios } from "@/lib/hooks/usePortfolios";
+import { mutate } from "swr";
 import type { BrokerImportResult, HoldingsFileLot, HoldingsFilePreview, HoldingsFileRow, LotToAdd } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { PortfolioChoice, type PortfolioTarget, suggestedTarget, targetFields } from "./PortfolioChoice";
 import { FileDrop, Note, Tile, plural } from "./BrokerImport";
 
 type Step = "choose" | "reading" | "preview" | "importing" | "done";
@@ -38,8 +40,11 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
   const [dates, setDates] = useState<Record<string, string>>({});
   const [result, setResult] = useState<BrokerImportResult | null>(null);
   const [error, setError] = useState("");
-  const [portfolioId, setPortfolioId] = useState<number | undefined>(undefined);
-  const { portfolios } = usePortfolios();
+  const [chosenTarget, setTarget] = useState<PortfolioTarget | null>(null);
+  const { portfolios, isLoading: portfoliosLoading } = usePortfolios();
+  const portfoliosLoaded = !portfoliosLoading;
+  // Until the user picks, suggest one (a portfolio named after the broker, or a new one)
+  const target = chosenTarget ?? suggestedTarget(portfolios, "Angel One");
 
   const choose = (picked: File[]) => {
     const [first] = picked;
@@ -94,7 +99,9 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
         }))
       : [],
   );
-  const problem = chosen.some((l) => !l.purchase_date)
+  const problem = "newPortfolio" in target && !target.newPortfolio.trim()
+    ? "Name the new portfolio"
+    : chosen.some((l) => !l.purchase_date)
     ? "Every holding needs a purchase date"
     : chosen.some((l) => l.purchase_date > today())
       ? "A purchase date can't be in the future"
@@ -107,8 +114,9 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
     setStep("importing");
     setError("");
     try {
-      setResult(await importLots(chosen, portfolioId ?? portfolios[0]?.id));
+      setResult(await importLots(chosen, targetFields(target)));
       setStep("done");
+      mutate("portfolios"); // a new portfolio shows in the sidebar
     } catch (e) {
       setError(e instanceof Error ? e.message : "The import failed");
       setStep("preview");
@@ -273,21 +281,8 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
           </Note>
         )}
 
-        {portfolios.length > 1 && (
-          <label className="flex items-center justify-between gap-3 text-[13px] text-ink-2">
-            Add to
-            <select
-              value={portfolioId ?? portfolios[0]?.id}
-              onChange={(e) => setPortfolioId(Number(e.target.value))}
-              className="h-9 rounded-md border border-line bg-well px-2.5 text-[13px] text-ink"
-            >
-              {portfolios.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        {portfoliosLoaded && (
+          <PortfolioChoice portfolios={portfolios} broker="Angel One" target={target} onChange={setTarget} />
         )}
 
         {(error || problem) && <Note icon={AlertTriangle} tone="cut">{error || problem}</Note>}
