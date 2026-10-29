@@ -38,6 +38,7 @@ const SERVICES = [
   { name: "European Central Bank", what: "Exchange rates." },
   { name: "Wikipedia", what: "The list of S&P 500 companies, for the screener." },
   { name: "PyPI", what: "A check for a new version, once a day. Turn it off in Settings, under Check for updates." },
+  { name: "NSE", what: "Its public lists of listed securities, to find the ticker for a holding named only by its ISIN." },
 ];
 
 const link = "text-ink underline decoration-line-strong underline-offset-[5px] transition-colors hover:decoration-sprout";

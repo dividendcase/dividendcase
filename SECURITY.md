@@ -15,4 +15,4 @@ Only the latest release gets security fixes. The app tells you when a new versio
 - The app serves on **127.0.0.1** only, so other computers can't reach it, and answers only requests addressed to `127.0.0.1` or `localhost` (which blocks DNS-rebinding attacks from web pages you visit).
 - The Docker image listens inside the container; publish its port on the host's loopback address only (`-p 127.0.0.1:8765:8765`).
 - There is no login: anyone who can use your computer's browser can use the app. Your data is one SQLite file in your data folder.
-- The app contacts only Yahoo Finance (market data), the European Central Bank (exchange rates), Wikipedia (the S&P 500 member list) and PyPI (the daily version check, which can be turned off). Nothing is sent to DividendCase.
+- The app contacts only Yahoo Finance (market data), the European Central Bank (exchange rates), Wikipedia (the S&P 500 member list), PyPI (the daily version check, which can be turned off) and, when you import a file that names holdings only by ISIN, NSE's public lists of securities. Nothing is sent to DividendCase.

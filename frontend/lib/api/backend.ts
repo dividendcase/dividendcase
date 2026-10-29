@@ -260,18 +260,32 @@ export async function importPortfolios(file: File): Promise<ImportSummary> {
 
 // ── Broker imports ──────────────────────────────────────────────────────────
 
-import type { BrokerImportResult, BrokerPreview } from "@/lib/types";
+import type { BrokerImportResult, BrokerPreview, HoldingsFilePreview, LotToAdd } from "@/lib/types";
 
-async function postFiles<T>(path: string, files: File[], extra: Record<string, string> = {}): Promise<T> {
+/** An import the API refused; `code` says why when the page should react (e.g. "password_required") */
+export class ImportRefused extends Error {
+  constructor(message: string, readonly code?: string) {
+    super(message);
+  }
+}
+
+async function importRequest<T>(path: string, init: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, { method: "POST", ...init });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ detail: "The import failed" }));
+    const detail = body.detail;
+    if (typeof detail === "string") throw new ImportRefused(detail);
+    if (detail && typeof detail === "object" && "message" in detail) throw new ImportRefused(detail.message, detail.code);
+    throw new ImportRefused(`The import failed (${res.status})`);
+  }
+  return res.json() as Promise<T>;
+}
+
+function postFiles<T>(path: string, files: File[], extra: Record<string, string> = {}): Promise<T> {
   const form = new FormData();
   files.forEach((f) => form.append("files", f));
   Object.entries(extra).forEach(([k, v]) => form.append(k, v));
-  const res = await fetch(`${API_BASE}${path}`, { method: "POST", body: form });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ detail: "The import failed" }));
-    throw new Error(typeof body.detail === "string" ? body.detail : `API ${res.status}`);
-  }
-  return res.json() as Promise<T>;
+  return importRequest<T>(path, { body: form });
 }
 
 /** What Zerodha tradebooks add up to, without changing anything */
@@ -315,3 +329,20 @@ export async function deleteAccount(): Promise<void> {
     throw new Error(`API ${res.status}: ${text}`);
   }
 }
+
+/** Read an Angel One holdings file (and its password, if it has one) without changing anything */
+export function previewAngelOne(file: File, password?: string): Promise<HoldingsFilePreview> {
+  const form = new FormData();
+  form.append("file", file);
+  if (password) form.append("password", password);
+  return importRequest<HoldingsFilePreview>("/api/v1/imports/angelone/preview", { body: form });
+}
+
+/** Add lots the user confirmed; any stock already in the app on that date is skipped */
+export function importLots(lots: LotToAdd[], portfolioId?: number): Promise<BrokerImportResult> {
+  return importRequest<BrokerImportResult>("/api/v1/imports/lots", {
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ lots, portfolio_id: portfolioId ?? null }),
+  });
+}
+

@@ -22,6 +22,38 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def search_quotes(q: str, limit: int = 10) -> list[dict]:
+    """Yahoo Finance's symbol search: the raw quote entries for a name, ticker or ISIN ([] on failure).
+
+    Uses curl_cffi (a browser's TLS fingerprint) when available, since Yahoo blocks plain clients.
+    """
+    url = "https://query1.finance.yahoo.com/v1/finance/search"
+    params = {
+        "q": q,
+        "quotesCount": limit,
+        "newsCount": 0,
+        "enableFuzzyQuery": "true",
+        "enableNavLinks": "false",
+        "enableEnhancedTriviaInfo": "false",
+    }
+    headers = {"Accept": "application/json", "Referer": "https://finance.yahoo.com/"}
+    try:
+        if _CURL_AVAILABLE:
+            resp = _curl_requests.get(url, params=params, impersonate="chrome120", headers=headers, timeout=5)
+        else:
+            headers["User-Agent"] = (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
+            resp = requests.get(url, params=params, headers=headers, timeout=5)
+        if resp.status_code != 200:
+            return []
+        return resp.json().get("quotes", [])
+    except Exception as e:
+        logger.warning(f"Yahoo Finance symbol search failed: {e}")
+        return []
+
+
 _profile_session = None
 
 

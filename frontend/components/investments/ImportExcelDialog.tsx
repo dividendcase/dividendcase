@@ -14,13 +14,21 @@ import { Upload, FileSpreadsheet, CheckCircle2, AlertTriangle, Info, Loader2, Do
 import { Segmented } from "@/components/ui/segmented";
 import type { ImportSummary } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AngelOneImport } from "./AngelOneImport";
 import { BrokerImport } from "./BrokerImport";
 
-type Source = "excel" | "zerodha";
+type Source = "excel" | "zerodha" | "angelone";
 const SOURCES: { value: Source; label: string }[] = [
   { value: "excel", label: "Spreadsheet" },
   { value: "zerodha", label: "Zerodha" },
+  { value: "angelone", label: "Angel One" },
 ];
+
+const DESCRIPTIONS: Record<Source, string> = {
+  excel: "Add many purchases at once from a spreadsheet. Each sheet becomes a portfolio.",
+  zerodha: "Add your holdings from the trades in your Zerodha tradebook.",
+  angelone: "Add your holdings from Angel One's holdings file.",
+};
 
 interface ImportExcelDialogProps {
   open: boolean;
@@ -115,14 +123,10 @@ export function ImportExcelDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={cn("sm:max-w-lg", source === "angelone" && "sm:max-w-2xl")}>
         <DialogHeader>
           <DialogTitle>Import holdings</DialogTitle>
-          <DialogDescription>
-            {source === "excel"
-              ? "Add many purchases at once from a spreadsheet. Each sheet becomes a portfolio."
-              : "Add your holdings from the trades in your Zerodha tradebook."}
-          </DialogDescription>
+          <DialogDescription>{DESCRIPTIONS[source]}</DialogDescription>
         </DialogHeader>
 
         {state === "idle" && (
@@ -130,6 +134,7 @@ export function ImportExcelDialog({
         )}
 
         {source === "zerodha" && <BrokerImport onComplete={handleDone} />}
+        {source === "angelone" && <AngelOneImport onComplete={handleDone} />}
 
         {/* Idle / Error state — file upload */}
         {source === "excel" && (state === "idle" || state === "error") && (

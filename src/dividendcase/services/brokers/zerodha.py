@@ -8,17 +8,16 @@ row is found by its names rather than its position.
 Only equity trades are read (segment EQ); derivatives, currency and commodity rows are counted and
 left out. NSE symbols become Yahoo tickers ending .NS, BSE ones .BO.
 """
-import csv
-import io
 import re
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime
+from datetime import date
 from typing import Optional
 
 from dividendcase.services.brokers import Trade
+from dividendcase.services.brokers.files import BrokerFileError, key, parse_date, parse_datetime, parse_number, rows
 
 
-class TradebookError(ValueError):
+class TradebookError(BrokerFileError):
     """The file isn't a Zerodha tradebook the app can read"""
 
 
@@ -37,66 +36,18 @@ class Tradebook:
     last: Optional[date] = None
 
 
-def _key(header) -> str:
-    return re.sub(r"[^a-z]+", "_", str(header or "").strip().lower()).strip("_")
-
-
-def _rows(content: bytes, filename: str) -> list[list]:
-    if filename.lower().endswith(".xlsx"):
-        from openpyxl import load_workbook
-
-        try:
-            wb = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
-        except Exception as e:
-            raise TradebookError("Couldn't open this Excel file.") from e
-        rows = [list(r) for r in wb.worksheets[0].iter_rows(values_only=True)]
-        wb.close()
-        return rows
-    text = content.decode("utf-8-sig", errors="replace")
-    return list(csv.reader(io.StringIO(text)))
-
-
-def _date(value) -> date:
-    if isinstance(value, datetime):
-        return value.date()
-    if isinstance(value, date):
-        return value
-    text = str(value).strip()
-    for fmt in ("%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d", "%d-%b-%Y", "%d %b %Y"):
-        try:
-            return datetime.strptime(text[:11].strip(), fmt).date()
-        except ValueError:
-            continue
-    raise ValueError(f"unreadable date {text!r}")
-
-
-def _number(value) -> float:
-    if isinstance(value, (int, float)):
-        return float(value)
-    return float(str(value).replace(",", "").strip())
-
-
-def _when(value) -> Optional[datetime]:
-    if isinstance(value, datetime):
-        return value
-    text = str(value or "").strip()
-    for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%d-%m-%Y %H:%M:%S", "%d/%m/%Y %H:%M:%S"):
-        try:
-            return datetime.strptime(text[:19], fmt)
-        except ValueError:
-            continue
-    return None
-
-
 def ticker_for(symbol: str, exchange: str) -> str:
     base = SERIES_SUFFIX.sub("", symbol.strip().upper())
     return base + SUFFIX.get(exchange.strip().upper(), ".NS")
 
 
 def parse(content: bytes, filename: str) -> Tradebook:
-    rows = _rows(content, filename)
+    try:
+        table = rows(content, filename)
+    except BrokerFileError as e:
+        raise TradebookError(str(e)) from e
     header_at = next(
-        (i for i, row in enumerate(rows[:40]) if REQUIRED <= {_key(c) for c in row if c is not None}),
+        (i for i, row in enumerate(table[:40]) if REQUIRED <= {key(c) for c in row if c is not None}),
         None,
     )
     if header_at is None:
@@ -104,10 +55,10 @@ def parse(content: bytes, filename: str) -> Tradebook:
             "This doesn't look like a Zerodha tradebook: it needs columns such as Symbol, ISIN, "
             "Trade Date, Trade Type, Quantity and Price."
         )
-    columns = {_key(c): i for i, c in enumerate(rows[header_at]) if c is not None}
+    columns = {key(c): i for i, c in enumerate(table[header_at]) if c is not None}
 
     book = Tradebook()
-    for number, row in enumerate(rows[header_at + 1:], start=header_at + 2):
+    for number, row in enumerate(table[header_at + 1:], start=header_at + 2):
         if not row or all(c in (None, "") for c in row):
             continue
 
@@ -128,9 +79,9 @@ def parse(content: bytes, filename: str) -> Tradebook:
             if not symbol or not isin:
                 raise ValueError("no symbol or ISIN")
             exchange = str(get("exchange") or "NSE").strip().upper()
-            trade_date = _date(get("trade_date"))
-            quantity = _number(get("quantity"))
-            price = _number(get("price"))
+            trade_date = parse_date(get("trade_date"))
+            quantity = parse_number(get("quantity"))
+            price = parse_number(get("price"))
             if quantity <= 0 or price <= 0:
                 raise ValueError("quantity and price must be above zero")
         except (TypeError, ValueError) as e:
@@ -147,7 +98,7 @@ def parse(content: bytes, filename: str) -> Tradebook:
             price=price,
             currency="INR",
             trade_id=trade_id,
-            executed_at=_when(get("order_execution_time")),
+            executed_at=parse_datetime(get("order_execution_time")),
         ))
         book.first = min(book.first or trade_date, trade_date)
         book.last = max(book.last or trade_date, trade_date)

@@ -2,11 +2,16 @@
 
 POST /imports/zerodha/preview   tradebook files → the holdings and lots they add up to
 POST /imports/zerodha           the same files (+ portfolio_id) → adds the lots not already there
+POST /imports/angelone/preview  a holdings file (+ its password) → holdings, tickers found by ISIN,
+                                and lots dated as late as each part could have been bought
+POST /imports/lots              the lots the user confirmed (tickers and dates edited) → adds them
 
 The app never connects to a broker: the user downloads the export and chooses it here. The files are
-read in memory and not kept; the preview and the import each read them, so nothing is stored between.
+read in memory and not kept, and neither is a file's password.
 """
-from typing import Optional
+import asyncio
+from datetime import date
+from typing import Iterable, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -17,8 +22,19 @@ from dividendcase.api.v1.deps import _get_user_id
 from dividendcase.database import get_db
 from dividendcase.models.user_investment import UserInvestment
 from dividendcase.models.user_portfolio import UserPortfolio
-from dividendcase.schemas.imports import BrokerImportResult, BrokerPreview, ImportedFile, ImportedHolding, ImportedLot
-from dividendcase.services.brokers import Positions, Trade, open_lots
+from dividendcase.schemas.imports import (
+    BrokerImportResult,
+    BrokerPreview,
+    HoldingsFileLot,
+    HoldingsFilePreview,
+    HoldingsFileRow,
+    ImportedFile,
+    ImportedHolding,
+    ImportedLot,
+    LotsToAdd,
+)
+from dividendcase.services import isin
+from dividendcase.services.brokers import Positions, Trade, angelone, open_lots
 from dividendcase.services.brokers import zerodha
 
 router = APIRouter()
@@ -63,6 +79,53 @@ async def _existing_lots(db: AsyncSession, user_id: UUID) -> set:
         select(UserInvestment.ticker_symbol, UserInvestment.purchase_date).where(UserInvestment.user_id == user_id)
     )
     return {(t, d) for t, d in rows.all()}
+
+
+async def _portfolio_id(db: AsyncSession, user_id: UUID, portfolio_id: Optional[int]) -> int:
+    """The portfolio to add to: the one asked for (it must be the user's), else the default one"""
+    if portfolio_id is None:
+        from dividendcase.api.v1.portfolios import _ensure_default_portfolio
+
+        return (await _ensure_default_portfolio(db, user_id)).id
+    owned = await db.execute(
+        select(UserPortfolio.id).where(UserPortfolio.id == portfolio_id, UserPortfolio.user_id == user_id)
+    )
+    if owned.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+    return portfolio_id
+
+
+async def _add_lots(
+    db: AsyncSession,
+    user_id: UUID,
+    portfolio_id: int,
+    lots: Iterable[tuple[str, date, float, Optional[float], str]],
+) -> tuple[int, int]:
+    """Add (ticker, purchase date, quantity, price, currency) lots, skipping any stock already in the app
+    on that date, then fetch prices and dividends for new stocks. Returns (created, already there)."""
+    existing = await _existing_lots(db, user_id)
+    created = already = 0
+    for ticker, purchase_date, quantity, price, currency in lots:
+        if (ticker, purchase_date) in existing:
+            already += 1
+            continue
+        db.add(UserInvestment(
+            user_id=user_id,
+            ticker_symbol=ticker,
+            purchase_date=purchase_date,
+            purchase_price=price,
+            quantity=quantity,
+            purchase_currency=currency,
+            portfolio_id=portfolio_id,
+        ))
+        existing.add((ticker, purchase_date))
+        created += 1
+    await db.commit()
+
+    from dividendcase.services.refresh import queue_holdings
+
+    await queue_holdings()
+    return created, already
 
 
 @router.post("/zerodha/preview", response_model=BrokerPreview)
@@ -113,42 +176,88 @@ async def import_zerodha(
     user_id: UUID = Depends(_get_user_id),
 ):
     positions, _, _ = await _read_zerodha(files)
-
-    if portfolio_id is None:
-        from dividendcase.api.v1.portfolios import _ensure_default_portfolio
-
-        portfolio_id = (await _ensure_default_portfolio(db, user_id)).id
-    else:
-        owned = await db.execute(
-            select(UserPortfolio.id).where(UserPortfolio.id == portfolio_id, UserPortfolio.user_id == user_id)
-        )
-        if owned.scalar_one_or_none() is None:
-            raise HTTPException(status_code=404, detail="Portfolio not found")
-
-    existing = await _existing_lots(db, user_id)
-    created = already = 0
-    for h in positions.holdings:
-        for lot in h.lots:
-            if (h.ticker, lot.purchase_date) in existing:
-                already += 1
-                continue
-            db.add(UserInvestment(
-                user_id=user_id,
-                ticker_symbol=h.ticker,
-                purchase_date=lot.purchase_date,
-                purchase_price=lot.price,
-                quantity=lot.quantity,
-                purchase_currency=h.currency,
-                portfolio_id=portfolio_id,
-            ))
-            existing.add((h.ticker, lot.purchase_date))
-            created += 1
-    await db.commit()
-
-    # Fetch prices and dividends for stocks the app doesn't have yet
-    from dividendcase.services.refresh import queue_holdings
-
-    await queue_holdings()
+    portfolio_id = await _portfolio_id(db, user_id, portfolio_id)
+    created, already = await _add_lots(
+        db,
+        user_id,
+        portfolio_id,
+        ((h.ticker, lot.purchase_date, lot.quantity, lot.price, h.currency) for h in positions.holdings for lot in h.lots),
+    )
     return BrokerImportResult(
         created=created, already_there=already, holdings=len(positions.holdings), portfolio_id=portfolio_id
+    )
+
+
+@router.post("/angelone/preview", response_model=HoldingsFilePreview)
+async def preview_angelone(
+    file: UploadFile = File(...),
+    password: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(_get_user_id),
+):
+    name = file.filename or "file"
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"{name} is larger than 5 MB")
+    try:
+        book = angelone.parse(content, name, password or None)
+    except angelone.PasswordRequired as e:
+        raise HTTPException(status_code=400, detail={"code": "password_required", "message": str(e)})
+    except angelone.WrongPassword as e:
+        raise HTTPException(status_code=400, detail={"code": "wrong_password", "message": str(e)})
+    except angelone.HoldingsFileError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    as_of = book.as_of or date.today()
+    today = date.today()
+    found = await asyncio.to_thread(isin.resolve, [p.isin for p in book.positions])
+    existing = await _existing_lots(db, user_id)
+    holdings = []
+    for p in book.positions:
+        match = found.get(p.isin)
+        ticker = match.ticker if match else None
+        holdings.append(HoldingsFileRow(
+            name=p.name,
+            isin=p.isin,
+            ticker=ticker,
+            found_by=match.source if match else None,
+            currency="INR",
+            quantity=p.quantity,
+            average_price=round(p.average_price, 4) if p.average_price > 0 else None,
+            lots=[
+                HoldingsFileLot(
+                    held=lot.held,
+                    purchase_date=day,
+                    quantity=lot.quantity,
+                    price=lot.price,
+                    already_there=(ticker, day) in existing,
+                )
+                for lot in angelone.lots(p, as_of)
+                # A file dated tomorrow (India is ahead) mustn't give a purchase date in the future
+                for day in [min(lot.purchase_date, today)]
+            ],
+        ))
+    return HoldingsFilePreview(broker="angelone", as_of=book.as_of, holdings=holdings, unreadable=book.unreadable)
+
+
+@router.post("/lots", response_model=BrokerImportResult)
+async def import_lots(
+    body: LotsToAdd,
+    db: AsyncSession = Depends(get_db),
+    user_id: UUID = Depends(_get_user_id),
+):
+    if any(lot.purchase_date > date.today() for lot in body.lots):
+        raise HTTPException(status_code=400, detail="A purchase date can't be in the future")
+    portfolio_id = await _portfolio_id(db, user_id, body.portfolio_id)
+    created, already = await _add_lots(
+        db,
+        user_id,
+        portfolio_id,
+        ((lot.ticker.strip().upper(), lot.purchase_date, lot.quantity, lot.price, lot.currency.upper()) for lot in body.lots),
+    )
+    return BrokerImportResult(
+        created=created,
+        already_there=already,
+        holdings=len({lot.ticker.strip().upper() for lot in body.lots}),
+        portfolio_id=portfolio_id,
     )
