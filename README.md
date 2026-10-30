@@ -52,11 +52,12 @@ Then open <http://127.0.0.1:8765/dashboard/>. Keep `127.0.0.1:` in the port mapp
 
 - **Income home:** what your holdings should pay over the next 12 months, month by month, all in your home currency or one currency at a time, with upcoming payments and where the income comes from.
 - **After tax:** what's left once the paying country withholds its tax, for residents of Ireland, the UK, India, Canada, Australia and the US (treaty rates, with the paperwork each assumes); set your broker's actual rate for any country in Settings.
-- **Stock pages:** 10 years of dividend history, TTM yield, a safety score, dividend growth (CAGR) and growth streaks.
-- **Screener:** index members from six markets, filtered by market, yield, how often they pay and whether they beat their local index over ten years.
+- **Stock pages:** 10 years of dividend history, the price with its ex-dividend dates, TTM yield, a safety score, dividend growth (CAGR) and growth streaks.
+- **Screener:** index members from six markets, filtered by market, yield, how often they pay and whether they beat their local index over ten years; each row opens the stock's price as a line, area, candles or OHLC bars.
+- **Advanced charts:** moving averages, Bollinger and yield bands, volume, RSI, MACD, drawdown and trailing yield for one stock, its returns over a range, and how its dividends have lined up with its price.
 - **Portfolios:** individual purchase lots in any currency, a 12-month income calendar, diversification charts, a benchmark comparison and a DRIP calculator.
 - **Watchlists and side-by-side comparison.**
-- **Excel import and export** of portfolios, holdings and watchlists.
+- **Imports from Zerodha, Angel One and Revolut** files you download from them (read on your computer, never connected to the broker), and **Excel import and export** of portfolios, holdings and watchlists.
 - **⌘K search** for any stock, page or action.
 
 ## How it works
@@ -80,7 +81,9 @@ Once a day the app asks [PyPI](https://pypi.org/project/dividendcase/) whether a
 While the app is open it keeps data current in the background: your holdings and watchlist stocks
 when it starts and every day, and the screener's index members (S&P 500, NIFTY 50, TSX 60,
 FTSE 100, ISEQ 20, ASX 200 and some high-yield groups) every week. It fetches about one stock a
-second and pauses whenever Yahoo Finance asks it to. The **Data** page shows progress.
+second and pauses whenever Yahoo Finance asks it to. The **Data** page shows progress. A stock's
+daily prices are downloaded the first time you open its chart, and again when they are more than
+12 hours old.
 
 ## Run from source
 
