@@ -50,9 +50,30 @@ def test_interface_pages_are_served_when_built(client):
 
     if not (WEB_DIR / "index.html").exists():
         pytest.skip("interface not built (uv run python scripts/build_web.py)")
-    for page in ["/dashboard/", "/dashboard/screener/", "/dashboard/stock/", "/dashboard/investments/portfolio/"]:
+    for page in ["/dashboard/", "/dashboard/screener/", "/dashboard/charts/", "/dashboard/stock/", "/dashboard/investments/portfolio/"]:
         r = client.get(page)
         assert r.status_code == 200 and "text/html" in r.headers["content-type"], page
+        # Checked on every visit, so an upgrade shows at once
+        assert r.headers["cache-control"] == "no-cache", page
+
+
+def test_the_interface_scripts_are_kept_and_its_pages_rechecked(tmp_path):
+    """Without a built interface too: the rule is the file's place, not the build."""
+    from starlette.testclient import TestClient
+    from fastapi import FastAPI
+    from dividendcase.main import InterfaceFiles
+
+    (tmp_path / "_next" / "static" / "chunks").mkdir(parents=True)
+    (tmp_path / "_next" / "static" / "chunks" / "a1b2c3.js").write_text("// hashed")
+    (tmp_path / "dashboard").mkdir()
+    (tmp_path / "dashboard" / "index.html").write_text("<html></html>")
+    (tmp_path / "dashboard" / "__next._tree.txt").write_text("tree")
+    web = FastAPI()
+    web.mount("/", InterfaceFiles(directory=tmp_path, html=True))
+    with TestClient(web) as c:
+        assert c.get("/_next/static/chunks/a1b2c3.js").headers["cache-control"] == "public, max-age=31536000, immutable"
+        assert c.get("/dashboard/").headers["cache-control"] == "no-cache"
+        assert c.get("/dashboard/__next._tree.txt").headers["cache-control"] == "no-cache"
 
 
 # ── preferences ──────────────────────────────────────────────────────────────

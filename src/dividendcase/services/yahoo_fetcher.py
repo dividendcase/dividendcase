@@ -398,6 +398,46 @@ def parse_chart_bars(payload: dict) -> list[dict]:
     return [by_date[day] for day in sorted(by_date)]
 
 
+# A run of bars this many times off the prices either side of it is a split Yahoo adjusted wrongly
+MISADJUSTED_FACTOR = 3.0
+MISADJUSTED_MAX_RUN = 5
+
+
+def drop_misadjusted_bars(bars: list[dict]) -> list[dict]:
+    """Leave out short runs of bars that Yahoo forgot to adjust for a split.
+
+    Nippon's GOLDBEES.NS, for example, has two days in December 2019 at a hundredth of the
+    price on either side (its 1:100 split), which would flatten every chart and average. A run
+    of up to MISADJUSTED_MAX_RUN bars is dropped when each close is at least MISADJUSTED_FACTOR
+    times above or below the close before the run, and the price after the run comes back to
+    within half again of where it was. A real move, which doesn't snap back like that, stays.
+    """
+    def far(a: float, b: float) -> bool:
+        return a > 0 and b > 0 and (a / b >= MISADJUSTED_FACTOR or b / a >= MISADJUSTED_FACTOR)
+
+    def near(a: float, b: float) -> bool:
+        return a > 0 and b > 0 and max(a, b) / min(a, b) <= 1.5
+
+    out: list[dict] = []
+    i = 0
+    while i < len(bars):
+        before = out[-1]["close"] if out else None
+        if before is not None and far(bars[i]["close"], before):
+            run = 0
+            while run < MISADJUSTED_MAX_RUN and i + run < len(bars) and far(bars[i + run]["close"], before):
+                run += 1
+            if i + run < len(bars) and near(bars[i + run]["close"], before):
+                logger.info(
+                    "Leaving out %d misadjusted bar(s) from %s: closes around %s against %s either side",
+                    run, bars[i]["bar_date"], bars[i]["close"], before,
+                )
+                i += run
+                continue
+        out.append(bars[i])
+        i += 1
+    return out
+
+
 def _strip_tz(index):
     """Remove timezone info from a DatetimeIndex."""
     if hasattr(index, "tz") and index.tz is not None:
@@ -615,7 +655,7 @@ class YahooFetcher:
                 "range": f"{years}y",
                 "events": "div,splits",
             })
-            bars = parse_chart_bars(payload)
+            bars = drop_misadjusted_bars(parse_chart_bars(payload))
             _record_success()
             return bars
         except CooldownActiveError:

@@ -287,6 +287,25 @@ def test_parse_chart_bars_without_adjusted_closes_or_a_result():
     assert parse_chart_bars({"chart": {"result": [{"meta": {}, "indicators": {}}]}}) == []
 
 
+def test_bars_yahoo_forgot_to_adjust_for_a_split_are_left_out():
+    from dividendcase.services.yahoo_fetcher import drop_misadjusted_bars
+
+    def bars(*closes):
+        return [{"bar_date": date(2019, 12, 16 + i), "close": c} for i, c in enumerate(closes)]
+
+    # Two days at a hundredth of the price either side, as GOLDBEES.NS has around its split
+    kept = drop_misadjusted_bars(bars(33.44, 33.50, 0.3355, 0.3365, 33.65, 33.75))
+    assert [b["close"] for b in kept] == [33.44, 33.50, 33.65, 33.75]
+    # The same at a hundred times the price
+    assert [b["close"] for b in drop_misadjusted_bars(bars(5.0, 500.0, 5.1))] == [5.0, 5.1]
+
+    # Real moves stay: a crash that doesn't come back, a recovery that takes longer than the
+    # run, a halving at the end of the history, and big but ordinary days
+    for closes in [(10.0, 3.0, 3.1, 3.2), (10.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 10.0), (10.0, 10.2, 3.3), (10.0, 6.5, 9.8)]:
+        assert drop_misadjusted_bars(bars(*closes)) == bars(*closes)
+    assert drop_misadjusted_bars([]) == []
+
+
 def test_the_download_asks_the_chart_api_for_daily_bars(monkeypatch):
     from dividendcase.services import yahoo_fetcher
 

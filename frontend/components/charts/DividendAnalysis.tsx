@@ -35,9 +35,9 @@ function strength(r: number): string {
 function Figure({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "money" | "cut" }) {
   return (
     <div className="glass-well min-w-0 rounded-xl border px-3 py-2.5">
-      <p className="truncate text-[12px] text-ink-3">{label}</p>
+      <p className="text-[12px] leading-snug text-ink-3">{label}</p>
       <p className={cn("num mt-0.5 text-[18px] font-medium tracking-[-0.02em]", tone === "money" ? "text-money" : tone === "cut" ? "text-cut" : "text-ink")}>{value}</p>
-      {sub && <p className="truncate text-[11.5px] text-ink-3">{sub}</p>}
+      {sub && <p className="text-[11.5px] leading-snug text-ink-3">{sub}</p>}
     </div>
   );
 }
@@ -102,12 +102,16 @@ function ExDividendCard({ moves, ticker }: { moves: ReturnType<typeof exDividend
           value: [m.dividendPct, m.drop],
           itemStyle: { color: m.drop > -m.dividendPct ? chartColors.sprout : chartColors.ink3, opacity: 0.85 },
         })),
-        markLine: {
-          silent: true, symbol: "none", animation: false,
-          lineStyle: { color: chartColors.ink3, type: "dashed" },
-          label: { formatter: "Fell by the dividend", color: chartColors.ink3, fontSize: 10, position: "insideEndBottom" },
-          data: [[{ coord: [lo, -lo] }, { coord: [hi, -hi] }]],
-        },
+      },
+      {
+        // Drawn as a line of its own: a markLine between two coordinates didn't show on real data
+        type: "line",
+        silent: true,
+        symbol: "none",
+        data: [[lo, -lo], [hi, -hi]],
+        lineStyle: { color: chartColors.ink3, type: "dashed", width: 1 },
+        endLabel: { show: true, formatter: "Fell by the dividend", color: chartColors.ink3, fontSize: 10, offset: [-118, 12] },
+        tooltip: { show: false },
       },
     ],
   };

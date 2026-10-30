@@ -49,6 +49,9 @@ const DEFAULTS: Settings = {
   panes: ["volume", "yield"],
 };
 
+// A fund or stock without dividends has nothing for these overlays and this pane to show
+const NEEDS_DIVIDENDS: readonly string[] = ["bands", "dividends", "yield"];
+
 // The chosen indicators are remembered on this computer, for the next stock and the next visit
 const KEY = "dividendcase:advanced-charts";
 
@@ -150,7 +153,12 @@ function StockCharts({ ticker }: { ticker: string }) {
     return { daily, bars, start, perf: performance(range, "day"), last: range[range.length - 1] };
   }, [prices.data, interval, settings.months]);
 
-  const overlays = useMemo(() => new Set(settings.overlays), [settings.overlays]);
+  const hasDividends = dividends.length > 0;
+  const overlays = useMemo(
+    () => new Set(settings.overlays.filter((o) => hasDividends || !NEEDS_DIVIDENDS.includes(o))),
+    [settings.overlays, hasDividends]
+  );
+  const panes = settings.panes.filter((p) => hasDividends || !NEEDS_DIVIDENDS.includes(p));
   const toggleOverlay = (k: OverlayKey) =>
     update({ overlays: overlays.has(k) ? settings.overlays.filter((o) => o !== k) : [...settings.overlays, k] });
   const togglePane = (k: PaneKey) =>
@@ -216,7 +224,14 @@ function StockCharts({ ticker }: { ticker: string }) {
                   key={o.key}
                   active={overlays.has(o.key)}
                   onClick={() => toggleOverlay(o.key)}
-                  title={short(o.key) ? `${o.title}. This range and interval give fewer bars than that: pick daily or weekly bars.` : o.title}
+                  disabled={!hasDividends && NEEDS_DIVIDENDS.includes(o.key)}
+                  title={
+                    !hasDividends && NEEDS_DIVIDENDS.includes(o.key)
+                      ? `${ticker} has no dividends on record`
+                      : short(o.key)
+                        ? `${o.title}. This range and interval give fewer bars than that: pick daily or weekly bars.`
+                        : o.title
+                  }
                   className={cn(short(o.key) && overlays.has(o.key) && "opacity-60")}
                 >
                   <span className="size-2 rounded-full" style={{ background: o.color }} aria-hidden="true" />
@@ -227,7 +242,13 @@ function StockCharts({ ticker }: { ticker: string }) {
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="mr-1 text-[12px] font-medium text-ink-3">Below</span>
               {PANES.map((p) => (
-                <Chip key={p.key} active={settings.panes.includes(p.key)} onClick={() => togglePane(p.key)} title={p.title}>
+                <Chip
+                  key={p.key}
+                  active={panes.includes(p.key)}
+                  onClick={() => togglePane(p.key)}
+                  disabled={!hasDividends && NEEDS_DIVIDENDS.includes(p.key)}
+                  title={!hasDividends && NEEDS_DIVIDENDS.includes(p.key) ? `${ticker} has no dividends on record` : p.title}
+                >
                   {p.label}
                 </Chip>
               ))}
@@ -246,7 +267,7 @@ function StockCharts({ ticker }: { ticker: string }) {
               type={settings.type}
               log={settings.log}
               overlays={overlays}
-              panes={settings.panes}
+              panes={panes}
             />
           )}
 

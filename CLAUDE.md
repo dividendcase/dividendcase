@@ -37,7 +37,9 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
   services/prices.py   daily OHLC bars for the price charts (price_bars): GET /stocks/{t}/prices?years=
                        (1–10) downloads on first use and again when prices_fetched_at is over 12 h
                        old, always 10 years, replacing the stored bars (one download per ticker at a
-                       time); a failed download serves stored bars with stale=true, else 503
+                       time); a failed download serves stored bars with stale=true, else 503;
+                       drop_misadjusted_bars leaves out short runs Yahoo forgot to split-adjust
+                       (GOLDBEES.NS has two days at 1/100 in Dec 2019)
   services/brokers/    broker exports → purchase lots: Trade, open_lots (FIFO sells, one lot per stock
                        per day, oversold/closed counts); files.py shared readers; zerodha.py reads
                        Console tradebooks (CSV or Excel, header found by name; EQ only; NSE → .NS,
@@ -209,6 +211,9 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   Portfolio pages use `/dashboard/investments/portfolio/?id=N`.
 - The API client (`frontend/lib/api/backend.ts`) calls the same origin; `API_BASE` comes from
   `NEXT_PUBLIC_API_URL` only in development.
+- The built interface is served by `InterfaceFiles` (main.py): pages and their `.txt` payloads with
+  `Cache-Control: no-cache`, so an upgrade shows at once; `_next/static/` (hashed) for a year. After
+  pulling or switching branches, rerun `scripts/build_web.py` before `uv run dividendcase`.
 - Refresh: holdings and watchlist stocks fetch with company profiles; screener stocks skip the
   profile lookup (Yahoo rate-limits it first) and leave existing profile fields untouched.
   Adding a holding fetches it at once (and queues a retry if that fails); adding to a watchlist
