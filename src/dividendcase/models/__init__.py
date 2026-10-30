@@ -7,6 +7,7 @@ from dividendcase.models.user_portfolio import UserPortfolio
 from dividendcase.models.user_preferences import UserPreferences
 from dividendcase.models.scheduler_run import SchedulerRun
 from dividendcase.models.fx_rate import FxRate
+from dividendcase.models.price_bar import PriceBar
 
 __all__ = [
     "Stock",
@@ -18,4 +19,5 @@ __all__ = [
     "UserPreferences",
     "SchedulerRun",
     "FxRate",
+    "PriceBar",
 ]

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -27,6 +28,23 @@ logger = logging.getLogger(__name__)
 
 # The Next.js static export, copied here by scripts/build_web.py
 WEB_DIR = Path(__file__).parent / "web"
+
+
+class InterfaceFiles(StaticFiles):
+    """The built interface. Pages and the data files beside them are checked with the server on
+    every visit, so a new version shows straight after an upgrade (without this, browsers guess
+    how long to keep a page and go on showing the old interface). Scripts and styles under
+    _next/static have the build's hash in their names, so they are kept for good."""
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        try:
+            parts = Path(os.path.realpath(full_path)).relative_to(os.path.realpath(self.directory)).parts
+        except ValueError:
+            parts = ()
+        hashed = parts[:2] == ("_next", "static")
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if hashed else "no-cache"
+        return response
 
 
 @asynccontextmanager
@@ -114,6 +132,6 @@ async def app_info():
 
 if (WEB_DIR / "index.html").exists():
     # Last, so /api and /health take precedence
-    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
+    app.mount("/", InterfaceFiles(directory=WEB_DIR, html=True), name="web")
 else:
     logger.warning("No built interface in %s: run `uv run python scripts/build_web.py`", WEB_DIR)

@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Link from "next/link";
 import useSWR from "swr";
-import { ArrowDown, ArrowUp, Database, Loader2, RefreshCw, Search, SearchX, TrendingUp, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Database, Loader2, RefreshCw, Search, SearchX, TrendingUp, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAppActions } from "@/components/layout/AppActions";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Chip, Segmented } from "@/components/ui/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TickerBadge } from "@/components/ui/ticker-badge";
+import { PriceChart } from "@/components/charts/PriceChart";
 import { InfoTip } from "@/components/ui/tooltip";
 import { EXCHANGE_NAMES } from "@/components/dashboard/CompanyInfoCard";
 import { getTopPerformers } from "@/lib/api/backend";
@@ -61,6 +61,8 @@ export default function ScreenerPage() {
   const [text, setText] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>({ key: "yield", dir: "desc" });
   const [shown, setShown] = useState(PAGE);
+  // The row whose price chart is open under it
+  const [open, setOpen] = useState<string | null>(null);
 
   // All stored payers at once; filtering happens here so it is instant. While the
   // background fetch adds stocks, reload the list every 25 new stocks.
@@ -135,7 +137,7 @@ export default function ScreenerPage() {
       />
 
       {screenerRunning && (
-        <div className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-[13px] text-ink-2">
+        <div className="glass-panel flex items-center gap-3 rounded-xl border px-4 py-3 text-[13px] text-ink-2">
           <Loader2 className="size-4 shrink-0 animate-spin text-sprout" />
           <span className="min-w-0 flex-1">
             Fetching screener stocks in the background:{" "}
@@ -239,18 +241,20 @@ export default function ScreenerPage() {
             <span>
               <span className="num text-ink">{rows.length.toLocaleString()}</span> {rows.length === 1 ? "stock" : "stocks"}
               {filtersOn && <> of <span className="num">{total.toLocaleString()}</span></>}
+              <span className="hidden md:inline">. Choose a row to see its price chart.</span>
             </span>
-            <span className="hidden sm:inline">Yield = last 12 months of dividends ÷ price at the last update</span>
+            <span className="hidden sm:inline">Yield is the last 12 months of dividends over the latest price</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[720px] border-collapse text-[13px]">
               <thead>
                 <tr>
-                  <SortTH label="Stock" active={sort.key === "ticker"} dir={sort.dir} onClick={() => toggleSort("ticker")} className="pl-4 text-left" />
-                  <th className="px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">Market</th>
-                  <th className="px-3 py-2.5 text-left font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">Pays</th>
+                  <th className="w-10 pl-3" aria-label="Price chart" />
+                  <SortTH label="Stock" active={sort.key === "ticker"} dir={sort.dir} onClick={() => toggleSort("ticker")} className="pl-1 text-left" />
+                  <th className="px-3 py-2.5 text-left text-[12px] font-medium text-ink-3">Market</th>
+                  <th className="px-3 py-2.5 text-left text-[12px] font-medium text-ink-3">Pays</th>
                   <SortTH label="Consistency" active={sort.key === "consistency"} dir={sort.dir} onClick={() => toggleSort("consistency")} className="text-right" />
-                  <th className="px-3 py-2.5 text-right font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-ink-3">
+                  <th className="px-3 py-2.5 text-right text-[12px] font-medium text-ink-3">
                     <span className="inline-flex items-center gap-1">
                       Vs index
                       <InfoTip>
@@ -266,15 +270,32 @@ export default function ScreenerPage() {
                 {rows.slice(0, shown).map((s) => {
                   const href = `/dashboard/stock/?t=${encodeURIComponent(s.ticker_symbol)}`;
                   const y = s.avg_dividend_yield;
+                  const expanded = open === s.ticker_symbol;
+                  const toggle = () => setOpen(expanded ? null : s.ticker_symbol);
                   return (
-                    <tr key={s.ticker_symbol} className="group border-t border-line transition-colors hover:bg-raised/50">
-                      <td className="py-2 pl-4 pr-3">
-                        <Link href={href} className="flex min-w-0 items-center gap-3">
-                          <TickerBadge ticker={s.ticker_symbol} />
-                          <span className="min-w-0">
-                            <span className="num block font-medium text-ink group-hover:text-sprout-hi">{s.ticker_symbol}</span>
-                            <span className="block max-w-[320px] truncate text-[12px] text-ink-3">{s.company_name}</span>
-                          </span>
+                    <Fragment key={s.ticker_symbol}>
+                    <tr
+                      onClick={(e) => {
+                        // The ticker is a link to the stock's page; anywhere else on the row opens the chart
+                        if (!(e.target as HTMLElement).closest("a, button")) toggle();
+                      }}
+                      className={cn("group cursor-pointer border-t border-line transition-colors hover:bg-white/[0.025]", expanded && "bg-white/[0.03]")}
+                    >
+                      <td className="py-2 pl-3">
+                        <button
+                          type="button"
+                          onClick={toggle}
+                          aria-expanded={expanded}
+                          aria-label={`${expanded ? "Hide" : "Show"} the price chart for ${s.ticker_symbol}`}
+                          className="flex size-7 items-center justify-center rounded-full text-ink-3 transition-colors hover:bg-white/[0.07] hover:text-ink"
+                        >
+                          <ChevronRight className={cn("size-4 transition-transform duration-200 ease-out-soft", expanded && "rotate-90")} />
+                        </button>
+                      </td>
+                      <td className="py-2 pl-1 pr-3">
+                        <Link href={href} className="block min-w-0">
+                          <span className="num block font-medium text-ink hover:text-sprout-hi">{s.ticker_symbol}</span>
+                          <span className="block max-w-[320px] truncate text-[12px] text-ink-3">{s.company_name}</span>
                         </Link>
                       </td>
                       <td className="px-3 py-2 text-ink-2" title={EXCHANGE_NAMES[s.exchange] ?? s.exchange}>
@@ -287,7 +308,7 @@ export default function ScreenerPage() {
                       </td>
                       <td className="whitespace-nowrap px-3 py-2 text-right text-[12.5px]" title={s.benchmark_ticker ? `Compared with ${s.benchmark_ticker}` : undefined}>
                         {s.beats_benchmark === true ? (
-                          <span className="text-money">▲ Beat</span>
+                          <span className="text-money">▲ Ahead</span>
                         ) : s.beats_benchmark === false ? (
                           <span className="text-ink-3">▼ Behind</span>
                         ) : (
@@ -301,6 +322,27 @@ export default function ScreenerPage() {
                         {y != null && y >= 10 && <span className="sr-only"> (very high, check it can be sustained)</span>}
                       </td>
                     </tr>
+                    {expanded && (
+                      <tr className="border-t border-white/[0.04] bg-white/[0.03]">
+                        <td colSpan={7} className="px-4 pb-5 pt-3 sm:pl-14">
+                          <PriceChart
+                            ticker={s.ticker_symbol}
+                            height={260}
+                            actions={
+                              <>
+                                <Button variant="ghost" size="sm" asChild>
+                                  <Link href={href}>Dividend history</Link>
+                                </Button>
+                                <Button variant="outline" size="sm" asChild>
+                                  <Link href={`/dashboard/charts/?t=${encodeURIComponent(s.ticker_symbol)}`}>Open in Advanced charts</Link>
+                                </Button>
+                              </>
+                            }
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>
@@ -330,7 +372,7 @@ function SortTH({ label, active, dir, onClick, className }: { label: string; act
       <button
         onClick={onClick}
         className={cn(
-          "inline-flex items-center gap-1 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] transition-colors",
+          "inline-flex items-center gap-1 text-[12px] font-medium transition-colors",
           active ? "text-ink" : "text-ink-3 hover:text-ink-2"
         )}
       >
@@ -344,7 +386,7 @@ function SortTH({ label, active, dir, onClick, className }: { label: string; act
 function ConsistencyBar({ value }: { value: number }) {
   return (
     <span className="inline-flex items-center gap-2" title={`Yield consistency ${value.toFixed(0)} of 100`}>
-      <span className="hidden h-1 w-14 overflow-hidden rounded-full bg-raised sm:block" aria-hidden="true">
+      <span className="hidden h-1 w-14 overflow-hidden rounded-full bg-white/[0.07] sm:block" aria-hidden="true">
         <span className="block h-full rounded-full bg-ink-3" style={{ width: `${Math.max(4, Math.min(100, value))}%` }} />
       </span>
       <span className="num w-7 text-right text-ink-2">{value.toFixed(0)}</span>

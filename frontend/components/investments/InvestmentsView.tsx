@@ -18,7 +18,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Stat } from "@/components/ui/stat";
+import { Stat, StatGroup } from "@/components/ui/stat";
 import { Chip, Segmented } from "@/components/ui/segmented";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -249,7 +249,7 @@ export function InvestmentsView({ portfolioId }: InvestmentsViewProps) {
       description={
         items.length > 0 ? (
           <>
-            <span className="num">{stockCount}</span> stock{stockCount === 1 ? "" : "s"} ·{" "}
+            <span className="num">{stockCount}</span> stock{stockCount === 1 ? "" : "s"} bought in{" "}
             <span className="num">{items.length}</span> lot{items.length === 1 ? "" : "s"}
             {isConsolidated && portfolios.length > 1 && (
               <>
@@ -382,7 +382,7 @@ export function InvestmentsView({ portfolioId }: InvestmentsViewProps) {
           title={
             isConsolidated ? (
               <>
-                Add your first <span className="serif-accent text-[18px]">holding</span>
+                Add your first holding
               </>
             ) : (
               "This portfolio is empty"
@@ -518,11 +518,7 @@ export function InvestmentsView({ portfolioId }: InvestmentsViewProps) {
 
 function StatSkeletons() {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {[0, 1, 2, 3].map((i) => (
-        <Skeleton key={i} className="h-[104px] rounded-xl" />
-      ))}
-    </div>
+    <Skeleton className="h-[104px] rounded-xl" />
   );
 }
 
@@ -721,11 +717,11 @@ function KpiRow({
   const gainPct = invested > 0 ? (gain / invested) * 100 : 0;
   const up = gain >= 0;
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Stat label="Invested" value={formatMoney(invested, currency)} sub={investedSub} />
-      <Stat label="Current value" value={formatMoney(currentValue, currency)} sub={valueSub} />
-      <Stat label="Dividends received" tone="money" value={formatMoney(dividends, currency)} sub="Since you bought" />
-      <Stat
+    <StatGroup className="grid-cols-2 lg:grid-cols-4">
+      <Stat bare label="Invested" value={formatMoney(invested, currency)} sub={investedSub} />
+      <Stat bare label="Current value" value={formatMoney(currentValue, currency)} sub={valueSub} />
+      <Stat bare label="Dividends received" tone="money" value={formatMoney(dividends, currency)} sub="Since you bought" />
+      <Stat bare
         label="Total return"
         value={
           invested > 0 ? (
@@ -752,7 +748,7 @@ function KpiRow({
           )
         }
       />
-    </div>
+    </StatGroup>
   );
 }
 
@@ -777,7 +773,7 @@ function PortfolioStrip({
         return (
           <div
             key={p.id}
-            className="group relative flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-card transition-colors hover:border-line-strong"
+            className="glass-panel group relative flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors hover:border-line-strong"
           >
             <div className="min-w-0 flex-1">
               <Link
@@ -791,7 +787,7 @@ function PortfolioStrip({
                   "Empty"
                 ) : (
                   <>
-                    <span className="num">{stocks}</span> stock{stocks === 1 ? "" : "s"} · <span className="num">{lots.length}</span> lot
+                    <span className="num">{stocks}</span> stock{stocks === 1 ? "" : "s"}, <span className="num">{lots.length}</span> lot
                     {lots.length === 1 ? "" : "s"}
                   </>
                 )}

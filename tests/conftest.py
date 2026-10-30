@@ -127,6 +127,34 @@ class FakeMarket:
             return None, []
         return {**stock, "last_fetched_at": datetime.now(timezone.utc).replace(tzinfo=None)}, [dict(r) for r in records]
 
+    def fetch_price_history(self, symbol, years=10):
+        """Invented daily bars, weekdays only, on a smooth curve around the stock's latest close."""
+        self.calls.append(f"prices:{symbol}")
+        stock, _ = self.stocks.get(symbol, (None, []))
+        if stock is None:
+            return []
+        import math
+
+        price = stock["last_price"]
+        start = date.today() - timedelta(days=round(365.25 * years))
+        bars, day, i = [], start, 0
+        while day <= date.today():
+            if day.weekday() < 5:
+                close = price * (1 + 0.08 * math.sin(i / 60) + 0.02 * math.sin(i / 7))
+                open_ = close * (1 - 0.005 * math.sin(i / 3))
+                bars.append({
+                    "bar_date": day,
+                    "open": round(open_, 4),
+                    "high": round(max(open_, close) * 1.01, 4),
+                    "low": round(min(open_, close) * 0.99, 4),
+                    "close": round(close, 4),
+                    "adj_close": round(close * 0.97, 4),
+                    "volume": 1_000_000 + 100_000 * (i % 5),
+                })
+                i += 1
+            day += timedelta(days=1)
+        return bars
+
 
     def universe(self, selected=None):
         """Stands in for the screener list: every fake stock, tagged with a market by exchange."""
@@ -193,6 +221,8 @@ def offline(market):
 
     REAL["fetch_stock_light"] = yahoo_fetcher.YahooFetcher.fetch_stock_light  # for tests of its parsing
     mp.setattr(yahoo_fetcher.YahooFetcher, "fetch_stock_light", market.fetch_stock_light)
+    REAL["fetch_price_history"] = yahoo_fetcher.YahooFetcher.fetch_price_history
+    mp.setattr(yahoo_fetcher.YahooFetcher, "fetch_price_history", market.fetch_price_history)
     mp.setattr(stocks, "_fetch_asset_profile", lambda ticker: {})
     mp.setattr(investment, "_get_benchmark_data", lambda ticker, year: (None, pd.DataFrame()))
     mp.setattr(portfolio, "_get_benchmark_data", lambda ticker, year: (None, pd.DataFrame()))

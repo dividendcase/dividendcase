@@ -48,7 +48,7 @@ export function UpdateNotice() {
               <button
                 onClick={copy}
                 aria-label="Copy command"
-                className="rounded p-1.5 text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+                className="rounded-full p-1.5 text-ink-3 transition-colors hover:bg-white/[0.07] hover:text-ink"
               >
                 {copied ? <Check className="size-3.5 text-sprout" /> : <Copy className="size-3.5" />}
               </button>

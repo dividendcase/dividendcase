@@ -5,7 +5,7 @@ index_dividend_fetcher.py and focused_dividend_scanner.py.
 import yfinance as yf
 import pandas as pd
 import requests
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from typing import Optional
 import logging
 import time
@@ -299,6 +299,145 @@ def _get_crumb() -> str:
     return _yf_crumb
 
 
+_CHART_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/plain, */*",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://finance.yahoo.com/",
+}
+
+
+def _get_chart(symbol: str, params: dict) -> dict:
+    """One request to the v8 chart API: query2, then query1 if that one is rate-limited.
+
+    Raises CooldownActiveError when a 429 starts a cooldown, RuntimeError on any other 429,
+    and the HTTP library's error for other failures.
+    """
+    # The v8 chart API does not require cookies or a crumb — only
+    # quoteSummary (v10) and similar endpoints need authentication.
+    # curl_cffi impersonates Chrome's TLS fingerprint, bypassing Yahoo
+    # Finance's bot detection that blocks Python requests on datacenter IPs.
+    if _CURL_AVAILABLE:
+        _do_get = lambda url, **kw: _curl_requests.get(
+            url, impersonate="chrome120", **kw
+        )
+    else:
+        _do_get = lambda url, **kw: requests.get(url, **kw)
+
+    # Try query2 first, fall back to query1
+    chart_resp = _do_get(
+        f"https://query2.finance.yahoo.com/v8/finance/chart/{symbol}",
+        headers=_CHART_HEADERS,
+        params=params,
+        timeout=15,
+    )
+    if chart_resp.status_code == 429:
+        chart_resp = _do_get(
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+            headers=_CHART_HEADERS,
+            params=params,
+            timeout=15,
+        )
+    if chart_resp.status_code == 429:
+        global _yf_crumb
+        _yf_crumb = None  # invalidate crumb so next attempt fetches a fresh one
+        _record_429()
+        if is_cooled_down():
+            raise CooldownActiveError(get_cooldown_remaining())
+        raise RuntimeError("Yahoo Finance rate-limited (429)")
+    chart_resp.raise_for_status()
+    return chart_resp.json()
+
+
+def _round_price(value) -> Optional[float]:
+    return round(float(value), 4) if value is not None else None
+
+
+def parse_chart_bars(payload: dict) -> list[dict]:
+    """Daily bars from a v8 chart response, oldest first ([] when it has no result).
+
+    Each bar is dated by its trading day in the exchange's own time zone (meta.gmtoffset), so a
+    session that opens at 10:00 in Sydney, 23:00 the day before in UTC, keeps its own date.
+    Days without a close are left out; adj_close falls back to close when Yahoo omits it.
+    """
+    result = ((payload or {}).get("chart", {}).get("result") or [None])[0]
+    if not result:
+        return []
+    offset = timedelta(seconds=(result.get("meta") or {}).get("gmtoffset") or 0)
+    timestamps = result.get("timestamp") or []
+    indicators = result.get("indicators") or {}
+    quote = (indicators.get("quote") or [{}])[0] or {}
+    adjclose = ((indicators.get("adjclose") or [{}])[0] or {}).get("adjclose") or []
+
+    def column(values: list, i: int):
+        return values[i] if i < len(values) else None
+
+    opens, highs, lows = quote.get("open") or [], quote.get("high") or [], quote.get("low") or []
+    closes, volumes = quote.get("close") or [], quote.get("volume") or []
+    by_date: dict[date, dict] = {}
+    for i, ts in enumerate(timestamps):
+        close = column(closes, i)
+        if ts is None or close is None:
+            continue
+        day = (datetime.fromtimestamp(ts, tz=timezone.utc) + offset).date()
+        adj = column(adjclose, i)
+        volume = column(volumes, i)
+        by_date[day] = {  # a later bar for the same day (today's live one, say) replaces it
+            "bar_date": day,
+            "open": _round_price(column(opens, i)),
+            "high": _round_price(column(highs, i)),
+            "low": _round_price(column(lows, i)),
+            "close": _round_price(close),
+            "adj_close": _round_price(adj if adj is not None else close),
+            "volume": int(volume) if volume is not None else None,
+        }
+    return [by_date[day] for day in sorted(by_date)]
+
+
+# A run of bars this many times off the prices either side of it is a split Yahoo adjusted wrongly
+MISADJUSTED_FACTOR = 3.0
+MISADJUSTED_MAX_RUN = 5
+
+
+def drop_misadjusted_bars(bars: list[dict]) -> list[dict]:
+    """Leave out short runs of bars that Yahoo forgot to adjust for a split.
+
+    Nippon's GOLDBEES.NS, for example, has two days in December 2019 at a hundredth of the
+    price on either side (its 1:100 split), which would flatten every chart and average. A run
+    of up to MISADJUSTED_MAX_RUN bars is dropped when each close is at least MISADJUSTED_FACTOR
+    times above or below the close before the run, and the price after the run comes back to
+    within half again of where it was. A real move, which doesn't snap back like that, stays.
+    """
+    def far(a: float, b: float) -> bool:
+        return a > 0 and b > 0 and (a / b >= MISADJUSTED_FACTOR or b / a >= MISADJUSTED_FACTOR)
+
+    def near(a: float, b: float) -> bool:
+        return a > 0 and b > 0 and max(a, b) / min(a, b) <= 1.5
+
+    out: list[dict] = []
+    i = 0
+    while i < len(bars):
+        before = out[-1]["close"] if out else None
+        if before is not None and far(bars[i]["close"], before):
+            run = 0
+            while run < MISADJUSTED_MAX_RUN and i + run < len(bars) and far(bars[i + run]["close"], before):
+                run += 1
+            if i + run < len(bars) and near(bars[i + run]["close"], before):
+                logger.info(
+                    "Leaving out %d misadjusted bar(s) from %s: closes around %s against %s either side",
+                    run, bars[i]["bar_date"], bars[i]["close"], before,
+                )
+                i += run
+                continue
+        out.append(bars[i])
+        i += 1
+    return out
+
+
 def _strip_tz(index):
     """Remove timezone info from a DatetimeIndex."""
     if hasattr(index, "tz") and index.tz is not None:
@@ -384,56 +523,11 @@ class YahooFetcher:
             logger.warning(f"fetch_light {symbol}: cooldown active ({remaining}s remaining)")
             raise CooldownActiveError(remaining)
         try:
-            # The v8 chart API does not require cookies or a crumb — only
-            # quoteSummary (v10) and similar endpoints need authentication.
-            # curl_cffi impersonates Chrome's TLS fingerprint, bypassing Yahoo
-            # Finance's bot detection that blocks Python requests on datacenter IPs.
-            if _CURL_AVAILABLE:
-                _do_get = lambda url, **kw: _curl_requests.get(
-                    url, impersonate="chrome120", **kw
-                )
-            else:
-                _do_get = lambda url, **kw: requests.get(url, **kw)
-
-            _HEADERS = {
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Referer": "https://finance.yahoo.com/",
-            }
-            params = {
+            payload = _get_chart(symbol, {
                 "interval": "1d",
                 "range": f"{years}y",
                 "events": "dividends,splits",
-            }
-            # Try query2 first, fall back to query1
-            chart_resp = _do_get(
-                f"https://query2.finance.yahoo.com/v8/finance/chart/{symbol}",
-                headers=_HEADERS,
-                params=params,
-                timeout=15,
-            )
-            if chart_resp.status_code == 429:
-                chart_resp = _do_get(
-                    f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
-                    headers=_HEADERS,
-                    params=params,
-                    timeout=15,
-                )
-            if chart_resp.status_code == 429:
-                global _yf_crumb
-                _yf_crumb = None  # invalidate crumb so next attempt fetches a fresh one
-                _record_429()
-                if is_cooled_down():
-                    raise CooldownActiveError(get_cooldown_remaining())
-                raise RuntimeError("Yahoo Finance rate-limited (429)")
-            chart_resp.raise_for_status()
-
-            payload = chart_resp.json()
+            })
             result = (payload.get("chart", {}).get("result") or [None])[0]
             if result is None:
                 logger.debug(f"fetch_light {symbol}: no chart result")
@@ -541,6 +635,39 @@ class YahooFetcher:
                 if is_cooled_down():
                     raise CooldownActiveError(get_cooldown_remaining()) from e
             logger.error(f"fetch_light {symbol}: {e}")
+            raise
+
+    def fetch_price_history(self, symbol: str, years: int = 10) -> list[dict]:
+        """
+        Daily bars (open, high, low, close, adjusted close, volume) for the last `years`
+        years from the v8 chart API, oldest first; [] when Yahoo has no prices for it.
+
+        Raises CooldownActiveError if Yahoo Finance rate-limit cooldown is active, and the
+        request's error if it fails.
+        """
+        if is_cooled_down():
+            remaining = get_cooldown_remaining()
+            logger.warning(f"fetch_price_history {symbol}: cooldown active ({remaining}s remaining)")
+            raise CooldownActiveError(remaining)
+        try:
+            payload = _get_chart(symbol, {
+                "interval": "1d",
+                "range": f"{years}y",
+                "events": "div,splits",
+            })
+            bars = drop_misadjusted_bars(parse_chart_bars(payload))
+            _record_success()
+            return bars
+        except CooldownActiveError:
+            raise
+        except Exception as e:
+            err_str = str(e)
+            _TRANSIENT_KEYWORDS = ("429", "Too Many", "Expecting value", "EOF")
+            if any(kw in err_str for kw in _TRANSIENT_KEYWORDS):
+                _record_429()
+                if is_cooled_down():
+                    raise CooldownActiveError(get_cooldown_remaining()) from e
+            logger.error(f"fetch_price_history {symbol}: {e}")
             raise
 
     # ------------------------------------------------------------------ #

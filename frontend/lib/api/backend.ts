@@ -1,4 +1,4 @@
-import type { StockSummary, DividendHistoryResponse } from "@/lib/types";
+import type { StockSummary, DividendHistoryResponse, PriceHistory } from "@/lib/types";
 
 // Same origin when served by the local app; `npm run dev` points it at the API (see .env.development)
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -39,6 +39,11 @@ export async function getDividendHistory(
   return apiFetch<DividendHistoryResponse>(
     `/api/v1/dividends/${encodeURIComponent(ticker)}?years=${years}`
   );
+}
+
+/** Daily bars for a stored stock; the server fetches them from Yahoo when its copy is over 12 hours old. */
+export async function getPriceHistory(ticker: string, years: number = 10): Promise<PriceHistory> {
+  return apiFetch<PriceHistory>(`/api/v1/stocks/${encodeURIComponent(ticker)}/prices?years=${years}`);
 }
 
 export async function fetchCustomStock(ticker: string): Promise<DividendHistoryResponse> {

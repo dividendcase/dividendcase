@@ -232,7 +232,7 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
                       )}
                       <p className="text-[11.5px] leading-snug text-ink-3">
                         {h.name}
-                        {!h.ticker && " · not found on NSE or BSE"}
+                        {!h.ticker && ", not found on NSE or BSE"}
                       </p>
                     </td>
                     <td className="num px-2.5 py-2 text-right leading-7 text-ink-2">{h.quantity}</td>
@@ -338,7 +338,7 @@ export function AngelOneImport({ onComplete }: { onComplete: () => void }) {
           accept=".xlsx,.csv,.pdf"
           label="Choose your Angel One holdings file"
           title="Drop your holdings file here"
-          hint="or click to browse · .xlsx, .csv or .pdf"
+          hint="or click to browse: .xlsx, .csv or .pdf"
           onFiles={choose}
         />
       )}

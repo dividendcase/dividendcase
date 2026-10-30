@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { EChart } from "@/components/charts/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { chartColors } from "@/lib/chartTheme";
 import { useInvestmentComparison } from "@/lib/hooks/useInvestmentComparison";
 import { useUserPreferences } from "@/lib/hooks/useUserPreferences";
 
@@ -76,12 +79,13 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
 
   const sym = CURRENCY_SYMBOLS[currency] ?? currency + " ";
   const benchmarkName = data?.benchmark_name ?? "Benchmark";
-  const benchmarkLabel = `${benchmarkName} Equivalent`;
+  const benchmarkLabel = `${benchmarkName}, with dividends`;
+  const stockLabel = `${ticker}, with dividends`;
 
   if (isLoading) {
     return (
       <Card>
-        <CardHeader><CardTitle>Investment Returns Comparison</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Total return against the index</CardTitle></CardHeader>
         <CardContent><Skeleton className="h-72 w-full" /></CardContent>
       </Card>
     );
@@ -102,9 +106,6 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
         tooltip: {
           trigger: "axis",
           axisPointer: { type: "cross", crossStyle: { color: "rgba(255,255,255,0.15)" } },
-          backgroundColor: "#1c1c25",
-          borderColor: "#282834",
-          textStyle: { color: "#ececf3", fontSize: 12 },
           formatter: (params: { seriesName: string; value: number; color: string; name: string }[]) => {
             if (!params?.length) return "";
             let html = `<div style="font-weight:500;margin-bottom:4px">${params[0]?.name ?? ""}</div>`;
@@ -115,60 +116,44 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
           },
         },
         legend: {
-          data: ["Cumulative Dividends", "Your Portfolio", benchmarkLabel],
-          textStyle: { color: "#80809a", fontSize: 12 },
+          data: [stockLabel, benchmarkLabel, "Dividends received"],
           bottom: 0,
         },
         xAxis: {
           type: "category",
           data: data.data_points.map((d) => d.date),
-          axisLabel: { fontSize: 10, color: "#80809a", interval: "auto", rotate: 30 },
-          axisLine: { lineStyle: { color: "#282834" } },
+          axisLabel: { interval: "auto", rotate: 30 },
           axisTick: { show: false },
         },
         yAxis: {
           type: "value",
           axisLabel: {
             formatter: (v: number) => formatCurrency(v),
-            fontSize: 11,
-            color: "#80809a",
           },
-          splitLine: { lineStyle: { color: "#22222c", type: "dashed" } },
           axisLine: { show: false },
           axisTick: { show: false },
         },
         series: [
           {
-            name: "Cumulative Dividends",
+            name: "Dividends received",
             type: "line",
-            smooth: true,
             data: data.data_points.map((d) => d.cumulative_divs),
             symbol: "none",
-            lineStyle: { color: "#7abf50", width: 2 },
-            itemStyle: { color: "#7abf50" },
-            areaStyle: {
-              color: {
-                type: "linear", x: 0, y: 0, x2: 0, y2: 1,
-                colorStops: [
-                  { offset: 0, color: "rgba(122,191,80,0.25)" },
-                  { offset: 1, color: "rgba(122,191,80,0.02)" },
-                ],
-              },
-            },
+            lineStyle: { color: chartColors.sprout, width: 1.5 },
+            itemStyle: { color: chartColors.sprout },
+            areaStyle: { color: "rgba(122,191,80,0.08)" },
           },
           {
-            name: "Your Portfolio",
+            name: stockLabel,
             type: "line",
-            smooth: true,
             data: data.data_points.map((d) => d.portfolio_value),
             symbol: "none",
-            lineStyle: { color: "#b3b3e6", width: 2.5 },
-            itemStyle: { color: "#b3b3e6" },
+            lineStyle: { color: chartColors.ink, width: 2 },
+            itemStyle: { color: chartColors.ink },
           },
           {
             name: benchmarkLabel,
             type: "line",
-            smooth: true,
             data: data.data_points.map((d) => d.benchmark_value),
             symbol: "none",
             lineStyle: { color: "#a9a9bd", width: 2, type: "dashed" },
@@ -182,41 +167,39 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex flex-wrap items-center gap-4 justify-between">
-          <span>Investment Returns vs {benchmarkName}</span>
-
-          {/* Controls */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1.5 text-sm">
-              <label className="text-muted-foreground text-xs">Benchmark</label>
-              <select
-                value={benchmarkOverride ?? ""}
-                onChange={(e) => setBenchmarkOverride(e.target.value || undefined)}
-                className="bg-muted text-foreground text-xs rounded px-2 py-1 border border-border"
-              >
-                <option value="">Auto</option>
-                {BENCHMARK_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-sm">
-              <label className="text-muted-foreground text-xs">From</label>
-              <select
-                value={startYear}
-                onChange={(e) => setStartYear(Number(e.target.value))}
-                className="bg-muted text-foreground text-xs rounded px-2 py-1 border border-border"
-              >
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex items-center gap-1.5 text-sm">
-              <label className="text-muted-foreground text-xs">Shares</label>
-              <input
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <CardTitle>Total return against {benchmarkName}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2.5 text-[12.5px] text-ink-3">
+            <label className="flex items-center gap-1.5">
+              Index
+              <Select value={benchmarkOverride ?? "auto"} onValueChange={(v) => setBenchmarkOverride(v === "auto" ? undefined : v)}>
+                <SelectTrigger className="h-8 w-auto min-w-36 text-[12.5px]" aria-label="Index">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">The stock&apos;s own market</SelectItem>
+                  {BENCHMARK_OPTIONS.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="flex items-center gap-1.5">
+              From
+              <Select value={String(startYear)} onValueChange={(v) => setStartYear(Number(v))}>
+                <SelectTrigger className="h-8 w-auto min-w-20 text-[12.5px]" aria-label="Start year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((y) => (
+                    <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="flex items-center gap-1.5">
+              Shares
+              <Input
                 type="number"
                 min={1}
                 max={100000}
@@ -227,29 +210,28 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
                   setShares(n);
                   setSharesInput(String(n));
                 }}
-                className="bg-muted text-foreground text-xs rounded px-2 py-1 border border-border w-20 text-right"
+                className="num h-8 w-20 text-right text-[12.5px]"
               />
-            </div>
-
+            </label>
             {data && (
-              <span className="text-xs text-muted-foreground">
-                Initial: {sym}{data.initial_investment.toLocaleString()}
+              <span>
+                Starting with <span className="num text-ink-2">{sym}{data.initial_investment.toLocaleString()}</span>
               </span>
             )}
           </div>
-        </CardTitle>
+        </div>
       </CardHeader>
 
       <CardContent>
         {dataLoading ? (
           <Skeleton className="h-72 w-full" />
         ) : error ? (
-          <div className="h-72 flex items-center justify-center text-muted-foreground text-sm">
-            Could not load comparison data for {ticker} from {startYear}
+          <div className="flex h-72 items-center justify-center text-[13px] text-ink-3">
+            Couldn&apos;t load the comparison for {ticker} from {startYear}. The index history may still be downloading.
           </div>
         ) : !option ? (
-          <div className="h-72 flex items-center justify-center text-muted-foreground text-sm">
-            No data available for {ticker} from {startYear}
+          <div className="flex h-72 items-center justify-center text-[13px] text-ink-3">
+            No price history for {ticker} from {startYear}. Try a later year.
           </div>
         ) : (
           <EChart option={option} style={{ height: 300 }} />
@@ -258,19 +240,14 @@ export function InvestmentComparisonChart({ ticker, currency, minYear, isLoading
 
       {option && data && (
         <CardContent className="pt-0">
-          <div className="text-xs text-muted-foreground space-y-1 border-t border-border pt-3">
-            <p className="font-medium text-foreground/80">How this comparison works</p>
+          <div className="space-y-1.5 border-t border-white/[0.06] pt-3 text-[12px] leading-relaxed text-ink-3">
+            <p className="font-medium text-ink-2">How this comparison works</p>
             <p>
-              The benchmark is the <span className="font-medium">{BENCHMARK_PRODUCTS[data.benchmark_ticker] ?? data.benchmark_name}</span>.
-              Both portfolios start with the same initial investment — your selected number of shares × the stock
-              price at the first dividend date in the chosen start year. The same dollar amount is hypothetically
-              invested in the benchmark on that date.
-            </p>
-            <p>
-              <span className="font-medium text-dial-hi">Your Portfolio</span> = current stock value + all
-              dividends received. <span className="font-medium text-watch">{benchmarkLabel}</span> = benchmark
-              value + dividends accumulated over the same period. Changing the number of shares scales
-              both investments equally, so the relative performance comparison remains the same.
+              Both lines start with the same amount: your number of shares times the price on the first dividend date of
+              the start year. The same amount goes into the{" "}
+              {BENCHMARK_PRODUCTS[data.benchmark_ticker] ?? data.benchmark_name} on that day. Each line is the holding&apos;s
+              value plus every dividend it paid since, not reinvested. Changing the number of shares scales both lines
+              together, so the comparison stays the same.
             </p>
           </div>
         </CardContent>

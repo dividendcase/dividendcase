@@ -290,7 +290,7 @@ export function BrokerImport({ broker, onComplete }: { broker: BrokerSpec; onCom
         multiple
         label={`Choose ${broker.file} files`}
         title={`Drop ${broker.file} files here`}
-        hint={`or click to browse · ${broker.extensions.join(", ").replace(/, ([^,]*)$/, " or $1")}`}
+        hint={`or click to browse: ${broker.extensions.join(", ").replace(/, ([^,]*)$/, " or $1")}`}
         onFiles={add}
       />
 

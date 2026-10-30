@@ -197,7 +197,7 @@ function SetupDialog({ onLater }: { onLater: () => void }) {
                         <span className="min-w-0">
                           <span className="block truncate text-[13px] font-medium text-ink">{m.name}</span>
                           <span className="block truncate text-[11.5px] text-ink-3">
-                            {m.country} · <span className="num">{m.stocks}</span> stocks
+                            {m.country}, <span className="num">{m.stocks}</span> stocks
                           </span>
                         </span>
                       </button>

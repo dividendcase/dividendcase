@@ -4,7 +4,6 @@ import { Fragment, useState } from "react";
 import Link from "next/link";
 import { ChevronRight, MoreHorizontal, Pencil, Trash2, ArrowRightLeft } from "lucide-react";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -208,7 +207,7 @@ function HoldingRow({
   return (
     <Fragment>
       <TR
-        className={cn("cursor-pointer", isExpanded && "bg-raised/40")}
+        className={cn("cursor-pointer", isExpanded && "bg-white/[0.03]")}
         onClick={onToggle}
       >
         <TD>
@@ -221,11 +220,10 @@ function HoldingRow({
                 e.stopPropagation();
                 onToggle();
               }}
-              className="-ml-1 rounded p-0.5 text-ink-3 transition-colors hover:bg-raised hover:text-ink"
+              className="-ml-1 rounded-full p-0.5 text-ink-3 transition-colors hover:bg-white/[0.07] hover:text-ink"
             >
               <ChevronRight className={cn("size-4 transition-transform", isExpanded && "rotate-90")} />
             </button>
-            <TickerBadge ticker={ticker} />
             <Link
               href={stockHref(ticker)}
               onClick={(e) => e.stopPropagation()}
@@ -235,8 +233,8 @@ function HoldingRow({
               <span className="num block truncate text-[13px] font-medium text-ink group-hover:text-sprout">{ticker}</span>
               <span className="block truncate text-[12px] text-ink-3 group-hover:text-ink-2">
                 {detail?.company_name ?? (exchange ? "" : " ")}
-                {detail?.company_name && exchange ? " · " : ""}
-                {exchange && <span className="font-mono text-[10.5px] uppercase">{exchange}</span>}
+                {detail?.company_name && exchange ? ", " : ""}
+                {exchange && <span>{exchange}</span>}
               </span>
             </Link>
           </div>
@@ -301,7 +299,7 @@ function HoldingRow({
                       <th
                         key={i}
                         className={cn(
-                          "border-b border-line bg-surface/60 px-3 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.08em] text-ink-3",
+                          "border-b border-line bg-white/[0.02] px-3 py-2 text-[11.5px] font-medium text-ink-3",
                           (h === "Shares" || h === "Price paid" || h === "Cost") && "text-right"
                         )}
                       >

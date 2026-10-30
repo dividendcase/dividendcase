@@ -5,14 +5,13 @@ import { useRouter } from "next/navigation";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
-  ArrowRight, BarChart3, Bookmark, Bug, CalendarDays, Lightbulb, Database, Download, FileSpreadsheet,
+  ArrowRight, BarChart3, Bookmark, Bug, CalendarDays, CandlestickChart, Lightbulb, Database, Download, FileSpreadsheet,
   GitCompareArrows, Info, Layers, Loader2, RefreshCw, Search, Settings, SlidersHorizontal, Sprout, Upload,
 } from "lucide-react";
 import { useStockSearch } from "@/lib/hooks/useStockSearch";
 import { useInvestments } from "@/lib/hooks/useInvestments";
 import { useWatchlist } from "@/lib/hooks/useWatchlist";
 import { useDataStatus } from "@/lib/hooks/useDataStatus";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { useAppInfo } from "@/lib/hooks/useAppInfo";
 import { bugReportUrl, ideaUrl } from "@/lib/feedback";
 
@@ -21,6 +20,7 @@ export const PAGES = [
   { href: "/dashboard/investments/", label: "Holdings", hint: "Portfolios", Icon: Layers, keywords: "portfolio investments lots" },
   { href: "/dashboard/calendar/", label: "Calendar", hint: "Upcoming payments", Icon: CalendarDays, keywords: "income schedule payments" },
   { href: "/dashboard/screener/", label: "Screener", hint: "Find dividend stocks", Icon: SlidersHorizontal, keywords: "stocks top filter yield" },
+  { href: "/dashboard/charts/", label: "Advanced charts", hint: "Indicators and dividend analysis", Icon: CandlestickChart, keywords: "candles technical moving average rsi macd volume price" },
   { href: "/dashboard/watchlist/", label: "Watchlists", hint: "", Icon: Bookmark, keywords: "saved" },
   { href: "/dashboard/compare/", label: "Compare", hint: "Up to four stocks", Icon: GitCompareArrows, keywords: "side by side" },
   { href: "/dashboard/drip/", label: "DRIP calculator", hint: "Reinvesting", Icon: Sprout, keywords: "reinvest compound growth" },
@@ -38,9 +38,9 @@ interface CommandPaletteProps {
 }
 
 const itemClass =
-  "group flex cursor-pointer select-none items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] text-ink-2 outline-none data-[selected=true]:bg-raised data-[selected=true]:text-ink [&_svg]:size-4 [&_svg]:shrink-0";
+  "group flex cursor-pointer select-none items-center gap-3 rounded-lg px-3 py-2 text-[13.5px] text-ink-2 outline-none data-[selected=true]:bg-white/[0.07] data-[selected=true]:text-ink [&_svg]:size-4 [&_svg]:shrink-0";
 const groupClass =
-  "px-2 pb-1 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:font-mono [&_[cmdk-group-heading]]:text-[10.5px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.08em] [&_[cmdk-group-heading]]:text-ink-3";
+  "px-2 pb-1 [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:text-[12px] [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-ink-3";
 
 function matches(q: string, ...fields: string[]) {
   const needle = q.trim().toLowerCase();
@@ -131,14 +131,14 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ground/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-ground/55 backdrop-blur-[3px] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100%-1.5rem)] max-w-xl -translate-x-1/2 overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
+          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100%-1.5rem)] max-w-xl -translate-x-1/2 glass overflow-hidden rounded-2xl border data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-[0.98] data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
         >
           <DialogPrimitive.Title className="sr-only">Search DividendCase</DialogPrimitive.Title>
           <Command shouldFilter={false} loop className="flex flex-col">
-            <div className="flex items-center gap-3 border-b border-line px-4">
+            <div className="flex items-center gap-3 border-b border-white/[0.07] px-4">
               <Search className="size-4 shrink-0 text-ink-3" />
               <Command.Input
                 value={query}
@@ -181,7 +181,6 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 <Command.Group heading="Your stocks" className={groupClass}>
                   {shownYours.map((t) => (
                     <Command.Item key={`y-${t.ticker}`} value={`y-${t.ticker}`} onSelect={() => openStock(t.ticker)} className={itemClass}>
-                      <TickerBadge ticker={t.ticker} />
                       <span className="num font-medium text-ink">{t.ticker}</span>
                       <span className="ml-auto text-[12px] text-ink-3">{t.kind}</span>
                     </Command.Item>
@@ -193,7 +192,6 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
                 <Command.Group heading="Stocks and ETFs" className={groupClass}>
                   {shownResults.map((r) => (
                     <Command.Item key={`s-${r.symbol}`} value={`s-${r.symbol}`} onSelect={() => openStock(r.symbol)} className={itemClass}>
-                      <TickerBadge ticker={r.symbol} />
                       <span className="num w-28 shrink-0 truncate font-medium text-ink">{r.symbol}</span>
                       <span className="truncate">{r.name}</span>
                       <span className="ml-auto shrink-0 font-mono text-[11px] text-ink-3">{r.exchange}</span>
@@ -247,9 +245,9 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
               )}
 
             </Command.List>
-            <div className="flex items-center gap-4 border-t border-line px-4 py-2 font-mono text-[10.5px] text-ink-3">
-              <span><kbd className="text-ink-2">↑↓</kbd> move</span>
-              <span><kbd className="text-ink-2">↵</kbd> open</span>
+            <div className="flex items-center gap-4 border-t border-white/[0.07] px-4 py-2 text-[11.5px] text-ink-3">
+              <span><kbd className="font-mono text-ink-2">↑↓</kbd> move</span>
+              <span><kbd className="font-mono text-ink-2">↵</kbd> open</span>
               <span className="ml-auto hidden sm:inline">Search runs on this computer</span>
             </div>
           </Command>

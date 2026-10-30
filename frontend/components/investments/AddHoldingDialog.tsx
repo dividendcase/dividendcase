@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { addInvestment } from "@/lib/api/backend";
 import type { Portfolio, StockSearchResult } from "@/lib/types";
 import { StockSearchField } from "./StockSearchField";
@@ -117,8 +116,7 @@ export function AddHoldingDialog({ open, onOpenChange, portfolios, defaultPortfo
           <div className="grid gap-1.5">
             <Label htmlFor="add-stock">Stock</Label>
             {stock ? (
-              <div className="flex h-9 items-center gap-2.5 rounded-md border border-line bg-well pl-1.5 pr-1">
-                <TickerBadge ticker={stock.symbol} />
+              <div className="flex h-9 items-center gap-2.5 rounded-[10px] border border-line bg-well pl-3 pr-1">
                 <span className="num text-[13px] font-medium text-ink">{stock.symbol}</span>
                 <span className="min-w-0 flex-1 truncate text-[13px] text-ink-3">{stock.name}</span>
                 <Button

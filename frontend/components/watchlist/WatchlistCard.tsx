@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useDraggable } from "@dnd-kit/core";
 import { ArrowRightLeft, BarChart3, GripVertical, MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +37,6 @@ export function WatchlistCardBody({ ticker, trailing, dragging }: { ticker: stri
   const yieldPct = detail?.avg_dividend_yield;
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <TickerBadge ticker={ticker} />
       <div className="min-w-0 flex-1">
         {dragging ? (
           <span className="num block truncate text-[13px] font-medium text-ink">{ticker}</span>

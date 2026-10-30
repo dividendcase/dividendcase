@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, Query
+from datetime import timezone
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Optional, List
 import logging
 from dividendcase.database import get_db
 from dividendcase.crud.stock import get_stock, get_stocks, get_top_performers
+from dividendcase.schemas.price import PriceHistoryResponse
 from dividendcase.schemas.stock import StockSummary, StockDetail, StocksListResponse
 from dividendcase.models.stock import Stock
+from dividendcase.services.prices import PricesUnavailable, get_price_bars
 
 import requests as _std_requests
 
@@ -253,6 +256,42 @@ async def stock_summary(ticker: str, db: AsyncSession = Depends(get_db)):
         "summary": result["summary"] or (stock.description if stock else None),
         "sector": result["sector"] or (_clean(stock.sector) if stock else None),
         "industry": result["industry"] or (_clean(stock.industry) if stock else None),
+    }
+
+
+@router.get("/{ticker}/prices", response_model=PriceHistoryResponse)
+async def stock_prices(
+    ticker: str,
+    years: int = Query(10, ge=1, le=10),
+    db: AsyncSession = Depends(get_db),
+):
+    """Daily bars for the price charts, oldest first: from the database, downloaded first when
+    missing or older than 12 hours (services/prices.py)."""
+    ticker = ticker.upper().strip()
+    stock = await get_stock(db, ticker)
+    if not stock:
+        raise HTTPException(status_code=404, detail=f"Stock {ticker} not found in database")
+    try:
+        bars, stale = await get_price_bars(db, stock, years)
+    except PricesUnavailable as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    fetched_at = stock.prices_fetched_at
+    if fetched_at is not None and fetched_at.tzinfo is None:
+        fetched_at = fetched_at.replace(tzinfo=timezone.utc)  # stored naive, in UTC
+    return {
+        "ticker": ticker,
+        "currency": stock.currency or "USD",
+        "fetched_at": fetched_at.replace(microsecond=0) if fetched_at else None,
+        "stale": stale,
+        "bars": [{
+            "date": b.bar_date,
+            "open": b.open,
+            "high": b.high,
+            "low": b.low,
+            "close": b.close,
+            "adj_close": b.adj_close,
+            "volume": b.volume,
+        } for b in bars],
     }
 
 

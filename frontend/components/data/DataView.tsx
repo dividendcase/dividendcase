@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Stat } from "@/components/ui/stat";
+import { Stat, StatGroup } from "@/components/ui/stat";
 import { formatShortDate } from "@/lib/format";
 import { timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ function Progress({
         </p>
       </div>
       <div
-        className="h-1.5 overflow-hidden rounded-full bg-raised"
+        className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
@@ -55,11 +55,11 @@ function Progress({
       </div>
       {running ? (
         <p className="text-[12px] text-ink-3">
-          <span className="num">{progress.saved}</span> stored · <span className="num">{progress.skipped}</span> {skippedLabel}
+          <span className="num">{progress.saved}</span> stored, <span className="num">{progress.skipped}</span> {skippedLabel}
           {progress.failed > 0 && (
             <span className="text-watch">
               {" "}
-              · <span className="num">{progress.failed}</span> failed
+              , <span className="num">{progress.failed}</span> failed
             </span>
           )}
         </p>
@@ -135,8 +135,8 @@ export function DataView() {
       )}
 
       {status ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat
+        <StatGroup className="grid-cols-2 lg:grid-cols-4">
+          <Stat bare
             label="Status"
             value={
               <span className={cn("font-sans text-[21px] font-semibold tracking-[-0.02em] sm:text-[23px]", waiting && "text-watch")}>
@@ -154,9 +154,9 @@ export function DataView() {
             }
             sub={status.current ? <span className="num">{status.current.ticker}</span> : waiting ? "Yahoo asked for a pause" : "Nothing waiting"}
           />
-          <Stat label="Stocks stored" value={status.stocks.toLocaleString()} sub="Screener and your own" />
-          <Stat label="Dividend payments" value={status.dividend_records.toLocaleString()} sub="On record" />
-          <Stat
+          <Stat bare label="Stocks stored" value={status.stocks.toLocaleString()} sub="Screener and your own" />
+          <Stat bare label="Dividend payments" value={status.dividend_records.toLocaleString()} sub="On record" />
+          <Stat bare
             label="Your stocks"
             value={status.your_tickers}
             tone={status.your_tickers_missing > 0 ? "watch" : "default"}
@@ -170,14 +170,10 @@ export function DataView() {
               )
             }
           />
-        </div>
+        </StatGroup>
       ) : (
         !error && (
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {[0, 1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-[104px] rounded-xl" />
-            ))}
-          </div>
+          <Skeleton className="h-[104px] rounded-xl" />
         )
       )}
 

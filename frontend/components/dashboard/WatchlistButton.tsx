@@ -71,7 +71,7 @@ export function WatchlistButton({ ticker }: Props) {
           {isSaved ? (
             <>
               <BookmarkCheck className="w-4 h-4 text-sprout" />
-              Saved{savedGroup ? ` · ${savedGroup.name}` : ""}
+              Saved{savedGroup ? ` in ${savedGroup.name}` : ""}
             </>
           ) : (
             <>

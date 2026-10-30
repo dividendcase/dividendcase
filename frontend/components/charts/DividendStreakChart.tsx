@@ -3,7 +3,8 @@
 import { EChart } from "@/components/charts/EChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy } from "lucide-react";
+import { chartColors } from "@/lib/chartTheme";
+import { formatMoney } from "@/lib/format";
 import type { DividendMetrics } from "@/lib/types";
 
 interface Props {
@@ -11,117 +12,93 @@ interface Props {
 }
 
 const COLORS = {
-  increase: "#7abf50",  // sprout
-  flat: "#e3a33b",      // watch
-  decrease: "#e5604f",  // cut
-  noData: "#363645",    // gray
+  increase: chartColors.sprout,
+  flat: chartColors.watch,
+  decrease: chartColors.cut,
+  partial: chartColors.lineStrong,
 };
+
+type Bar = { year: number; amount: number; color: string; label: string };
 
 export function DividendStreakChart({ metrics }: Props) {
   const { annual_dividends, consecutive_growth_years } = metrics;
   if (!annual_dividends || Object.keys(annual_dividends).length < 2) return null;
 
+  const currency = metrics.currency ?? "USD";
+  const thisYear = new Date().getFullYear();
   const years = Object.keys(annual_dividends)
     .map(Number)
     .sort((a, b) => a - b);
 
-  // Build bars with color coding
-  const barData = years.map((year, i) => {
+  // The first year on record and the year in progress are partial: comparing them with a full
+  // year would call an unfinished year a cut
+  const bars: Bar[] = years.map((year, i) => {
     const amount = annual_dividends[String(year)];
-    if (i === 0) {
-      return { year, amount, color: COLORS.noData, label: "baseline" };
-    }
-    const prevAmount = annual_dividends[String(years[i - 1])];
-    if (!prevAmount || prevAmount === 0) {
-      return { year, amount, color: COLORS.noData, label: "no prior data" };
-    }
-    const change = ((amount - prevAmount) / prevAmount) * 100;
-    if (change > 2) {
-      return { year, amount, color: COLORS.increase, label: `+${change.toFixed(1)}%` };
-    } else if (change < -2) {
-      return { year, amount, color: COLORS.decrease, label: `${change.toFixed(1)}%` };
-    } else {
-      return { year, amount, color: COLORS.flat, label: `${change >= 0 ? "+" : ""}${change.toFixed(1)}%` };
-    }
+    if (year === thisYear) return { year, amount, color: COLORS.partial, label: "so far this year" };
+    if (i === 0) return { year, amount, color: COLORS.partial, label: "first year on record, may be partial" };
+    const prev = annual_dividends[String(years[i - 1])];
+    if (!prev) return { year, amount, color: COLORS.partial, label: "no year before to compare" };
+    const change = ((amount - prev) / prev) * 100;
+    const label = `${change >= 0 ? "+" : "−"}${Math.abs(change).toFixed(1)}% on ${years[i - 1]}`;
+    if (change > 2) return { year, amount, color: COLORS.increase, label };
+    if (change < -2) return { year, amount, color: COLORS.decrease, label };
+    return { year, amount, color: COLORS.flat, label };
   });
-
-  const sym = metrics.currency
-    ? ({ USD: "$", CAD: "C$", GBP: "£", EUR: "€", AUD: "A$", INR: "₹", JPY: "¥", HKD: "HK$" }[metrics.currency] ?? metrics.currency + " ")
-    : "$";
 
   const option = {
     tooltip: {
       trigger: "axis",
-      backgroundColor: "#1c1c25",
-      borderColor: "#282834",
-      textStyle: { color: "#ececf3", fontSize: 12 },
-      formatter: (params: { name: string; value: number; dataIndex: number }[]) => {
-        const p = params[0];
-        const item = barData[p.dataIndex];
-        return `<b>${p.name}</b><br/>Dividend/Share: ${sym}${item.amount.toFixed(4)}<br/>YoY: ${item.label}`;
+      axisPointer: { type: "shadow" },
+      formatter: (params: { dataIndex: number }[]) => {
+        const bar = bars[params[0].dataIndex];
+        return `<b>${bar.year}</b><br/>${formatMoney(bar.amount, currency, { decimals: 4 })} a share<br/><span style="color:${chartColors.ink3}">${bar.label}</span>`;
       },
     },
-    grid: { top: 16, right: 16, bottom: 32, left: 48, containLabel: true },
+    grid: { top: 16, right: 16, bottom: 8, left: 8, containLabel: true },
     xAxis: {
       type: "category",
-      data: barData.map((d) => String(d.year)),
-      axisLabel: { fontSize: 10, color: "#80809a", interval: 0, rotate: years.length > 12 ? 45 : 0 },
-      axisLine: { lineStyle: { color: "#282834" } },
-      axisTick: { show: false },
+      data: bars.map((d) => String(d.year)),
+      axisLabel: { interval: 0, rotate: years.length > 12 ? 45 : 0 },
     },
     yAxis: {
       type: "value",
-      axisLabel: {
-        fontSize: 10,
-        color: "#80809a",
-        formatter: (v: number) => `${sym}${v.toFixed(2)}`,
-      },
-      splitLine: { lineStyle: { color: "#22222c", type: "dashed" } },
-      axisLine: { show: false },
-      axisTick: { show: false },
+      axisLabel: { formatter: (v: number) => formatMoney(v, currency, { decimals: 2 }) },
     },
     series: [
       {
         type: "bar",
-        data: barData.map((d) => ({
+        data: bars.map((d) => ({
           value: d.amount,
-          itemStyle: { color: d.color },
+          itemStyle: d.color === COLORS.partial ? { color: "transparent", borderColor: chartColors.ink3, borderWidth: 1, borderType: "dashed" } : { color: d.color },
         })),
         barMaxWidth: 32,
       },
     ],
   };
 
-  const streakYears = consecutive_growth_years ?? 0;
+  const streak = consecutive_growth_years ?? 0;
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base">
-            Dividend History by Year
-            {metrics.ticker_symbol && (
-              <span className="ml-2 text-sm font-mono text-muted-foreground">({metrics.ticker_symbol})</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>Dividends by year</CardTitle>
+          <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-ink-2">
+            {streak > 0 && (
+              <span>
+                Held or raised <span className="num text-ink">{streak}</span> {streak === 1 ? "year" : "years"} running
+              </span>
             )}
-          </CardTitle>
-          <div className="flex items-center gap-2 flex-wrap">
-            {streakYears > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Trophy className={`w-4 h-4 ${
-                  streakYears >= 25 ? "text-watch" : streakYears >= 10 ? "text-money" : "text-muted-foreground"
-                }`} />
-                <span className="text-sm font-medium text-foreground">{streakYears}yr streak</span>
-              </div>
-            )}
-            {streakYears >= 50 && <Badge variant="green">Dividend King</Badge>}
-            {streakYears >= 25 && streakYears < 50 && <Badge variant="green">Dividend Aristocrat</Badge>}
-            {streakYears >= 10 && streakYears < 25 && <Badge variant="outline">Dividend Achiever</Badge>}
+            {streak >= 50 && <Badge variant="green">Dividend King</Badge>}
+            {streak >= 25 && streak < 50 && <Badge variant="green">Dividend Aristocrat</Badge>}
+            {streak >= 10 && streak < 25 && <Badge variant="outline">Dividend Achiever</Badge>}
           </div>
         </div>
-        <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.increase }} /> Increase</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.flat }} /> Flat (&#177;2%)</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: COLORS.decrease }} /> Decrease</span>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-ink-3">
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm" style={{ backgroundColor: COLORS.increase }} />Raised</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm" style={{ backgroundColor: COLORS.flat }} />Flat, within 2%</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm" style={{ backgroundColor: COLORS.decrease }} />Cut</span>
+          <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-sm border border-dashed border-ink-3" />Partial year</span>
         </div>
       </CardHeader>
       <CardContent>

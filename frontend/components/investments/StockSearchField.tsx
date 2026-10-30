@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { TickerBadge } from "@/components/ui/ticker-badge";
 import { useStockSearch } from "@/lib/hooks/useStockSearch";
 import { cn } from "@/lib/utils";
 import type { StockSearchResult } from "@/lib/types";
@@ -133,7 +132,7 @@ export function StockSearchField({
           <div
             id={listId}
             role="listbox"
-            className="max-h-64 overflow-y-auto rounded-lg border border-line bg-raised p-1 shadow-pop"
+            className="glass max-h-64 overflow-y-auto rounded-xl border p-1"
           >
             {results.length === 0 && isSearching && (
               <p className="px-3 py-2 text-[12.5px] text-ink-3">Searching Yahoo Finance…</p>
@@ -149,11 +148,10 @@ export function StockSearchField({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(r)}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-[13px] text-ink-2 transition-colors",
-                  i === active && "bg-overlay text-ink"
+                  "flex w-full items-center gap-3 rounded-lg px-2.5 py-1.5 text-left text-[13px] text-ink-2 transition-colors",
+                  i === active && "bg-white/[0.07] text-ink"
                 )}
               >
-                <TickerBadge ticker={r.symbol} />
                 <span className="num w-24 shrink-0 truncate font-medium text-ink">{r.symbol}</span>
                 <span className="min-w-0 flex-1 truncate">{r.name}</span>
                 {r.exchange && <span className="shrink-0 font-mono text-[10.5px] text-ink-3">{r.exchange}</span>}

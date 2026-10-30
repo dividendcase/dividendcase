@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ShieldCheck, TrendingDown, TrendingUp, Trophy } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -20,20 +20,29 @@ function Metric({
   sub,
   tip,
   tone = "default",
+  word = false,
 }: {
   label: string;
   value: string;
   sub?: React.ReactNode;
   tip: React.ReactNode;
   tone?: "default" | "money";
+  /** The value is a word, not a number: Geist, not Geist Mono */
+  word?: boolean;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5 bg-surface p-4 sm:p-5">
+    <div className="-ml-px -mt-px flex min-w-0 flex-col gap-1.5 border-l border-t border-white/[0.06] p-4 sm:p-5">
       <div className="flex items-center gap-1.5">
         <p className="eyebrow truncate">{label}</p>
         <InfoTip>{tip}</InfoTip>
       </div>
-      <p className={cn("num text-[26px] font-medium leading-none tracking-[-0.03em]", tone === "money" ? "text-money" : "text-ink")}>
+      <p
+        className={cn(
+          "text-[26px] font-medium leading-none tracking-[-0.03em]",
+          word ? "font-sans font-semibold tracking-[-0.025em]" : "num",
+          tone === "money" ? "text-money" : "text-ink"
+        )}
+      >
         {value}
       </p>
       {sub && <p className="truncate text-[12.5px] text-ink-3">{sub}</p>}
@@ -79,7 +88,7 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
   return (
     <div className="space-y-3">
       {/* Yield and payout */}
-      <Card className="grid grid-cols-2 gap-px bg-line lg:grid-cols-4">
+      <Card className="grid grid-cols-2 lg:grid-cols-4">
         <Metric
           label="TTM yield"
           value={primaryYield != null ? `${primaryYield.toFixed(2)}%` : "—"}
@@ -111,6 +120,7 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
         />
         <Metric
           label="Pays"
+          word
           value={freq}
           sub={`${metrics.total_payments} payments on record`}
           tip={
@@ -129,7 +139,6 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
         {metrics.dividend_safety_score != null && (
           <Card className="flex flex-col gap-3 p-4 sm:p-5">
             <div className="flex items-center gap-2">
-              <ShieldCheck className={cn("size-4", safety.text)} />
               <p className="eyebrow">Dividend safety</p>
               <Badge variant={safety.badge} className="ml-auto">{metrics.safety_label}</Badge>
             </div>
@@ -139,7 +148,7 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
               </span>
               <span className="num text-[13px] text-ink-3">/ 100</span>
             </div>
-            <div className="relative h-1.5 overflow-hidden rounded-full bg-raised" aria-hidden="true">
+            <div className="relative h-1.5 overflow-hidden rounded-full bg-white/[0.06]" aria-hidden="true">
               <div className={cn("h-full rounded-full", safety.bar)} style={{ width: `${Math.min(100, Math.max(0, metrics.dividend_safety_score))}%` }} />
               <span className="absolute inset-y-0 left-[40%] w-px bg-ground/80" />
               <span className="absolute inset-y-0 left-[70%] w-px bg-ground/80" />
@@ -155,7 +164,7 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
                 <li><span className="num text-ink-2">15%</span> history length, capped at 10 years</li>
                 <li><span className="num text-ink-2">10%</span> no cuts in the last 5 years</li>
                 <li><span className="num text-ink-2">10%</span> yield below 8% (half marks to 15%)</li>
-                <li className="pt-1">Safe from 70 · Moderate from 40 · At risk below 40</li>
+                <li className="pt-1">Safe from 70, moderate from 40, at risk below 40</li>
               </ul>
             </details>
           </Card>
@@ -165,7 +174,6 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
         {growthMain != null && (
           <Card className="flex flex-col gap-3 p-4 sm:p-5">
             <div className="flex items-center gap-2">
-              {growthMain >= 0 ? <TrendingUp className="size-4 text-money" /> : <TrendingDown className="size-4 text-cut" />}
               <p className="eyebrow">Dividend growth</p>
               <InfoTip>Compound annual growth of the dividend per share: (end ÷ start)^(1 ÷ years) − 1.</InfoTip>
             </div>
@@ -177,8 +185,8 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
             </div>
             <div className="mt-auto grid grid-cols-3 gap-2">
               {([["3Y", metrics.dividend_growth_cagr_3y], ["5Y", metrics.dividend_growth_cagr_5y], ["10Y", metrics.dividend_growth_cagr_10y]] as const).map(([k, v]) => (
-                <div key={k} className="rounded-lg bg-well px-2.5 py-2">
-                  <p className="font-mono text-[10.5px] text-ink-3">{k}</p>
+                <div key={k} className="glass-well rounded-[10px] border px-2.5 py-2">
+                  <p className="text-[11.5px] text-ink-3">{k === "3Y" ? "3 years" : k === "5Y" ? "5 years" : "10 years"}</p>
                   <p className={cn("num text-[13.5px]", v == null ? "text-ink-3" : v >= 0 ? "text-ink" : "text-cut")}>
                     {v == null ? "—" : `${v >= 0 ? "▲" : "▼"} ${signed(v)}`}
                   </p>
@@ -192,7 +200,6 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
         {streak != null && (
           <Card className="flex flex-col gap-3 p-4 sm:p-5">
             <div className="flex items-center gap-2">
-              <Trophy className={cn("size-4", streak >= 10 ? "text-money" : "text-ink-3")} />
               <p className="eyebrow">Growth streak</p>
               <InfoTip>Consecutive years with a stable or higher total dividend, counting back from the latest full year (2% tolerance for “flat”).</InfoTip>
             </div>
@@ -202,9 +209,9 @@ export function MetricsPanel({ metrics, isLoading }: Props) {
             </div>
             <div className="mt-auto">
               {streak >= 50 ? (
-                <Badge variant="green">Dividend King · 50+ years</Badge>
+                <Badge variant="green">Dividend King: 50 years or more</Badge>
               ) : streak >= 25 ? (
-                <Badge variant="green">Dividend Aristocrat · 25+ years</Badge>
+                <Badge variant="green">Dividend Aristocrat: 25 years or more</Badge>
               ) : streak >= 10 ? (
                 <Badge variant="green">Held or raised every year on record</Badge>
               ) : (
