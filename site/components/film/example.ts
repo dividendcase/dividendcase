@@ -30,15 +30,15 @@ export const HOLDINGS: ExampleHolding[] = [
  * example portfolio's calendar shows them. Estimates, so no "+" as if money had arrived.
  */
 export const PAYMENTS: { ticker: string; amount: string; date: string }[] = [
-  { ticker: "O", amount: "$22.36", date: "15 Oct" },
-  { ticker: "KRZ", amount: "€25.89", date: "9 Nov" },
-  { ticker: "ENB", amount: "C$141.02", date: "1 Dec" },
-  { ticker: "ULVR", amount: "£22.51", date: "4 Dec" },
-  { ticker: "JNJ", amount: "$49.44", date: "10 Dec" },
-  { ticker: "ITC", amount: "₹3,052.88", date: "28 Dec" },
-  { ticker: "KO", amount: "$61.19", date: "1 Jan" },
-  { ticker: "BHP", amount: "A$96.71", date: "25 Mar" },
-  { ticker: "HDFCBANK", amount: "₹1,609.18", date: "28 Jun" },
+  { ticker: "KRZ", amount: "€25.74", date: "9 Nov" },
+  { ticker: "O", amount: "$22.37", date: "15 Nov" },
+  { ticker: "ENB", amount: "C$140.70", date: "1 Dec" },
+  { ticker: "ULVR", amount: "£22.46", date: "4 Dec" },
+  { ticker: "JNJ", amount: "$49.24", date: "10 Dec" },
+  { ticker: "ITC", amount: "₹3,039.28", date: "28 Dec" },
+  { ticker: "KO", amount: "$60.98", date: "1 Jan" },
+  { ticker: "BHP", amount: "A$96.35", date: "25 Mar" },
+  { ticker: "HDFCBANK", amount: "₹1,597.46", date: "28 Jun" },
 ];
 
 export const EXCHANGE_COUNT = new Set(HOLDINGS.map((h) => h.exchange)).size;
@@ -46,23 +46,22 @@ export const EXCHANGE_COUNT = new Set(HOLDINGS.map((h) => h.exchange)).size;
 /**
  * The next 12 months in euros, as the app shows them for the example portfolio (scripts/demo_server.py):
  * what each month pays before tax, and what the paying countries keep at source for a resident of
- * Ireland. Twelve months from early October run into the next October, so there are 13 columns.
+ * Ireland. Taken at the end of October, so the twelve months run from November to October.
  * `label` marks a month whose tax the film names.
  */
 export const MONTHS: { month: string; gross: number; withheld: number; label?: string }[] = [
-  { month: "Oct", gross: 21.51, withheld: 3.22 },
-  { month: "Nov", gross: 47.4, withheld: 9.69, label: "Ireland 25%" },
-  { month: "Dec", gross: 224.3, withheld: 28.19 },
-  { month: "Jan", gross: 80.38, withheld: 12.05 },
-  { month: "Feb", gross: 21.51, withheld: 3.22 },
-  { month: "Mar", gross: 249.49, withheld: 24.93, label: "Canada 15%" },
-  { month: "Apr", gross: 80.38, withheld: 12.05 },
-  { month: "May", gross: 47.4, withheld: 9.69 },
-  { month: "Jun", gross: 241.51, withheld: 29.91 },
-  { month: "Jul", gross: 80.38, withheld: 12.05, label: "US 15%" },
-  { month: "Aug", gross: 21.51, withheld: 3.22 },
-  { month: "Sep", gross: 249.49, withheld: 24.93 },
-  { month: "Oct", gross: 58.86, withheld: 8.83 },
+  { month: "Nov", gross: 47.31, withheld: 9.68, label: "Ireland 25%" },
+  { month: "Dec", gross: 223.61, withheld: 28.11 },
+  { month: "Jan", gross: 80.36, withheld: 12.06 },
+  { month: "Feb", gross: 21.57, withheld: 3.24 },
+  { month: "Mar", gross: 248.58, withheld: 24.86, label: "Canada 15%" },
+  { month: "Apr", gross: 80.36, withheld: 12.06 },
+  { month: "May", gross: 47.31, withheld: 9.68 },
+  { month: "Jun", gross: 240.7, withheld: 29.82 },
+  { month: "Jul", gross: 80.36, withheld: 12.06, label: "US 15%" },
+  { month: "Aug", gross: 21.57, withheld: 3.24 },
+  { month: "Sep", gross: 248.58, withheld: 24.86 },
+  { month: "Oct", gross: 80.36, withheld: 12.06 },
 ];
 
 const cents = (n: number) => Math.round(n * 100) / 100;
