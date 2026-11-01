@@ -2,6 +2,9 @@
 
 export const GITHUB_URL = "https://github.com/dividendcase/dividendcase";
 
+/** For questions and feedback from people who'd rather not use GitHub; it lands in a Resend inbox */
+export const CONTACT_EMAIL = "feedback@dividendcase.com";
+
 /** Section links start with "/" so they also work from other pages, such as /privacy/ */
 export const NAV_LINKS = [
   { href: "/#features", label: "Features" },

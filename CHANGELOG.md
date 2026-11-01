@@ -5,6 +5,8 @@ while the version starts with 0, a minor release (0.2, 0.3…) may change things
 
 ## Unreleased
 
+- **Email us:** if you'd rather not use GitHub, write to feedback@dividendcase.com. **Send feedback** in the sidebar is now a menu: report a problem or suggest an idea on GitHub, or start an email with your version filled in. ⌘K has **Email feedback**, and the About page has a Get in touch section.
+
 ## 0.4.0
 
 - **Import from Zerodha:** in Import, choose Zerodha and add the tradebooks you download from Console (Reports, Tradebook; CSV or Excel, one per year). The app matches each sale with the earliest buy of the same stock, combines buys made on the same day, and shows the holdings it worked out before adding anything. Lots already in the app are skipped, so importing again adds only what's new. DividendCase never connects to Zerodha: the files are read on your computer and not kept.

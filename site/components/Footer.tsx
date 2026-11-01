@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight } from "@phosphor-icons/react";
-import { GITHUB_URL, buttonPrimary } from "./site";
+import { CONTACT_EMAIL, GITHUB_URL, buttonPrimary } from "./site";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -15,6 +15,7 @@ const LINKS = [
   { href: `${GITHUB_URL}/pkgs/container/dividendcase`, label: "Docker image" },
   { href: `${GITHUB_URL}/blob/main/SECURITY.md`, label: "Security" },
   { href: "/privacy/", label: "Privacy policy" },
+  { href: `mailto:${CONTACT_EMAIL}`, label: "Contact" },
 ];
 
 /**
