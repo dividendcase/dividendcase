@@ -6,6 +6,7 @@ Thanks for helping. DividendCase is young, and the most useful thing right now i
 
 - **Something isn't working:** [open a bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml). **Report a problem** in the app's ⌘K menu fills in your version and system for you.
 - **An idea:** [describe what you're trying to do](https://github.com/dividendcase/dividendcase/issues/new?template=idea.yml).
+- **No GitHub account, or a question:** email [feedback@dividendcase.com](mailto:feedback@dividendcase.com). **Send feedback** in the app's sidebar can start that email for you, with your version filled in.
 - **A security problem:** please don't open a public issue; see [SECURITY.md](SECURITY.md).
 
 Please leave out anything private: no portfolio files, account numbers or unblurred screenshots of real balances.

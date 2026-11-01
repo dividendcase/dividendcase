@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/Footer";
 import { Nav } from "@/components/Nav";
-import { GITHUB_URL } from "@/components/site";
+import { CONTACT_EMAIL, GITHUB_URL } from "@/components/site";
 
 /** The day the hosted app closed and this site took over dividendcase.com */
 const EFFECTIVE = "1\u00a0November 2026"; // no line break inside the date
-const CONTACT = "feedback@dividendcase.com";
+const CONTACT = CONTACT_EMAIL;
 
 const description =
   "DividendCase collects nothing: this website has no cookies or analytics, and the app runs on your own " +

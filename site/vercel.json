@@ -10,7 +10,7 @@
     { "source": "/about{/}?", "destination": "/", "permanent": false },
     {
       "source": "/contact{/}?",
-      "destination": "https://github.com/dividendcase/dividendcase/issues/new/choose",
+      "destination": "/#help",
       "permanent": false
     },
     {

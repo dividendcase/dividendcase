@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3, Bookmark, CalendarDays, CandlestickChart, Database, FolderPlus, GitCompareArrows, Info, Layers,
-  Lock, Settings, SlidersHorizontal, Sprout, X, MessageSquare, ExternalLink,
+  Lock, Settings, SlidersHorizontal, Sprout, X, MessageSquare, Bug, Lightbulb, Mail, ChevronRight,
 } from "lucide-react";
 import { LogoMark } from "@dividendcase/brand/logo";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,9 @@ import { usePortfolios } from "@/lib/hooks/usePortfolios";
 import { isBusy, useDataStatus } from "@/lib/hooks/useDataStatus";
 import { timeAgo } from "@/lib/format";
 import { UpdateNotice } from "@/components/layout/UpdateNotice";
-import { FEEDBACK_URL } from "@/lib/feedback";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useAppInfo } from "@/lib/hooks/useAppInfo";
+import { bugReportUrl, feedbackMailto, FEEDBACK_EMAIL, ideaUrl } from "@/lib/feedback";
 
 const MAX_PORTFOLIOS = 4;
 
@@ -174,16 +176,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               />
             ))}
           </div>
-          <a
-            href={FEEDBACK_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group mt-0.5 flex items-center gap-3 rounded-[10px] px-2.5 py-[6px] text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-white/[0.045] hover:text-ink"
-          >
-            <MessageSquare className="size-[17px] shrink-0 text-ink-3 transition-colors group-hover:text-ink-2" strokeWidth={1.8} />
-            <span className="flex-1 truncate">Send feedback</span>
-            <ExternalLink className="size-3.5 text-ink-3 opacity-0 transition-opacity group-hover:opacity-100" />
-          </a>
+          <FeedbackMenu />
         </nav>
 
         <UpdateNotice />
@@ -250,5 +243,45 @@ function PortfolioLinks({
         </SubLink>
       ))}
     </>
+  );
+}
+
+/** Send feedback: GitHub's forms for those who use it, email for everyone else. */
+function FeedbackMenu() {
+  const { info } = useAppInfo();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="group mt-0.5 flex w-full items-center gap-3 rounded-[10px] px-2.5 py-[6px] text-left text-[13.5px] font-medium text-ink-2 transition-colors hover:bg-white/[0.045] hover:text-ink data-[state=open]:bg-white/[0.045] data-[state=open]:text-ink">
+        <MessageSquare className="size-[17px] shrink-0 text-ink-3 transition-colors group-hover:text-ink-2" strokeWidth={1.8} />
+        <span className="flex-1 truncate">Send feedback</span>
+        <ChevronRight className="size-3.5 text-ink-3" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent side="right" align="end" sideOffset={10} className="w-64">
+        <DropdownMenuLabel>On GitHub</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <a href={bugReportUrl(info?.version, info?.install_method)} target="_blank" rel="noopener noreferrer">
+            <Bug />
+            Report a problem
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={ideaUrl()} target="_blank" rel="noopener noreferrer">
+            <Lightbulb />
+            Suggest an idea
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel>No GitHub account?</DropdownMenuLabel>
+        <DropdownMenuItem asChild>
+          <a href={feedbackMailto(info?.version, info?.install_method)}>
+            <Mail />
+            <span className="min-w-0">
+              <span className="block">Email us</span>
+              <span className="block truncate text-[12px] text-ink-3">{FEEDBACK_EMAIL}</span>
+            </span>
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

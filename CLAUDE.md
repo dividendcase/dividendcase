@@ -84,7 +84,8 @@ site/                  dividendcase.com: Next 16 static export, live since 1 Nov
                        app/privacy/ is the privacy page; app/not-found.tsx the 404. vercel.json
                        redirects the hosted app's old addresses (307, so a Cloud app can reuse them):
                        /login, /register, /dashboard/* … → /#hosted-account (that FAQ answer),
-                       /contact → GitHub issues, /terms → LICENSE. Section links start with "/#"
+                       /contact → /#help (the FAQ answer offering
+                       feedback@dividendcase.com or GitHub issues), /terms → LICENSE. Section links start with "/#"
                        so they work from every page
 scripts/demo_server.py the app on an invented example portfolio, network blocked (like the tests), for
                        screenshots: `uv run python scripts/demo_server.py` → :8770. The website's
@@ -94,7 +95,11 @@ scripts/smoke_test.py  start an installed `dividendcase` on a temp data folder a
                        full path locally: `uv run` puts this repo's own environment first on PATH)
 Dockerfile             node → uv build wheel → uv pip install --system; listens on 0.0.0.0 inside,
                        data in /data, non-root; publish with -p 127.0.0.1:8765:8765
-.github/ISSUE_TEMPLATE bug_report.yml (version/system prefilled by lib/feedback.ts), idea.yml
+.github/ISSUE_TEMPLATE bug_report.yml (version/system prefilled by lib/feedback.ts), idea.yml. The other public
+                       contact is feedback@dividendcase.com (FEEDBACK_EMAIL in lib/feedback.ts, CONTACT_EMAIL in
+                       site/components/site.ts): a Resend inbox, "DividendCase feedback", replies sent as
+                       "Pratik from DividendCase". The sidebar's Send feedback menu, ⌘K, About, the site's FAQ
+                       (#help) and footer offer it beside GitHub
 ```
 
 ## Interface map (frontend/)

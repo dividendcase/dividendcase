@@ -1,11 +1,12 @@
 "use client";
 
 import { m } from "motion/react";
-import { ArrowUpRight } from "@phosphor-icons/react";
+import { ArrowUpRight, EnvelopeSimple } from "@phosphor-icons/react";
 import { GitHubIcon } from "./icons";
-import { DATA_FOLDERS, GITHUB_URL } from "./site";
+import { CONTACT_EMAIL, DATA_FOLDERS, GITHUB_URL } from "./site";
 
 const code = "font-mono text-[0.92em] text-ink";
+const inline = "text-ink underline decoration-line-strong underline-offset-4 hover:decoration-sprout";
 
 /** Short, plain answers; each one true of the app as it ships */
 const FAQS: { q: string; a: React.ReactNode; id?: string }[] = [
@@ -54,16 +55,43 @@ const FAQS: { q: string; a: React.ReactNode; id?: string }[] = [
     a: <>No. It shows what your holdings have paid and estimates what they should pay. The decisions are yours.</>,
   },
   {
+    q: "How do I get help or send feedback?",
+    // The hosted app's old /contact page redirects here (site/vercel.json)
+    id: "help",
+    a: (
+      <>
+        Email{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`} className={inline}>
+          {CONTACT_EMAIL}
+        </a>
+        , or open an issue on{" "}
+        <a href={`${GITHUB_URL}/issues/new/choose`} className={inline}>
+          GitHub
+        </a>{" "}
+        if you use it. Questions, problems and ideas are all welcome. Security problems go privately through{" "}
+        <a href={`${GITHUB_URL}/blob/main/SECURITY.md`} className={inline}>
+          GitHub&apos;s reporting
+        </a>
+        .
+      </>
+    ),
+  },
+  {
     q: "I had an account on dividendcase.com.",
     // Old addresses of the hosted app redirect here (site/vercel.json)
     id: "hosted-account",
     a: (
       <>
         Hosted accounts closed on 1&nbsp;November 2026. If you exported your data,{" "}
-        <a href="#install" className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-sprout">
+        <a href="#install" className={inline}>
           install the app
         </a>
-        , choose Import and pick that file: your portfolios and watchlists come back as they were.
+        , choose Import and pick that file: your portfolios and watchlists come back as they were. Questions about your
+        old account or its data:{" "}
+        <a href={`mailto:${CONTACT_EMAIL}`} className={inline}>
+          {CONTACT_EMAIL}
+        </a>
+        .
       </>
     ),
   },
@@ -98,6 +126,12 @@ export function OpenSource() {
               <a href={`${GITHUB_URL}/issues/new/choose`} className="inline-flex items-center gap-1.5 text-ink-2 transition-colors hover:text-ink">
                 Report a problem or suggest an idea
                 <ArrowUpRight className="size-3.5" aria-hidden />
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${CONTACT_EMAIL}`} className="inline-flex items-center gap-1.5 text-ink-2 transition-colors hover:text-ink">
+                <EnvelopeSimple className="size-4" aria-hidden />
+                Or email {CONTACT_EMAIL}
               </a>
             </li>
           </ul>

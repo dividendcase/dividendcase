@@ -46,7 +46,7 @@ docker run -d --name dividendcase --restart unless-stopped \
 
 Then open <http://127.0.0.1:8765/dashboard/>. Keep `127.0.0.1:` in the port mapping so only this computer can reach it. Your data lives in the `dividendcase-data` volume; to update, `docker pull ghcr.io/dividendcase/dividendcase:latest` and recreate the container.
 
-**Feedback:** the app's **Send feedback** link opens a [bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml) with your version filled in; ideas are welcome [here](https://github.com/dividendcase/dividendcase/issues/new?template=idea.yml). See [CONTRIBUTING.md](https://github.com/dividendcase/dividendcase/blob/main/CONTRIBUTING.md).
+**Feedback and help:** email [feedback@dividendcase.com](mailto:feedback@dividendcase.com), or use GitHub: a [bug report](https://github.com/dividendcase/dividendcase/issues/new?template=bug_report.yml) or an [idea](https://github.com/dividendcase/dividendcase/issues/new?template=idea.yml). The app's **Send feedback** menu offers all three, with your version filled in. Security problems go privately, as [SECURITY.md](https://github.com/dividendcase/dividendcase/blob/main/SECURITY.md) explains. See [CONTRIBUTING.md](https://github.com/dividendcase/dividendcase/blob/main/CONTRIBUTING.md).
 
 ## What it does
 

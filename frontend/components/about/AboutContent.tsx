@@ -10,6 +10,8 @@ import {
   GitCompareArrows,
   Layers,
   Lock,
+  Mail,
+  MessageSquare,
   ShieldAlert,
   SlidersHorizontal,
   Sprout,
@@ -17,6 +19,8 @@ import {
 import { LogoMark } from "@dividendcase/brand/logo";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAppInfo } from "@/lib/hooks/useAppInfo";
+import { FEEDBACK_EMAIL, FEEDBACK_URL, feedbackMailto } from "@/lib/feedback";
 
 const GITHUB_URL = "https://github.com/dividendcase/dividendcase";
 
@@ -169,7 +173,7 @@ export function AboutContent() {
         <SectionTitle>What it does</SectionTitle>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {features.map(({ Icon, title, text }) => (
-            <div key={title} className="flex gap-3 rounded-xl border border-line bg-surface p-4">
+            <div key={title} className="glass-panel flex gap-3 rounded-xl border p-4">
               <Icon className="mt-0.5 size-4 shrink-0 text-ink-3" strokeWidth={1.8} />
               <div className="space-y-1">
                 <h3 className="text-[13.5px] font-medium text-ink">{title}</h3>
@@ -257,7 +261,7 @@ export function AboutContent() {
           href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 transition-colors hover:border-line-strong"
+          className="glass-panel group flex items-center justify-between gap-3 rounded-xl border px-4 py-3 transition-colors hover:border-white/[0.12]"
         >
           <span className="min-w-0">
             <span className="block text-[13.5px] font-medium text-ink">Source code, issues and releases</span>
@@ -266,6 +270,8 @@ export function AboutContent() {
           <ExternalLink className="size-4 shrink-0 text-ink-3 transition-colors group-hover:text-ink" />
         </a>
       </section>
+
+      <GetInTouch />
 
       {/* Maker */}
       <section className="space-y-3 border-t border-line pt-8">
@@ -284,5 +290,46 @@ export function AboutContent() {
         </div>
       </section>
     </div>
+  );
+}
+
+/** Email for anyone; GitHub for those who use it. Security reports have their own private route. */
+function GetInTouch() {
+  const { info } = useAppInfo();
+  const card = "glass-panel group flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors hover:border-white/[0.12]";
+  return (
+    <section className="space-y-3 border-t border-line pt-8">
+      <SectionTitle>Get in touch</SectionTitle>
+      <p className="text-[14px] leading-7 text-ink-2">
+        Questions, problems and ideas are all welcome, by email or on GitHub, whichever suits you. Please report security
+        problems privately, as{" "}
+        <a
+          href={`${GITHUB_URL}/blob/main/SECURITY.md`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sprout underline-offset-4 hover:underline"
+        >
+          SECURITY.md
+        </a>{" "}
+        explains.
+      </p>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <a href={feedbackMailto(info?.version, info?.install_method)} className={card}>
+          <Mail className="size-4 shrink-0 text-ink-3 transition-colors group-hover:text-sprout" strokeWidth={1.8} />
+          <span className="min-w-0">
+            <span className="block text-[13.5px] font-medium text-ink">Email</span>
+            <span className="block truncate text-[12.5px] text-ink-3">{FEEDBACK_EMAIL}</span>
+          </span>
+        </a>
+        <a href={FEEDBACK_URL} target="_blank" rel="noopener noreferrer" className={card}>
+          <MessageSquare className="size-4 shrink-0 text-ink-3 transition-colors group-hover:text-sprout" strokeWidth={1.8} />
+          <span className="min-w-0">
+            <span className="block text-[13.5px] font-medium text-ink">GitHub issues</span>
+            <span className="block truncate text-[12.5px] text-ink-3">Report a problem or suggest an idea</span>
+          </span>
+          <ExternalLink className="ml-auto size-4 shrink-0 text-ink-3 transition-colors group-hover:text-ink" />
+        </a>
+      </div>
+    </section>
   );
 }

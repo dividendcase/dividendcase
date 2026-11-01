@@ -6,14 +6,14 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import {
   ArrowRight, BarChart3, Bookmark, Bug, CalendarDays, CandlestickChart, Lightbulb, Database, Download, FileSpreadsheet,
-  GitCompareArrows, Info, Layers, Loader2, RefreshCw, Search, Settings, SlidersHorizontal, Sprout, Upload,
+  GitCompareArrows, Info, Layers, Loader2, Mail, RefreshCw, Search, Settings, SlidersHorizontal, Sprout, Upload,
 } from "lucide-react";
 import { useStockSearch } from "@/lib/hooks/useStockSearch";
 import { useInvestments } from "@/lib/hooks/useInvestments";
 import { useWatchlist } from "@/lib/hooks/useWatchlist";
 import { useDataStatus } from "@/lib/hooks/useDataStatus";
 import { useAppInfo } from "@/lib/hooks/useAppInfo";
-import { bugReportUrl, ideaUrl } from "@/lib/feedback";
+import { bugReportUrl, feedbackMailto, ideaUrl } from "@/lib/feedback";
 
 export const PAGES = [
   { href: "/dashboard/", label: "Income", hint: "Home", Icon: BarChart3, keywords: "home dashboard overview" },
@@ -112,6 +112,7 @@ export function CommandPalette({ open, onOpenChange, onImport, onExport, onRepor
     { key: "refresh", label: "Refresh my stocks now", Icon: RefreshCw, keywords: "update fetch yahoo data", fn: () => startRefresh("holdings", true) },
     { key: "bug", label: "Report a problem", Icon: Bug, keywords: "bug issue feedback broken wrong github", fn: () => { window.open(bugReportUrl(appInfo?.version, appInfo?.install_method), "_blank", "noopener"); } },
     { key: "idea", label: "Suggest an idea", Icon: Lightbulb, keywords: "feature request feedback github", fn: () => { window.open(ideaUrl(), "_blank", "noopener"); } },
+    { key: "email", label: "Email feedback", Icon: Mail, keywords: "contact support help question mail feedback@dividendcase.com", fn: () => { window.location.href = feedbackMailto(appInfo?.version, appInfo?.install_method); } },
   ];
 
   const q = query.trim();
