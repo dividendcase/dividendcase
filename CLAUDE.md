@@ -69,8 +69,10 @@ packages/brand/        tokens.css (Tailwind v4 @theme static: colours, fonts, ra
                        num / eyebrow / serif-accent / keeper-dot) + src/logo.tsx (LogoMark, Logo)
 frontend/              the app: Next 16 App Router, React 19, Tailwind 4, TS 7, ECharts 6;
                        static export (output: "export", trailingSlash)
-site/                  dividendcase.com: Next 16 static export; not deployed yet (the hosted repo
-                       keeps serving dividendcase.com until 1 Nov 2026). components/film/ is the
+site/                  dividendcase.com: Next 16 static export, live since 1 Nov 2026 (Vercel project
+                       "dividendcase", team pratikb-projects, builds site/ from main; www and
+                       dividend-atlas.com 308 to it; mail for feedback@ is DNS on the domain, not the
+                       project). components/film/ is the
                        hero + "how it works" scroll film: a sticky stage and one GSAP ScrollTrigger
                        timeline (vault and dial in SVG + CSS 3D, payment particles in three.js loaded
                        when idle, desktop only); FilmStatic for reduced motion; example.ts holds the
@@ -196,8 +198,8 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   (lg/xl/2xl); the website keeps the brand's. Reduce transparency turns the blur off.
 - Website copy says what the app really does: the user enters holdings (by hand or from a spreadsheet),
   the app estimates dividends from each company's history, and it never connects to a broker or bank.
-  Say "expected" or "estimate", never "received" or "arrives", and no "+" on amounts as if paid. Don't
-  mention broker imports on the site until they ship.
+  Say "expected" or "estimate", never "received" or "arrives", and no "+" on amounts as if paid. Broker
+  imports shipped in 0.4.0: the site may mention them as files read on the computer, never a connection.
 - Use the brand classes (`bg-surface`, `bg-raised`, `border-line`, `text-ink-2`, `text-money`,
   `text-watch`, `text-cut`) rather than Tailwind palette colours.
 - `next dev` would write AGENTS.md/CLAUDE.md into the workspace; `agentRules: false` stops it.
@@ -233,13 +235,12 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 
 In order; details and decisions are in `docs/roadmap.md`. Early testers have had it since 0.1.0 (29 Sep 2026); collect their issues on GitHub.
 
-1. Landing page redesign (October 2026): one continuous scroll film (GSAP ScrollTrigger + Motion +
-   three.js), storyboard reviewed first. It goes live as dividendcase.com on 1 Nov 2026, not earlier:
-   the hosted app keeps working until closure day.
-2. Broker imports: Zerodha, Angel One (0.4.0), then Trading 212, Revolut, Degiro (0.5.0).
-3. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
+1. Broker imports: Zerodha, Angel One and Revolut shipped in 0.4.0 (30 Oct 2026); next Trading 212
+   and Degiro (0.5.0). The website (scroll film) went live as dividendcase.com on 1 Nov 2026, when the
+   hosted accounts closed.
+2. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
    CH, ES, JP); Australian unfranked parts; Irish DWT exemptions.
-4. Contributions: no CLA and no outside code (decided 29 Sep 2026). People propose work in issues and
+3. Contributions: no CLA and no outside code (decided 29 Sep 2026). People propose work in issues and
    we write it, so Pratik stays the sole copyright holder; pull requests are limited to collaborators.
    Never copy code pasted into an issue or comment: write it from the description.
 Billing and any paid Cloud launch come later; for now the focus is this app and a Cloud prototype.
