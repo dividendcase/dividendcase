@@ -51,7 +51,7 @@ dependencies = [
     "packaging>=24",
     # Broker files: Angel One's password-protected Excel download, and holdings saved as PDF
     "msoffcrypto-tool>=5.4",
-    "pypdf>=5.0",
+    "pypdf>=6.21.4",
 ]
 
 [project.scripts]
