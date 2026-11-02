@@ -3,6 +3,8 @@
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
 while the version starts with 0, a minor release (0.2, 0.3…) may change things.
 
+## Unreleased
+
 ## 0.4.1
 
 - **Email us:** if you'd rather not use GitHub, write to feedback@dividendcase.com. **Send feedback** in the sidebar is now a menu: report a problem or suggest an idea on GitHub, or start an email with your version filled in. ⌘K has **Email feedback**, and the About page has a Get in touch section.
