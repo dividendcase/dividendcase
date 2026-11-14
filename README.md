@@ -9,11 +9,13 @@
 
 A free, open-source dividend tracker that runs on your own computer. Your data stays with you.
 
-> **Status:** early release (0.1). Things may still change between versions; your data is backed up before every upgrade.
+> **Status:** version 1. Your data is backed up before every upgrade.
 
 ## Install
 
-DividendCase installs with [uv](https://docs.astral.sh/uv/), which also sets up Python for you.
+**Windows:** get [DividendCase from the Microsoft Store](https://apps.microsoft.com/detail/9P832BD624ST). One click, no commands; open it from the Start menu, and the Store keeps it up to date.
+
+On macOS and Linux, DividendCase installs with [uv](https://docs.astral.sh/uv/), which also sets up Python for you.
 
 **macOS and Linux**
 
@@ -23,7 +25,7 @@ uv tool install dividendcase
 dividendcase
 ```
 
-**Windows** (PowerShell)
+**Windows, from PowerShell** (if you'd rather not use the Store; on PCs with Smart App Control turned on this fails with a "Bad Image" error, because the Python that uv downloads isn't signed)
 
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -35,6 +37,7 @@ It opens <http://127.0.0.1:8765/dashboard/> in your browser once it's ready; the
 
 - **Update:** `uv tool upgrade dividendcase`. The app tells you when a new version is out, and saves a copy of your data before an update changes it.
 - **Uninstall:** `uv tool uninstall dividendcase`. Your data folder (below) stays until you delete it.
+- **The Windows app from the Store** has no terminal window: an icon in the notification area (by the clock) opens it again or quits it. The Store updates it, and you remove it like any other app, in Windows Settings under Apps.
 
 **Docker** (Linux servers, a NAS, or if you'd rather not install Python tools)
 

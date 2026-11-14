@@ -5,11 +5,12 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { Check, Copy } from "@phosphor-icons/react";
-import { GITHUB_URL } from "./site";
+import { GITHUB_URL, STORE_URL, buttonPrimary } from "./site";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-type Tab = { key: string; label: string; prompt: string; commands: string[] };
+/** `store`: the system has an app in a store, offered before the commands */
+type Tab = { key: string; label: string; prompt: string; commands: string[]; store?: boolean };
 
 /** The install commands, as in the README */
 const TABS: Tab[] = [
@@ -23,6 +24,7 @@ const TABS: Tab[] = [
     key: "windows",
     label: "Windows",
     prompt: ">",
+    store: true,
     commands: [
       'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
       "uv tool install dividendcase",
@@ -113,7 +115,7 @@ export function Install() {
             Install it in a minute.
           </h2>
           <p data-reveal="" className="mt-4 max-w-[440px] text-[17px] leading-[1.6] text-pretty text-ink-2 md:text-[19px]">
-            Free. It installs with uv, which sets up Python for you, then opens in your browser.
+            Free. On Windows it is one click from the Microsoft Store. On macOS and Linux it installs with uv, which sets up Python for you. Then it opens in your browser.
           </p>
           <dl data-reveal="" className="mt-10 space-y-3 text-[14px]">
             <div className="flex flex-wrap gap-x-3">
@@ -168,6 +170,19 @@ export function Install() {
               aria-labelledby={`install-tab-${tab}`}
               className="space-y-1.5 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.75] md:px-6 md:text-[14px]"
             >
+              {current.store && (
+                <div className="mb-5 border-b border-line pb-6 font-sans whitespace-normal">
+                  <p className="text-[16px] font-semibold text-ink">One click, no commands.</p>
+                  <p className="mt-1.5 max-w-[460px] text-[14px] leading-[1.6] text-ink-2">
+                    Get DividendCase from the Microsoft Store, then open it from the Start menu. The Store keeps it up
+                    to date.
+                  </p>
+                  <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className={`${buttonPrimary} mt-4 active:translate-y-px`}>
+                    Get it from the Microsoft Store
+                  </a>
+                  <p className="mt-6 text-[13px] text-ink-3">Or install it from PowerShell with uv:</p>
+                </div>
+              )}
               {current.commands.map((c, i) => (
                 <p key={`${tab}-${i}`} className="whitespace-pre text-ink">
                   <span className="text-ink-3 select-none">{current.prompt} </span>

@@ -111,6 +111,8 @@ packaging/windows/     the Microsoft Store package (MSIX), for people who won't 
                        is 1.0.0 everywhere (decided 14 Nov 2026) and versions stay the same on every system.
                        make_icons.py redraws assets/ and src/dividendcase/assets/tray.png from the logo.
                        The Store signs the package; Mac and Linux stay on uv (no Apple Developer account).
+                       Live since 14 Nov 2026: https://apps.microsoft.com/detail/9P832BD624ST (STORE_URL in
+                       site/components/site.ts; the site's Install section and the README offer it first).
                        store/ holds the Partner Center listing (listing.md: every field's text, as submitted
                        for 1.0.0 on 14 Nov 2026) and its six 1920×1080 screenshots from scripts/demo_server.py.
 Dockerfile             node → uv build wheel → uv pip install --system; listens on 0.0.0.0 inside,
