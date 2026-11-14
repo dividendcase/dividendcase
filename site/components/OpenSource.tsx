@@ -5,7 +5,9 @@ import { ArrowUpRight, EnvelopeSimple } from "@phosphor-icons/react";
 import { GitHubIcon } from "./icons";
 import { CONTACT_EMAIL, DATA_FOLDERS, GITHUB_URL } from "./site";
 
-const code = "font-mono text-[0.92em] text-ink";
+// Folder paths have no spaces: without this a long one can't wrap and pushes the whole page
+// wider than the screen (the Windows path did, at laptop widths)
+const code = "font-mono text-[0.92em] text-ink [overflow-wrap:anywhere]";
 const inline = "text-ink underline decoration-line-strong underline-offset-4 hover:decoration-sprout";
 
 /** Short, plain answers; each one true of the app as it ships */
