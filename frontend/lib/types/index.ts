@@ -390,5 +390,6 @@ export interface AppInfo {
   upgrade_command: string;
   /** The notes for the newer version when there is one, otherwise the list of releases */
   releases_url: string;
-  install_method: "uv" | "docker" | string;
+  /** "store" is the Windows app from the Microsoft Store, which the Store keeps up to date */
+  install_method: "uv" | "docker" | "store" | string;
 }

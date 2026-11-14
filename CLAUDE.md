@@ -12,6 +12,11 @@ Local folder is `~/Github/dividendcase-app` because macOS treats `dividendcase` 
 src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
   cli.py               `dividendcase` command: uvicorn on 127.0.0.1 + opens the browser
   config.py            settings (DIVIDENDCASE_* env vars); data dir via platformdirs
+  desktop.py           the Windows app's launcher (`pythonw -I -m dividendcase.desktop --store`): no
+                       terminal, server on its own thread, browser opens when ready, notification-area
+                       icon (pystray + Pillow, the `desktop` extra) with Open and Quit; a second start
+                       opens the running copy; output goes to dividendcase.log in the data folder;
+                       --store sets install_method "store" (no PyPI update check: the Store updates it)
   database.py          async SQLAlchemy on SQLite (WAL, foreign keys on)
   api/v1/deps.py       LOCAL_USER_ID: the single local user; no auth
   services/refresh.py  background refresh: one worker, priority queue (holdings > screener),
@@ -31,7 +36,7 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
                        countries → None (shown gross, listed in unestimated_sources). The calendar
                        adds withholding_rate/net_amount per entry and net totals; GET /withholding
                        (?ticker=) for Settings and stock pages. Rates need a tax professional's
-                       review before 1.0.
+                       review (still open: 1.0.0 was chosen for the Store, not because this is done).
   services/benchmark.py beats_benchmark: 10-year (or since first payment, min 3 y) total return vs
                        the exchange's index (EXCHANGE_BENCHMARKS), weekly + after screener batches
   services/prices.py   daily OHLC bars for the price charts (price_bars): GET /stocks/{t}/prices?years=
@@ -93,6 +98,17 @@ scripts/demo_server.py the app on an invented example portfolio, network blocked
 scripts/build_web.py   npm ci (root) + build frontend + copy frontend/out into src/dividendcase/web
 scripts/smoke_test.py  start an installed `dividendcase` on a temp data folder and check it (pass the
                        full path locally: `uv run` puts this repo's own environment first on PATH)
+packaging/windows/     the Microsoft Store package (MSIX), for people who won't use a terminal (and because
+                       Smart App Control blocks uv's unsigned Python: error 0xc0e90002). build_msix.py
+                       (Windows only): a copy of uv's Python 3.13 + the wheel and its libraries at uv.lock's
+                       versions, compiled ahead (the installed folder is read-only), AppxManifest.xml filled
+                       in, resources.pri (makepri) and makeappx. Identity from MSIX_IDENTITY_NAME,
+                       MSIX_PUBLISHER, MSIX_PUBLISHER_DISPLAY_NAME (Partner Center → Product identity;
+                       repository variables in the Release workflow), else a test identity. Store version =
+                       ours (1.0.1 → 1.0.1.0). The Store refuses a leading 0, so the release after 0.4.1
+                       is 1.0.0 everywhere (decided 14 Nov 2026) and versions stay the same on every system.
+                       make_icons.py redraws assets/ and src/dividendcase/assets/tray.png from the logo.
+                       The Store signs the package; Mac and Linux stay on uv (no Apple Developer account).
 Dockerfile             node → uv build wheel → uv pip install --system; listens on 0.0.0.0 inside,
                        data in /data, non-root; publish with -p 127.0.0.1:8765:8765
 .github/ISSUE_TEMPLATE bug_report.yml (version/system prefilled by lib/feedback.ts), idea.yml. The other public
@@ -178,6 +194,12 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   ghcr.io/dividendcase/dividendcase:<version> and :latest. "Run workflow" by hand = TestPyPI dry run. No GitHub environments:
   the free plan has none for private repos; add a protected `pypi` environment once public.
   Pushing a release tag publishes publicly: always ask Pratik first.
+- Windows app: the Build workflow's `windows-app` job builds the package, signs it with a throwaway
+  certificate, installs it, runs `scripts/smoke_test.py` against the folder it was packed from (an
+  installed Store app's python.exe can't be started from outside: access denied) and opens the
+  installed app through its Start menu entry. The Release workflow builds it with the real identity as the artifact
+  `microsoft-store-package`; uploading that in Partner Center is done by hand, and is publishing:
+  ask Pratik first.
 - CI: `.github/workflows/tests.yml` (pytest + migrate check; Linux/3.12 on PRs; on main also
   Python 3.11 and 3.13, macOS and Windows) and `build.yml` (type-check both apps, build the site;
   build the wheel, `scripts/check_dist.py`, then `uv tool install` it and run
@@ -241,7 +263,7 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
 In order; details and decisions are in `docs/roadmap.md`. Early testers have had it since 0.1.0 (29 Sep 2026); collect their issues on GitHub.
 
 1. Broker imports: Zerodha, Angel One and Revolut shipped in 0.4.0 (30 Oct 2026); next Trading 212
-   and Degiro (0.5.0). The website (scroll film) went live as dividendcase.com on 1 Nov 2026, when the
+   and Degiro. The next release is 1.0.0, with the Windows app in the Microsoft Store. The website (scroll film) went live as dividendcase.com on 1 Nov 2026, when the
    hosted accounts closed.
 2. Withholding: a tax professional's review of the rate table; more source countries (DE, FR, NL,
    CH, ES, JP); Australian unfranked parts; Irish DWT exemptions.

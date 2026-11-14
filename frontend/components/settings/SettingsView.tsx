@@ -328,16 +328,22 @@ export function SettingsView() {
               />
             </SettingRow>
 
-            <SettingRow
-              title="Check for updates"
-              description="Once a day, asks PyPI (where DividendCase is published) for the newest version number. Nothing about you or your portfolio is sent."
-            >
-              <Switch
-                label="Check for updates"
-                checked={preferences.check_for_updates}
-                onChange={(v) => updatePreference({ check_for_updates: v })}
-              />
-            </SettingRow>
+            {appInfo?.install_method === "store" ? (
+              <SettingRow title="Updates" description="The Microsoft Store keeps DividendCase up to date. The app itself doesn't check for new versions.">
+                <span className="text-[12.5px] text-ink-3">Automatic</span>
+              </SettingRow>
+            ) : (
+              <SettingRow
+                title="Check for updates"
+                description="Once a day, asks PyPI (where DividendCase is published) for the newest version number. Nothing about you or your portfolio is sent."
+              >
+                <Switch
+                  label="Check for updates"
+                  checked={preferences.check_for_updates}
+                  onChange={(v) => updatePreference({ check_for_updates: v })}
+                />
+              </SettingRow>
+            )}
           </>
         )}
       </Section>

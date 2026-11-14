@@ -9,7 +9,7 @@ function system(installMethod?: string | null): string {
   const ua = navigator.userAgent;
   const os = /Windows/i.test(ua) ? "Windows" : /Mac OS X|Macintosh/i.test(ua) ? "macOS" : /Linux/i.test(ua) ? "Linux" : "";
   // The browser's system is the host's, which is also where Docker runs
-  const how = installMethod === "docker" ? "Docker" : "uv";
+  const how = installMethod === "docker" ? "Docker" : installMethod === "store" ? "the Microsoft Store" : "uv";
   return os ? `${os}, installed with ${how}` : "";
 }
 

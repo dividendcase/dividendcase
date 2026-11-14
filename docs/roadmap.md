@@ -139,7 +139,7 @@ hands over to the next without a cut.
 ## 2. Broker imports
 
 **Order:** Zerodha → Angel One (India), then Trading 212 → Revolut → Degiro.
-**Releases:** 0.4.0 for Zerodha and Angel One; 0.5.0 for Trading 212, Revolut and Degiro.
+**Releases:** 0.4.0 for Zerodha and Angel One; Revolut came early, in 0.4.0. The release after 0.4.1 is 1.0.0 (the Microsoft Store doesn't take versions that start with 0, and the Windows app should carry the same number as everywhere else); Trading 212 and Degiro follow in 1.x.
 
 **For each broker:**
 
@@ -169,7 +169,7 @@ broker (no prices; combine with the average prices).
 Revolut's account statement imports too (7 Oct 2026), checked against a real statement with a single
 buy (read locally, never committed). Sells, dividends, splits and non-USD stocks are tested only on
 invented statements, and the CSV/Excel reader follows column names other tools document: check both
-with a longer real statement before 0.5.0.
+with a longer real statement before 1.0.0.
 
 **Follow-up once imports work:** import the dividends actually received and the tax withheld, then
 compare them with what the app expected. When a broker withheld a different rate from our estimate,
@@ -177,7 +177,7 @@ offer to use the broker's rate for that country.
 
 ## 3. Other open items
 
-- Pratik: check the Irish withholding rates. A tax professional reviews the whole table before 1.0.
+- Pratik: check the Irish withholding rates. A tax professional reviews the whole table (still open; 1.0.0 doesn't mean it's done).
 - Decide on a private feedback address for people without a GitHub account (feedback@dividendcase.com).
 - Later:
   - more withholding source countries (DE, FR, NL, CH, ES, JP);

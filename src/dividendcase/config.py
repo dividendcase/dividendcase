@@ -27,8 +27,9 @@ class Settings(BaseSettings):
     # Ask PyPI once a day whether a newer version exists (off in tests; users can also
     # turn it off in Settings)
     check_updates: bool = True
-    # How this copy was installed, for the update instructions: "uv" (uv tool install) or
-    # "docker" (set in the Docker image)
+    # How this copy was installed, for the update instructions: "uv" (uv tool install),
+    # "docker" (set in the Docker image) or "store" (the Windows app from the Microsoft Store,
+    # set by dividendcase.desktop --store)
     install_method: str = "uv"
 
     @property

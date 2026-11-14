@@ -1,6 +1,6 @@
 [project]
 name = "dividendcase"
-version = "0.5.0.dev0"
+version = "1.0.0.dev0"
 description = "A free, open-source dividend tracker that runs on your own computer. Your data stays with you."
 readme = "README.md"
 license = "AGPL-3.0-or-later"
@@ -54,6 +54,14 @@ dependencies = [
     "pypdf>=6.21.4",
 ]
 
+[project.optional-dependencies]
+# The notification-area icon of the Windows app (dividendcase.desktop); the Microsoft Store
+# package includes it, `uv tool install dividendcase` doesn't need it
+desktop = [
+    "pystray>=0.19.5",
+    "pillow>=11",
+]
+
 [project.scripts]
 dividendcase = "dividendcase.cli:main"
 
@@ -76,7 +84,7 @@ artifacts = ["src/dividendcase/web/**"]
 # `uv build` makes the wheel from the sdist, so the sdist needs the built interface too;
 # the JavaScript sources and workspaces stay out of the Python package
 artifacts = ["src/dividendcase/web/**"]
-exclude = ["/frontend", "/frontend/.env.development", "/site", "/packages", "/package.json", "/package-lock.json", "/CLAUDE.md", "node_modules", ".test-data", "*.db"]
+exclude = ["/frontend", "/frontend/.env.development", "/site", "/packages", "/packaging", "/package.json", "/package-lock.json", "/CLAUDE.md", "node_modules", ".test-data", "*.db"]
 
 [dependency-groups]
 dev = [
