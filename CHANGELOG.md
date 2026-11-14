@@ -2,6 +2,8 @@
 
 All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/).
 
+## Unreleased
+
 ## 1.0.0
 
 - **A Windows app, for the Microsoft Store:** install DividendCase with one click, without a terminal or any commands. Open it from the Start menu and it opens in your browser; an icon in the notification area (by the clock) opens it again or quits it, and the Store keeps it up to date. The app is with Microsoft for review as this release goes out, and the website will link to it once it's listed. Mac and Linux installs are unchanged.
