@@ -83,6 +83,7 @@ export function Footer() {
           <div className="space-y-1 text-[12.5px] leading-[1.6] text-ink-3 md:text-right">
             <p>AGPL-3.0-or-later. Not financial advice. Not affiliated with Yahoo.</p>
             <p>© 2026 DividendCase. The name and logo are not covered by the licence.</p>
+            <p>Microsoft and Microsoft Store are trademarks of the Microsoft group of companies.</p>
           </div>
         </div>
       </div>

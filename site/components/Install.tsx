@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { Check, Copy } from "@phosphor-icons/react";
-import { GITHUB_URL, STORE_URL, buttonPrimary } from "./site";
+import { GITHUB_URL, STORE_URL } from "./site";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -112,13 +112,22 @@ export function Install() {
               Get DividendCase from the Microsoft Store, then open it from the Start menu.
             </p>
             <div className="mt-6">
+              {/* Microsoft's own badge, unchanged, served from this site: its web component would
+                  load a script from Microsoft on every visit, which the privacy page rules out */}
               <a
                 href={STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`${buttonPrimary} px-5 py-3 text-[15px] shadow-[0_10px_30px_-12px_rgb(122_191_80/0.55)] active:translate-y-px`}
+                className="inline-block rounded-lg transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-0"
               >
-                Get it from the Microsoft Store
+                {/* eslint-disable-next-line @next/next/no-img-element -- a static export serves images as files */}
+                <img
+                  src="/badges/microsoft-store.svg"
+                  width={220}
+                  height={60}
+                  alt="Download DividendCase from the Microsoft Store"
+                  className="block h-[60px] w-auto"
+                />
               </a>
             </div>
           </div>
