@@ -32,6 +32,8 @@ def upgrade_command() -> str:
 
     if settings.install_method == "docker":
         return f"docker pull {DOCKER_IMAGE}:latest"
+    if settings.install_method == "store":
+        return ""  # the Microsoft Store updates the Windows app by itself
     return "uv tool upgrade dividendcase"
 
 
@@ -87,7 +89,9 @@ async def _wanted() -> bool:
 
 async def check_for_update() -> Optional[str]:
     """Ask PyPI for the newest version (if the user allows it) and remember the answer."""
-    if not await _wanted():
+    # The Windows app from the Microsoft Store is updated by the Store, a few days after a
+    # release reaches PyPI: a notice here would point at a version the Store doesn't have yet
+    if _install_method() == "store" or not await _wanted():
         forget()
         return None
     try:

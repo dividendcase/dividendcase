@@ -131,6 +131,8 @@ Both are Next.js static exports (`output: "export"`), so they can't use middlewa
 
 Bump `version` in `pyproject.toml`, add a matching section to [CHANGELOG.md](https://github.com/dividendcase/dividendcase/blob/main/CHANGELOG.md), run `uv lock`, merge, then push a tag such as `v0.1.1`. The **Release** workflow tests it, installs the built package on Linux, macOS and Windows, publishes it to PyPI with trusted publishing and creates the GitHub release.
 
+The Windows app for the Microsoft Store is built by the same workflow (`packaging/windows/build_msix.py`) and kept as the run's `microsoft-store-package` artifact, which is uploaded in Partner Center by hand. It carries its own Python and libraries, and the Store signs it. Its identity comes from the repository variables `MSIX_IDENTITY_NAME`, `MSIX_PUBLISHER` and `MSIX_PUBLISHER_DISPLAY_NAME` (Partner Center, Product identity). The Store's version is the same as ours (1.0.1 is 1.0.1.0 there); the Store doesn't accept a version that starts with 0, which is why 1.0.0 followed 0.4.1.
+
 ## Data and disclaimer
 
 DividendCase is not affiliated with Yahoo. Yahoo Finance data is intended for personal use, so this project never distributes market data: each installation fetches its own. Nothing in DividendCase is financial advice.

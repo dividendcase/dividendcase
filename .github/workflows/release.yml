@@ -4,6 +4,9 @@ name: Release
 # same number, merge, then push the tag `v<version>`. PyPI trusts this workflow directly
 # (trusted publishing), so there are no tokens or passwords in the repository.
 #
+# The Windows app goes to the Microsoft Store by hand for now: download the
+# "microsoft-store-package" artifact from the run and upload it in Partner Center.
+#
 # Run it by hand ("Run workflow") for a dry run on TestPyPI instead.
 
 on:
@@ -94,6 +97,39 @@ jobs:
           echo "$(uv tool dir --bin)" >> "$GITHUB_PATH"
       - name: Start it and check it works
         run: uv run --no-project python scripts/smoke_test.py
+
+  windows-app:
+    name: Windows app (Microsoft Store package)
+    needs: [build, install]
+    runs-on: windows-latest
+    timeout-minutes: 30
+    # The app's identity in Partner Center (Product identity), as repository variables. They
+    # aren't secrets: every installed copy shows them.
+    env:
+      MSIX_IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+      MSIX_PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+      MSIX_PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v6
+      - name: Build the package
+        shell: bash
+        run: |
+          if [ -z "$MSIX_IDENTITY_NAME" ]; then
+            echo "::warning::No MSIX_* repository variables: this package has a test identity and the Store won't take it"
+          fi
+          uv run --no-project python packaging/windows/build_msix.py "$(ls dist/*.whl)"
+      # Upload this file in Partner Center (Packages) to publish the version. It is unsigned on
+      # purpose: the Store signs it. The Build workflow installs and runs the same package.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: microsoft-store-package
+          path: dist/*.msix
+          retention-days: 90
 
   testpypi:
     name: Publish to TestPyPI

@@ -34,7 +34,7 @@ body:
     id: system
     attributes:
       label: Computer
-      description: Operating system and version, and how you installed it (uv, Docker or from source).
+      description: Operating system and version, and how you installed it (uv, the Microsoft Store, Docker or from source).
       placeholder: macOS 14, installed with uv
     validations:
       required: true
@@ -42,5 +42,5 @@ body:
     id: terminal
     attributes:
       label: What the terminal says
-      description: If there's an error in the window where DividendCase runs, paste it here.
+      description: If there's an error in the window where DividendCase runs, paste it here. The Windows app from the Microsoft Store has no such window; its messages are in dividendcase.log in the data folder (Settings shows where that is).
       render: text
