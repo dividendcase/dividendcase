@@ -72,6 +72,8 @@ src/dividendcase/      Python package (FastAPI app, models, Yahoo fetcher, CLI)
 package.json           npm workspaces: frontend, site, packages/*  (one root package-lock.json)
 packages/brand/        tokens.css (Tailwind v4 @theme static: colours, fonts, radii, utilities
                        num / eyebrow / serif-accent / keeper-dot) + src/logo.tsx (LogoMark, Logo)
+                       make_logos.py (Playwright) draws assets/logos/: Microsoft Store poster, box art,
+                       tiles and hero, YouTube avatar (circle-safe), banner and watermark, and general marks
 frontend/              the app: Next 16 App Router, React 19, Tailwind 4, TS 7, ECharts 6;
                        static export (output: "export", trailingSlash)
 site/                  dividendcase.com: Next 16 static export, live since 1 Nov 2026 (Vercel project
@@ -109,6 +111,8 @@ packaging/windows/     the Microsoft Store package (MSIX), for people who won't 
                        is 1.0.0 everywhere (decided 14 Nov 2026) and versions stay the same on every system.
                        make_icons.py redraws assets/ and src/dividendcase/assets/tray.png from the logo.
                        The Store signs the package; Mac and Linux stay on uv (no Apple Developer account).
+                       store/ holds the Partner Center listing (listing.md: every field's text, as submitted
+                       for 1.0.0 on 14 Nov 2026) and its six 1920×1080 screenshots from scripts/demo_server.py.
 Dockerfile             node → uv build wheel → uv pip install --system; listens on 0.0.0.0 inside,
                        data in /data, non-root; publish with -p 127.0.0.1:8765:8765
 .github/ISSUE_TEMPLATE bug_report.yml (version/system prefilled by lib/feedback.ts), idea.yml. The other public
