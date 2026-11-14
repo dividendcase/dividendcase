@@ -1,10 +1,12 @@
 # Changelog
 
-All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/);
-while the version starts with 0, a minor release (0.2, 0.3…) may change things.
+All notable changes to DividendCase. Versions follow [semantic versioning](https://semver.org/).
 
-## Unreleased
+## 1.0.0
 
+- **A Windows app, for the Microsoft Store:** install DividendCase with one click, without a terminal or any commands. Open it from the Start menu and it opens in your browser; an icon in the notification area (by the clock) opens it again or quits it, and the Store keeps it up to date. The app is with Microsoft for review as this release goes out, and the website will link to it once it's listed. Mac and Linux installs are unchanged.
+- If `uv tool install dividendcase` failed on your PC with a "Bad Image" message (error 0xc0e90002), the Store app is the fix. Windows' Smart App Control blocks the copy of Python that uv downloads because it isn't signed; the Store app is signed by Microsoft.
+- **Why 1.0.0:** the Microsoft Store doesn't accept version numbers that start with 0, and DividendCase should carry the same number on every system. Nothing was removed since 0.4.1, and the app works the same way. The tax withheld at source is still an estimate: the rates haven't been reviewed by a tax professional yet.
 - Security: updated pypdf, certifi and Next.js.
 
 ## 0.4.1
