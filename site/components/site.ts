@@ -2,6 +2,9 @@
 
 export const GITHUB_URL = "https://github.com/dividendcase/dividendcase";
 
+/** The Windows app's page in the Microsoft Store: one click to install, updated by the Store */
+export const STORE_URL = "https://apps.microsoft.com/detail/9P832BD624ST";
+
 /** For questions and feedback from people who'd rather not use GitHub; it lands in a Resend inbox */
 export const CONTACT_EMAIL = "feedback@dividendcase.com";
 
