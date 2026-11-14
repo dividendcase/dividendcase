@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -9,55 +9,48 @@ import { GITHUB_URL, STORE_URL, buttonPrimary } from "./site";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** `store`: the system has an app in a store, offered before the commands */
-type Tab = { key: string; label: string; prompt: string; commands: string[]; store?: boolean };
-
 /** The install commands, as in the README */
-const TABS: Tab[] = [
+const UNIX_COMMANDS = ["curl -LsSf https://astral.sh/uv/install.sh | sh", "uv tool install dividendcase", "dividendcase"];
+
+/** For the few who want them: shown under the two main ways, smaller */
+const OTHER_WAYS: { key: string; label: string; note: string; prompt: string; commands: string[] }[] = [
   {
-    key: "unix",
-    label: "macOS and Linux",
+    key: "docker",
+    label: "Docker",
+    note: "For a home server or a NAS.",
     prompt: "$",
-    commands: ["curl -LsSf https://astral.sh/uv/install.sh | sh", "uv tool install dividendcase", "dividendcase"],
+    commands: [
+      "docker run -d --name dividendcase --restart unless-stopped -p 127.0.0.1:8765:8765 -v dividendcase-data:/data ghcr.io/dividendcase/dividendcase:latest",
+    ],
   },
   {
-    key: "windows",
-    label: "Windows",
+    key: "powershell",
+    label: "Windows, from PowerShell",
+    note: "Without the Store. Windows blocks this on PCs with Smart App Control turned on.",
     prompt: ">",
-    store: true,
     commands: [
       'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"',
       "uv tool install dividendcase",
       "dividendcase",
     ],
   },
-  {
-    key: "docker",
-    label: "Docker",
-    prompt: "$",
-    commands: [
-      "docker run -d --name dividendcase --restart unless-stopped -p 127.0.0.1:8765:8765 -v dividendcase-data:/data ghcr.io/dividendcase/dividendcase:latest",
-    ],
-  },
 ];
 
 const APP_URL = "http://127.0.0.1:8765/dashboard/";
 
+const card = "relative flex flex-col overflow-hidden rounded-2xl border border-line-strong bg-well shadow-pop";
+const cardHead = "flex h-12 flex-none items-center justify-between gap-3 border-b border-line bg-surface pr-2.5 pl-5";
+const cardTitle = "text-[14px] font-semibold text-ink";
+
 /**
- * Frame 10: install. When the section comes into view the commands type themselves, the app's
- * startup lines follow and the browser opens on the app (a real screenshot, with an example
- * portfolio of invented numbers).
+ * Frame 10: install. The two ways nearly everyone uses sit side by side: the Microsoft Store on
+ * Windows, three commands on a Mac. When the section comes into view the commands type
+ * themselves, the app's startup lines follow and the browser opens on the app (a real
+ * screenshot, with an example portfolio of invented numbers). Docker, PowerShell and building
+ * from source come after, smaller.
  */
 export function Install() {
   const section = useRef<HTMLElement>(null);
-  const [tab, setTab] = useState(TABS[0].key);
-  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const current = TABS.find((t) => t.key === tab)!;
-
-  // Start on the visitor's own system
-  useEffect(() => {
-    if (/Windows/i.test(navigator.userAgent)) setTab("windows");
-  }, []);
 
   useGSAP(
     () => {
@@ -94,30 +87,79 @@ export function Install() {
     { scope: section },
   );
 
-  function onTabKey(e: KeyboardEvent<HTMLButtonElement>) {
-    const i = TABS.findIndex((t) => t.key === tab);
-    let next = i;
-    if (e.key === "ArrowRight") next = (i + 1) % TABS.length;
-    else if (e.key === "ArrowLeft") next = (i - 1 + TABS.length) % TABS.length;
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = TABS.length - 1;
-    else return;
-    e.preventDefault();
-    setTab(TABS[next].key);
-    tabRefs.current[TABS[next].key]?.focus();
-  }
-
   return (
     <section ref={section} id="install" aria-labelledby="install-title" className="container-page py-28 md:py-40">
-      <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
-        <div className="lg:pt-10">
-          <h2 id="install-title" data-reveal="" className="heading text-[clamp(32px,3.6vw,52px)]">
-            Install it in a minute.
-          </h2>
-          <p data-reveal="" className="mt-4 max-w-[440px] text-[17px] leading-[1.6] text-pretty text-ink-2 md:text-[19px]">
-            Free. On Windows it is one click from the Microsoft Store. On macOS and Linux it installs with uv, which sets up Python for you. Then it opens in your browser.
-          </p>
-          <dl data-reveal="" className="mt-10 space-y-3 text-[14px]">
+      <div className="max-w-[620px]">
+        <h2 id="install-title" data-reveal="" className="heading text-[clamp(32px,3.6vw,52px)]">
+          Install it in a minute.
+        </h2>
+        <p data-reveal="" className="mt-4 text-[17px] leading-[1.6] text-pretty text-ink-2 md:text-[19px]">
+          Free. One click on Windows, three commands on a Mac. Then it opens in your browser.
+        </p>
+      </div>
+
+      <div className="mt-12 grid grid-cols-1 gap-5 lg:mt-14 lg:grid-cols-2 lg:gap-6">
+        <div data-reveal="" className={card}>
+          <div className={cardHead}>
+            <h3 className={cardTitle}>Windows</h3>
+            <span className="pr-2.5 text-[12.5px] text-ink-3">Windows 10 and 11</span>
+          </div>
+          <div className="flex flex-1 flex-col justify-center px-5 py-8 md:px-7 md:py-10">
+            <p className="text-[22px] leading-[1.25] font-semibold tracking-[-0.01em] text-ink md:text-[26px]">
+              One click, no commands.
+            </p>
+            <p className="mt-3 max-w-[420px] text-[15px] leading-[1.6] text-ink-2">
+              Get DividendCase from the Microsoft Store, then open it from the Start menu.
+            </p>
+            <div className="mt-6">
+              <a
+                href={STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${buttonPrimary} px-5 py-3 text-[15px] shadow-[0_10px_30px_-12px_rgb(122_191_80/0.55)] active:translate-y-px`}
+              >
+                Get it from the Microsoft Store
+              </a>
+            </div>
+          </div>
+          <dl className="space-y-2 border-t border-line px-5 py-4 text-[13.5px] md:px-7">
+            <div className="flex flex-wrap gap-x-3">
+              <dt className="w-16 text-ink-3">Update</dt>
+              <dd className="text-ink-2">The Store does it for you</dd>
+            </div>
+            <div className="flex flex-wrap gap-x-3">
+              <dt className="w-16 text-ink-3">Remove</dt>
+              <dd className="text-ink-2">Windows Settings, under Apps</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div data-reveal="" className={card}>
+          <div className={cardHead}>
+            <h3 className={cardTitle}>macOS and Linux</h3>
+            <CopyButton text={UNIX_COMMANDS.join("\n")} />
+          </div>
+          <div className="flex-1 space-y-1.5 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.75] md:px-7 md:text-[14px]">
+            {UNIX_COMMANDS.map((c) => (
+              <p key={c} className="whitespace-pre text-ink">
+                <span className="text-ink-3 select-none">$ </span>
+                <span data-command="" className="inline-block">
+                  {c}
+                </span>
+              </p>
+            ))}
+            <p data-output="" className="pt-2 whitespace-pre text-ink-3">
+              Starting DividendCase at {APP_URL}
+            </p>
+            <p data-output="" className="whitespace-pre">
+              <span className="text-sprout-hi">Ready.</span>
+              <span className="text-ink-2"> Opening {APP_URL}</span>
+            </p>
+            <p className="pt-3 font-sans text-[13.5px] leading-[1.55] whitespace-normal text-ink-3">
+              Paste these into Terminal. The first one installs uv, which sets up Python for you.
+            </p>
+          </div>
+          <dl className="space-y-2 border-t border-line px-5 py-4 text-[13.5px] md:px-7">
             <div className="flex flex-wrap gap-x-3">
               <dt className="w-16 text-ink-3">Update</dt>
               <dd className="num text-ink-2">uv tool upgrade dividendcase</dd>
@@ -127,98 +169,64 @@ export function Install() {
               <dd className="num text-ink-2">uv tool uninstall dividendcase</dd>
             </div>
           </dl>
-          <p data-reveal="" className="mt-8 text-[14px] text-ink-3">
-            Prefer to build it yourself?{" "}
-            <a href={`${GITHUB_URL}#readme`} className="text-ink-2 underline decoration-line-strong underline-offset-4 hover:text-ink">
-              Run it from source
-            </a>
-            .
-          </p>
         </div>
+      </div>
 
-        <div className="relative">
-          <div className="relative z-10 overflow-hidden rounded-2xl border border-line-strong bg-well shadow-pop">
-            <div className="flex items-center justify-between gap-3 border-b border-line bg-surface px-2.5 py-2">
-              <div role="tablist" aria-label="Your system" className="flex gap-1 overflow-x-auto">
-                {TABS.map((t) => (
-                  <button
-                    key={t.key}
-                    ref={(el) => {
-                      tabRefs.current[t.key] = el;
-                    }}
-                    type="button"
-                    role="tab"
-                    id={`install-tab-${t.key}`}
-                    aria-selected={t.key === tab}
-                    aria-controls="install-panel"
-                    tabIndex={t.key === tab ? 0 : -1}
-                    onClick={() => setTab(t.key)}
-                    onKeyDown={onTabKey}
-                    className={`h-8 rounded-lg px-3 text-[13px] font-medium whitespace-nowrap transition-colors ${
-                      t.key === tab ? "bg-overlay text-ink" : "text-ink-3 hover:text-ink-2"
-                    }`}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-              <CopyButton text={current.commands.join("\n")} />
-            </div>
-            <div
-              id="install-panel"
-              role="tabpanel"
-              aria-labelledby={`install-tab-${tab}`}
-              className="space-y-1.5 overflow-x-auto px-5 py-5 font-mono text-[13px] leading-[1.75] md:px-6 md:text-[14px]"
-            >
-              {current.store && (
-                <div className="mb-5 border-b border-line pb-6 font-sans whitespace-normal">
-                  <p className="text-[16px] font-semibold text-ink">One click, no commands.</p>
-                  <p className="mt-1.5 max-w-[460px] text-[14px] leading-[1.6] text-ink-2">
-                    Get DividendCase from the Microsoft Store, then open it from the Start menu. The Store keeps it up
-                    to date.
-                  </p>
-                  <a href={STORE_URL} target="_blank" rel="noopener noreferrer" className={`${buttonPrimary} mt-4 active:translate-y-px`}>
-                    Get it from the Microsoft Store
-                  </a>
-                  <p className="mt-6 text-[13px] text-ink-3">Or install it from PowerShell with uv:</p>
+      <figure
+        data-browser=""
+        className="relative mx-auto mt-6 max-w-[1040px] overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop lg:mt-8"
+      >
+        <div className="flex h-10 items-center justify-center border-b border-line bg-raised">
+          <span className="rounded-md bg-well px-3 py-1 font-mono text-[12px] text-ink-2">127.0.0.1:8765/dashboard/</span>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a static export serves images as files */}
+        <img
+          src="/shots/income-home.webp"
+          srcSet="/shots/income-home.webp 2x"
+          width={1440}
+          height={900}
+          alt="The DividendCase Income page with an example portfolio: expected dividends for the next 12 months, after tax, by month"
+          loading="lazy"
+          className="block h-auto w-full"
+        />
+        <figcaption className="sr-only">Example portfolio with invented numbers</figcaption>
+      </figure>
+
+      <div data-reveal="" className="mt-16 border-t border-line pt-10 lg:mt-20">
+        <h3 className="text-[15px] font-semibold text-ink">Other ways to install</h3>
+        <dl className="mt-6 space-y-6">
+          {OTHER_WAYS.map((way) => (
+            <div key={way.key} className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-10">
+              <dt>
+                <span className="block text-[14px] font-medium text-ink">{way.label}</span>
+                <span className="mt-1 block text-[13.5px] leading-[1.5] text-ink-3">{way.note}</span>
+              </dt>
+              <dd className="flex min-w-0 items-start gap-2 rounded-xl border border-line bg-well py-2 pr-2 pl-4">
+                <div className="min-w-0 flex-1 space-y-1 overflow-x-auto py-1 font-mono text-[12.5px] leading-[1.7] md:text-[13px]">
+                  {way.commands.map((c) => (
+                    <p key={c} className="whitespace-pre text-ink-2">
+                      <span className="text-ink-3 select-none">{way.prompt} </span>
+                      {c}
+                    </p>
+                  ))}
                 </div>
-              )}
-              {current.commands.map((c, i) => (
-                <p key={`${tab}-${i}`} className="whitespace-pre text-ink">
-                  <span className="text-ink-3 select-none">{current.prompt} </span>
-                  {/* Typed in on first view; switching tabs shows the others whole */}
-                  <span data-command={tab === TABS[0].key ? "" : undefined} className="inline-block">
-                    {c}
-                  </span>
-                </p>
-              ))}
-              <p data-output="" className="pt-2 whitespace-pre text-ink-3">
-                Starting DividendCase at {APP_URL}
-              </p>
-              <p data-output="" className="whitespace-pre">
-                <span className="text-sprout-hi">Ready.</span>
-                <span className="text-ink-2"> Opening {APP_URL}</span>
-              </p>
+                <CopyButton text={way.commands.join("\n")} />
+              </dd>
             </div>
+          ))}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)] lg:gap-10">
+            <dt>
+              <span className="block text-[14px] font-medium text-ink">From source</span>
+              <span className="mt-1 block text-[13.5px] leading-[1.5] text-ink-3">To read the code or change it.</span>
+            </dt>
+            <dd className="text-[14px] leading-[1.6] text-ink-2">
+              <a href={`${GITHUB_URL}#readme`} className="text-ink underline decoration-line-strong underline-offset-4 hover:decoration-sprout">
+                Build and run it from the code on GitHub
+              </a>
+              .
+            </dd>
           </div>
-
-          <figure data-browser="" className="relative mt-5 overflow-hidden rounded-2xl border border-line-strong bg-surface shadow-pop lg:mt-6 lg:ml-12">
-            <div className="flex h-10 items-center justify-center border-b border-line bg-raised">
-              <span className="rounded-md bg-well px-3 py-1 font-mono text-[12px] text-ink-2">127.0.0.1:8765/dashboard/</span>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element -- a static export serves images as files */}
-            <img
-              src="/shots/income-home.webp"
-              srcSet="/shots/income-home.webp 2x"
-              width={1440}
-              height={900}
-              alt="The DividendCase Income page with an example portfolio: expected dividends for the next 12 months, after tax, by month"
-              loading="lazy"
-              className="block h-auto w-full"
-            />
-            <figcaption className="sr-only">Example portfolio with invented numbers</figcaption>
-          </figure>
-        </div>
+        </dl>
       </div>
     </section>
   );
