@@ -195,8 +195,9 @@ the URL (the preview tool has read the old repo's launch.json even after the ses
   the free plan has none for private repos; add a protected `pypi` environment once public.
   Pushing a release tag publishes publicly: always ask Pratik first.
 - Windows app: the Build workflow's `windows-app` job builds the package, signs it with a throwaway
-  certificate, installs it, runs `scripts/smoke_test.py` against the installed Python and opens it
-  through its Start menu entry. The Release workflow builds it with the real identity as the artifact
+  certificate, installs it, runs `scripts/smoke_test.py` against the folder it was packed from (an
+  installed Store app's python.exe can't be started from outside: access denied) and opens the
+  installed app through its Start menu entry. The Release workflow builds it with the real identity as the artifact
   `microsoft-store-package`; uploading that in Partner Center is done by hand, and is publishing:
   ask Pratik first.
 - CI: `.github/workflows/tests.yml` (pytest + migrate check; Linux/3.12 on PRs; on main also

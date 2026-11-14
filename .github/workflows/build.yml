@@ -124,9 +124,11 @@ jobs:
           "INSTALL_LOCATION=$($package.InstallLocation)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           "PACKAGE_FAMILY=$($package.PackageFamilyName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
           Write-Host "Installed $($package.PackageFullName) in $($package.InstallLocation)"
-      - name: Run the installed copy and check it works
+      # The full check runs on the folder the package was made from: Windows only lets an
+      # installed Store app's programs start through the app itself (the next step)
+      - name: Run the packaged copy and check it works
         shell: bash
-        run: uv run --no-project python scripts/smoke_test.py "$INSTALL_LOCATION/python/python.exe" -I -m dividendcase.desktop --no-tray
+        run: uv run --no-project python scripts/smoke_test.py build/msix/package/python/python.exe -I -m dividendcase.desktop --no-tray
       - name: Open it the way the Start menu does
         shell: powershell
         run: |
